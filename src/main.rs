@@ -120,7 +120,7 @@ pub fn spawn_enemies(
         commands.spawn((
                 SpriteBundle{
                     transform: Transform::from_xyz(rand_x, rand_y, 0.0),
-                    texture: asset_server.load("sprites/player_x.png"),
+                    texture: asset_server.load("sprites/enemy_slime.png"),
                     ..default()
                 },
                 Enemy{
@@ -146,7 +146,7 @@ pub fn spawn_stars(
         commands.spawn((
                 SpriteBundle{
                     transform: Transform::from_xyz(rand_x, rand_y, 0.0),
-                    texture: asset_server.load("sprites/player_x.png"),
+                    texture: asset_server.load("sprites/point_star.png"),
                     ..default()
                 },
                 Star{},
@@ -396,7 +396,7 @@ pub fn spawn_stars_over_time(
         commands.spawn((
                 SpriteBundle{
                     transform: Transform::from_xyz(random_x, random_y, 0.0),
-                    texture: asset_server.load("sprites/player_x.png"),
+                    texture: asset_server.load("sprites/point_star.png"),
                     ..default()
                 }, 
                 Star{},
