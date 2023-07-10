@@ -12,6 +12,7 @@ pub const NUMBER_OF_STARS: usize = 4;
 pub const STAR_SIZE: f32 = 30.0;
 pub const STAR_SPAWN_TIME: f32 = 1.0;
 
+// ECS Loop
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -37,8 +38,8 @@ fn main() {
 
 
 
-
-#[derive(Component)]
+// Create component and resources. 
+#[derive(Component)] 
 pub struct Player{}
 
 #[derive(Component)]
@@ -73,6 +74,10 @@ impl Default for StarSpawnTimer{
     }
 }
 
+
+
+
+// Player spawn function
 pub fn spawn_player(mut commands: Commands, 
                     window_query: Query<&Window, With<PrimaryWindow>>,
                     asset_server: Res<AssetServer>,
@@ -90,7 +95,7 @@ pub fn spawn_player(mut commands: Commands,
 }
 
 
-
+// Camera spawn 
 pub fn spawn_camera(mut commands: Commands, 
                     window_query: Query<&Window, With<PrimaryWindow>>,
                     ){
@@ -131,6 +136,7 @@ pub fn spawn_enemies(
     }
 }
 
+// Initial star spaning, not routine bonus spawns.
 pub fn spawn_stars(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -155,7 +161,7 @@ pub fn spawn_stars(
 }
 
 
-
+// Player movement function
 pub fn player_movement(
     keyboard_input:Res<Input<KeyCode>>,
     mut player_query: Query<&mut Transform, With<Player>>,
@@ -187,7 +193,8 @@ pub fn player_movement(
         transform.translation += direction * PLAYER_SPEED * time.delta_seconds();
     }
 }
- 
+
+// Prevent player from leaving window 
 pub fn confine_player_movement(
     mut player_query: Query<&mut Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -224,7 +231,7 @@ pub fn confine_player_movement(
 
 }
 
-
+// Enemy movement function.
 pub fn enemy_movement(
     mut enemy_query: Query<(&mut Transform, &Enemy)>,
     time: Res<Time>
@@ -237,6 +244,7 @@ pub fn enemy_movement(
 }
 
 
+// Change enemy direction when hitting a wall.
 pub fn update_enemy_direction(
     mut enemy_query: Query<(&mut Transform, &mut Enemy)>,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -286,6 +294,8 @@ pub fn update_enemy_direction(
     }   
 }
 
+
+// Prevent enemy from leaving window.
 pub fn confine_enemy_movement(
     mut enemy_query: Query<&mut Transform, With<Enemy>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -319,6 +329,7 @@ pub fn confine_enemy_movement(
     }
 }
                              
+// Player and enemy collision detection.
 pub fn enemy_hit_player(
     mut commands: Commands,
     mut player_query: Query<(Entity, &Transform), With<Player>>,
@@ -344,6 +355,7 @@ pub fn enemy_hit_player(
 }
 
 
+// Player and star collision detection.
 pub fn player_hit_star(
     mut commands: Commands,
     player_query: Query<&Transform, With<Player>>,
@@ -369,6 +381,7 @@ pub fn player_hit_star(
 }
 
 
+// Update score variable.
 pub fn update_score(score: Res<Score>){
     if score.is_changed(){
         println!("score: {}", score.value.to_string());
@@ -376,11 +389,13 @@ pub fn update_score(score: Res<Score>){
 }
 
 
+// Timer tick handling star spawning.
 pub fn tick_star_spawn_timer(mut star_spawn_timer: ResMut<StarSpawnTimer>, time: Res<Time>){
     star_spawn_timer.timer.tick(time.delta());
     
 }
 
+// Star spawner over time. 
 pub fn spawn_stars_over_time(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
