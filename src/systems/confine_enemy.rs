@@ -1,3 +1,4 @@
+
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
@@ -8,7 +9,7 @@ pub fn confine_enemy_movement(
     mut enemy_query: Query<&mut Transform, With<Enemy>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single();
 
     let half_enemy_size: f32 = ENEMY_SIZE / 2.0;
     let x_min: f32 = 0.0 + half_enemy_size;

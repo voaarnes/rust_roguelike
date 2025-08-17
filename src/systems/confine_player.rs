@@ -9,7 +9,7 @@ pub fn confine_player_movement(
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
     if let Ok(mut player_transform) = player_query.get_single_mut() {
-        let window = window_query.get_single().unwrap();
+        let window = window_query.single();
 
         let half_player_size: f32 = PLAYER_SIZE / 2.0;
         let x_min: f32 = 0.0 + half_player_size;

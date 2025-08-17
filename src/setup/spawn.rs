@@ -14,11 +14,11 @@ pub fn spawn_player(
     let window: &Window = window_query.get_single().unwrap();
 
     commands.spawn((
-        Sprite {
-            image: asset_server.load("sprites/player_x.png"),
+        SpriteBundle {
+            texture: asset_server.load("sprites/player_x.png"),
+            transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
             ..default()
         },
-        Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
         Player {},
     ));
 }
@@ -35,11 +35,11 @@ pub fn spawn_enemies(
         let rand_y: f32 = random::<f32>() * window.height();
 
         commands.spawn((
-            Sprite {
-                image: asset_server.load("sprites/player_x.png"),
+            SpriteBundle {
+                texture: asset_server.load("sprites/player_x.png"),
+                transform: Transform::from_xyz(rand_x, rand_y, 0.0),
                 ..default()
             },
-            Transform::from_xyz(rand_x, rand_y, 0.0),
             Enemy {
                 direction: Vec2::new(random::<f32>(), random::<f32>()).normalize(),
             },
@@ -47,7 +47,7 @@ pub fn spawn_enemies(
     }
 }
 
-// Initial star spaning, not routine bonus spawns.
+// Initial star spawning, not routine bonus spawns.
 pub fn spawn_stars(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -55,16 +55,16 @@ pub fn spawn_stars(
 ) {
     let window: &Window = window_query.get_single().unwrap();
 
-    for _ in 0..NUMBER_OF_ENEMIES {
+    for _ in 0..NUMBER_OF_STARS {
         let rand_x: f32 = random::<f32>() * window.width();
         let rand_y: f32 = random::<f32>() * window.height();
 
         commands.spawn((
-            Sprite {
-                image: asset_server.load("sprites/player_x.png"),
+            SpriteBundle {
+                texture: asset_server.load("sprites/player_x.png"),
+                transform: Transform::from_xyz(rand_x, rand_y, 0.0),
                 ..default()
             },
-            Transform::from_xyz(rand_x, rand_y, 0.0),
             Star {},
         ));
     }
