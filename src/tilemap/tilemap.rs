@@ -41,15 +41,23 @@ pub struct Tilemap {
 }
 
 impl Tilemap {
+
     pub fn from_string(map_string: &str) -> Self {
-        let lines: Vec<&str> = map_string.lines().collect();
+        // Drop empty/whitespace-only lines (e.g., the very first blank line)
+        let lines: Vec<&str> = map_string
+            .lines()
+            .map(|l| l.trim_end())
+            .filter(|l| !l.is_empty())
+            .collect();
+
         let height = lines.len();
-        let width = lines.get(0).map_or(0, |line| line.len());
-        
+        let width = lines.iter().map(|l| l.len()).max().unwrap_or(0);
+
         let mut tiles = vec![vec![None; width]; height];
-        
+
         for (y, line) in lines.iter().enumerate() {
             for (x, ch) in line.chars().enumerate() {
+                if x >= width { break; }
                 tiles[y][x] = match ch {
                     '#' => Some(TileType::Wall),
                     '.' => Some(TileType::Floor),
@@ -61,7 +69,7 @@ impl Tilemap {
                 };
             }
         }
-        
+
         Self { width, height, tiles }
     }
     

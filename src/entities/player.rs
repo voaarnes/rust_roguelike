@@ -26,11 +26,38 @@ impl Default for Player {
     }
 }
 
+#[derive(Resource, Clone)]
+pub struct SpriteAtlases {
+    pub player: Handle<TextureAtlasLayout>,
+}
+
+pub const PLAYER_FRAME_W: u32 = 32;
+pub const PLAYER_FRAME_H: u32 = 32;
+pub const PLAYER_COLUMNS: u32 = 8; // e.g. 8 frames across
+pub const PLAYER_ROWS: u32 = 1;     // e.g. 1 row
+
+
+pub fn build_player_atlas(
+    mut commands: Commands,
+    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
+) {
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(PLAYER_FRAME_W, PLAYER_FRAME_H),
+        PLAYER_COLUMNS,
+        PLAYER_ROWS,
+        None,
+        None,
+    );
+    let handle = layouts.add(layout);
+    commands.insert_resource(SpriteAtlases { player: handle });
+}
+
+
 fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    let texture_handle: Handle<Image> = asset_server.load("sprites/player_sheet.png");
+    let texture_handle: Handle<Image> = asset_server.load("sprites/test_p_sprite.png");
     
     // Create texture atlas layout for player sprite sheet
     let texture_atlas_layout = TextureAtlasLayout::from_grid(
@@ -125,3 +152,4 @@ fn player_movement(
         }
     }
 }
+

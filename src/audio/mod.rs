@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 
 pub struct AudioPlugin;
+use bevy::audio::Volume; 
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
@@ -35,7 +36,8 @@ impl AudioManager {
         if let Some(sound) = self.sounds.get(sound_name) {
             commands.spawn((
                 AudioPlayer::new(sound.clone()),
-                PlaybackSettings::ONCE.with_volume(volume),
+                PlaybackSettings::ONCE.with_volume(Volume::Linear(volume))
+                
             ));
         }
     }
@@ -49,7 +51,7 @@ impl AudioManager {
         if let Some(music) = self.music.get(music_name) {
             commands.spawn((
                 AudioPlayer::new(music.clone()),
-                PlaybackSettings::LOOP.with_volume(volume),
+                PlaybackSettings::ONCE.with_volume(Volume::Linear(volume))
             ));
         }
     }
