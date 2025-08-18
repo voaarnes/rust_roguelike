@@ -16,12 +16,15 @@ pub fn spawn_stars_over_time(
     star_spawn_timer: Res<StarSpawnTimer>,
 ) {
     if star_spawn_timer.timer.finished() {
-        let window = window_query.single();
+        let window = window_query.single().unwrap();
         let random_x: f32 = random::<f32>() * window.width();
         let random_y: f32 = random::<f32>() * window.height();
 
         commands.spawn((
-            Sprite::from_image(asset_server.load("sprites/player_x.png")),
+            Sprite {
+                image: asset_server.load("sprites/player_x.png"),
+                ..default()
+            },
             Transform::from_xyz(random_x, random_y, 0.0),
             Star {},
         ));

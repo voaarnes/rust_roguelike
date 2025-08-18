@@ -24,11 +24,9 @@ mod systems {
 mod constants;
 
 use bevy::prelude::*;
-use components::*;
 use constants::*;
 use resources::score::Score;
 use resources::star_spawn_timer::StarSpawnTimer;
-use resources::*;
 use setup::*;
 use systems::collisions;
 use systems::score;

@@ -10,7 +10,7 @@ pub fn player_movement(
 ) {
     let mut direction = Vec3::ZERO;
 
-    if let Ok(mut transform) = player_query.get_single_mut() {
+    if let Ok(mut transform) = player_query.single_mut() {
         if keys.pressed(KeyCode::ArrowLeft) || keys.pressed(KeyCode::KeyA) {
             direction += Vec3::new(-1.0, 0.0, 0.0);
         }

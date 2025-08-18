@@ -1,8 +1,8 @@
 use bevy::audio::{AudioPlayer, PlaybackSettings};
 use bevy::prelude::*;
 
-use crate::components::{enemy::Enemy, player::Player, star::Star};
-use crate::{ENEMY_SIZE, PLAYER_SIZE, STAR_SIZE};
+use crate::components::{enemy::Enemy, player::Player};
+use crate::{ENEMY_SIZE, PLAYER_SIZE};
 
 pub fn enemy_hit_player(
     mut commands: Commands,
@@ -10,7 +10,7 @@ pub fn enemy_hit_player(
     enemy_query: Query<&Transform, With<Enemy>>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Ok((player_entity, player_transform)) = player_query.get_single_mut() {
+    if let Ok((player_entity, player_transform)) = player_query.single_mut() {
         for enemy_transform in enemy_query.iter() {
             let distance: f32 = player_transform
                 .translation

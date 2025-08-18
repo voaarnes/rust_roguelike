@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use rand::prelude::*;
 
 use crate::components::enemy::Enemy;
 use crate::components::player::Player;
@@ -13,9 +12,9 @@ use crate::STAR_SIZE;
 pub fn update_enemy_direction(
     mut enemy_query: Query<(&mut Transform, &mut Enemy)>,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    asset_server: Res<AssetServer>,
+    _asset_server: Res<AssetServer>,
 ) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single().unwrap();
 
     let half_enemy_size: f32 = ENEMY_SIZE / 2.0;
     let x_min: f32 = 0.0 + half_enemy_size;
@@ -38,6 +37,7 @@ pub fn update_enemy_direction(
         }
 
         if direction_changed {
+            // Audio code commented out
             // let sound_effect_1: Handle<AudioSource> = asset_server.load("audio/audio_001.ogg");
             // let sound_effect_2: Handle<AudioSource> = asset_server.load("audio/audio_002.ogg");
 
@@ -59,7 +59,7 @@ pub fn player_hit_star(
     asset_server: Res<AssetServer>,
     mut score: ResMut<Score>,
 ) {
-    if let Ok(player_transform) = player_query.get_single() {
+    if let Ok(player_transform) = player_query.single() {
         for (star_entity, star_transform) in star_query.iter() {
             let distance = player_transform
                 .translation
