@@ -49,7 +49,7 @@ fn spawn_player(
             texture_atlas: Some(TextureAtlas { layout: layout_handle, index: 0 }),
             ..Default::default()
         },
-        Transform::from_xyz(0.0, 0.0, 1.0),
+        Transform::from_xyz(0.0, 0.0, 10.0),
         animation,
     ));
 }

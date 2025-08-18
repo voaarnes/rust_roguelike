@@ -17,6 +17,14 @@ pub enum TileType {
     Water,
 }
 
+
+#[derive(Resource, Clone, Copy)]
+pub struct MapSizePx {
+    pub w: f32,
+    pub h: f32,
+}
+
+
 #[derive(Resource)]
 pub struct TilemapConfig {
     pub tile_size: f32,

@@ -1,12 +1,15 @@
-use super::tilemap::{Tile, TileType, Tilemap, TilemapConfig};
+use super::tilemap::{Tile, TileType, Tilemap, TilemapConfig, MapSizePx};
 use bevy::prelude::*;
+
+
 
 pub fn load_test_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    config: Res<TilemapConfig>,
 ) {
-    // Example level data - you can load this from a file
-    let level_data = "
+    let level_data = r#"
 ########################################
 #......................................#
 #.....###...###...###..................#
@@ -26,49 +29,54 @@ pub fn load_test_level(
 #.....................~~~~~~~~~~~~~~~~~#
 #.....................~~~~~~~~~~~~~~~~~#
 ########################################
-";
+"#;
 
     let tilemap = Tilemap::from_string(level_data);
-    let config = TilemapConfig::default();
-    
-    // Load the tileset texture
+
+    // tileset + atlas layout (FIX: use a real handle, not weak_from_u128)
     let tileset_handle: Handle<Image> = asset_server.load("sprites/tileset.png");
-    
-    // Create texture atlas layout
-    let texture_atlas_layout = TextureAtlasLayout::from_grid(
+    let layout = TextureAtlasLayout::from_grid(
         UVec2::new(config.tile_size as u32, config.tile_size as u32),
         config.tileset_columns as u32,
         config.tileset_rows as u32,
         None,
         None,
     );
-    
-    // Spawn tiles
+    let layout_handle = atlas_layouts.add(layout);
+
+    // Map size (in pixels) and centered origin
+    let map_w = tilemap.width as f32 * config.tile_size;
+    let map_h = tilemap.height as f32 * config.tile_size;
+    commands.insert_resource(MapSizePx { w: map_w, h: map_h });
+
+    // Center the map at world (0,0).
+    // Place tile (0,0) at the top-left logically, but offset so the whole map is centered.
+    let origin_x = -map_w * 0.5 + config.tile_size * 0.5;
+    let origin_y = -map_h * 0.5 + config.tile_size * 0.5;
+
     for y in 0..tilemap.height {
         for x in 0..tilemap.width {
             if let Some(tile_type) = tilemap.tiles[y][x] {
                 let tile_index = get_tile_index(tile_type);
+
+                // Keep "text line 0 is top row" by flipping y index
                 let world_pos = Vec3::new(
-                    x as f32 * config.tile_size,
-                    (tilemap.height - y - 1) as f32 * config.tile_size,
+                    origin_x + (x as f32) * config.tile_size,
+                    origin_y + ((tilemap.height - y - 1) as f32) * config.tile_size,
                     0.0,
                 );
-                
+
                 commands.spawn((
                     Sprite {
                         image: tileset_handle.clone(),
                         texture_atlas: Some(TextureAtlas {
-                            layout: Handle::weak_from_u128(0), // You'll need to properly handle this
+                            layout: layout_handle.clone(),
                             index: tile_index,
                         }),
                         ..default()
                     },
                     Transform::from_translation(world_pos),
-                    Tile {
-                        tile_type,
-                        walkable: is_walkable(tile_type),
-                        tile_index,
-                    },
+                    Tile { tile_type, walkable: is_walkable(tile_type), tile_index },
                 ));
             }
         }
