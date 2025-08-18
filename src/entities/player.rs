@@ -1,117 +1,60 @@
+
 // src/entities/player.rs
 use bevy::prelude::*;
+//use bevy::sprite::TextureAtlasLayout;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player)
-            .add_systems(Update, player_movement);
+        app.add_systems(Startup, spawn_player) // single system
+           .add_systems(Update, player_movement);
     }
 }
+
+const PLAYER_FRAME_W: u32 = 32;
+const PLAYER_FRAME_H: u32 = 32;
+const PLAYER_COLUMNS: u32 = 4;
+const PLAYER_ROWS: u32 = 4;
 
 #[derive(Component)]
-pub struct Player {
-    pub speed: f32,
-    pub health: i32,
-}
-
-impl Default for Player {
-    fn default() -> Self {
-        Self {
-            speed: 500.0,
-            health: 100,
-        }
-    }
-}
-
-#[derive(Resource, Clone)]
-pub struct SpriteAtlases {
-    pub player: Handle<TextureAtlasLayout>,
-}
-
-pub const PLAYER_FRAME_W: u32 = 32;
-pub const PLAYER_FRAME_H: u32 = 32;
-pub const PLAYER_COLUMNS: u32 = 8; // e.g. 8 frames across
-pub const PLAYER_ROWS: u32 = 1;     // e.g. 1 row
-
-
-pub fn build_player_atlas(
-    mut commands: Commands,
-    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    let layout = TextureAtlasLayout::from_grid(
-        UVec2::new(PLAYER_FRAME_W, PLAYER_FRAME_H),
-        PLAYER_COLUMNS,
-        PLAYER_ROWS,
-        None,
-        None,
-    );
-    let handle = layouts.add(layout);
-    commands.insert_resource(SpriteAtlases { player: handle });
-}
-
+pub struct Player { pub speed: f32, pub health: i32 }
+impl Default for Player { fn default() -> Self { Self { speed: 500.0, health: 100 } } }
 
 fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let texture_handle: Handle<Image> = asset_server.load("sprites/test_p_sprite.png");
-    
-    // Create texture atlas layout for player sprite sheet
-    let texture_atlas_layout = TextureAtlasLayout::from_grid(
-        UVec2::new(32, 32),
-        4,  // columns
-        4,  // rows
-        None,
-        None,
+    let image: Handle<Image> = asset_server.load("sprites/test_p_sprite.png");
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(PLAYER_FRAME_W, PLAYER_FRAME_H),
+        PLAYER_COLUMNS,
+        PLAYER_ROWS,
+        None, None,
     );
-    
+    let layout_handle = layouts.add(layout);
+
     let mut animation = SpriteSheetAnimation::new(0.1);
-    
-    // Define animations
-    animation.add_animation(
-        "idle".to_string(),
-        AnimationClip {
-            start_index: 0,
-            end_index: 3,
-            frame_duration: 0.2,
-        },
-    );
-    
-    animation.add_animation(
-        "walk".to_string(),
-        AnimationClip {
-            start_index: 4,
-            end_index: 7,
-            frame_duration: 0.1,
-        },
-    );
-    
-    animation.add_animation(
-        "attack".to_string(),
-        AnimationClip {
-            start_index: 8,
-            end_index: 11,
-            frame_duration: 0.05,
-        },
-    );
-    
+    animation.add_animation("idle".into(),   AnimationClip { start_index: 0,  end_index: 3,  frame_duration: 0.2 });
+    animation.add_animation("walk".into(),   AnimationClip { start_index: 4,  end_index: 7,  frame_duration: 0.1 });
+    animation.add_animation("attack".into(), AnimationClip { start_index: 8,  end_index: 11, frame_duration: 0.05 });
+    animation.play("idle", true);
+
     commands.spawn((
+        Player::default(),
         Sprite {
-            image: texture_handle,
-            texture_atlas: Some(TextureAtlas {
-                layout: Handle::weak_from_u128(0), // You'll need to properly handle this
-                index: 0,
-            }),
-            ..default()
+            image,
+            texture_atlas: Some(TextureAtlas { layout: layout_handle, index: 0 }),
+            ..Default::default()
         },
         Transform::from_xyz(0.0, 0.0, 1.0),
-        Player::default(),
         animation,
     ));
 }
+
+
 
 fn player_movement(
     keys: Res<ButtonInput<KeyCode>>,
