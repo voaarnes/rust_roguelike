@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
+use crate::tilemap::TilemapSet;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Startup, (wait_for_map_size, ApplyDeferred, spawn_player).chain())
+            .add_systems(Startup, spawn_player.after(TilemapSet::LoadLevel))
             .add_systems(Update, player_movement);
     }
 }
@@ -26,12 +27,6 @@ impl Default for Player {
     fn default() -> Self { 
         Self { speed: 250.0, health: 100 } 
     } 
-}
-
-fn wait_for_map_size(map_size: Option<Res<crate::tilemap::tilemap::MapSizePx>>) {
-    if map_size.is_none() {
-        panic!("MapSizePx resource not found!");
-    }
 }
 
 fn spawn_player(
@@ -104,7 +99,7 @@ fn player_movement(
             }
             let new_pos = transform.translation + direction * player.speed * time.delta_secs();
             
-            // Clamp to map bounds
+            // Clamp to map bounds with player size consideration
             let half_w = map_size.w * 0.5 - 16.0;
             let half_h = map_size.h * 0.5 - 16.0;
             transform.translation.x = new_pos.x.clamp(-half_w, half_w);

@@ -1,19 +1,15 @@
-// src/entities/collectible.rs
 use bevy::prelude::*;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
+use crate::tilemap::TilemapSet;
 
 pub struct CollectiblePlugin;
 
 impl Plugin for CollectiblePlugin {
     fn build(&self, app: &mut App) {
         app
-            // spawn event
             .add_event::<SpawnCollectible>()
-            // build atlas, then flush, then seed a few
-            .add_systems(Startup, (build_collectible_atlas, ApplyDeferred, seed_collectibles))
-            // turn events into entities
+            .add_systems(Startup, (build_collectible_atlas, ApplyDeferred, seed_collectibles).chain().after(TilemapSet::LoadLevel))
             .add_systems(Update, handle_spawn_collectible_events)
-            // cosmetic bobbing
             .add_systems(Update, animate_collectibles);
     }
 }
@@ -26,9 +22,9 @@ pub struct Collectible {
 
 #[derive(Clone, Copy)]
 pub enum CollectibleType {
-    Strawberry, // row 0
-    Pear,       // row 1
-    Mango,      // row 2
+    Strawberry,
+    Pear,
+    Mango,
 }
 
 #[derive(Resource, Clone)]
@@ -37,7 +33,6 @@ pub struct FruitAtlases {
     pub texture: Handle<Image>,
 }
 
-// meyveler.png: 3 rows (strawberry/pear/mango), 3 columns each
 pub const FRUIT_FRAME_W: u32 = 32;
 pub const FRUIT_FRAME_H: u32 = 32;
 pub const FRUIT_COLUMNS: u32 = 3;

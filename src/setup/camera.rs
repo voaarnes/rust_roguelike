@@ -18,10 +18,10 @@ pub fn camera_follow_player(
     map_size: Option<Res<MapSizePx>>,
     windows: Query<&Window>,
 ) {
-    let Ok(player_tf) = player_q.get_single() else { return; };
-    let Ok(mut cam_tf) = cam_q.get_single_mut() else { return; };
+    let Ok(player_tf) = player_q.single() else { return; };
+    let Ok(mut cam_tf) = cam_q.single_mut() else { return; };
     let Some(map_size) = map_size else { return; };
-    let Ok(window) = windows.get_single() else { return; };
+    let Ok(window) = windows.single() else { return; };
     
     // Get viewport dimensions
     let half_width = window.width() * 0.5;

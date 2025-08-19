@@ -1,19 +1,15 @@
-// src/entities/enemy.rs
 use bevy::prelude::*;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
+use crate::tilemap::TilemapSet;
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app
-            // 1) allow spawning enemies from anywhere
             .add_event::<SpawnEnemy>()
-            // 2) build atlas + textures once, flush, then optionally seed a few
-            .add_systems(Startup, (build_enemy_atlases, ApplyDeferred, seed_enemies))
-            // 3) turn spawn events into actual entities
+            .add_systems(Startup, (build_enemy_atlases, ApplyDeferred, seed_enemies).chain().after(TilemapSet::LoadLevel))
             .add_systems(Update, handle_spawn_enemy_events)
-            // 4) enemy logic
             .add_systems(Update, (enemy_ai, enemy_movement));
     }
 }
@@ -70,16 +66,11 @@ pub struct EnemyAtlases {
     pub orc: Handle<Image>,
 }
 
-// ---- spritesheet layout assumptions ----
-// Each enemy sheet has 8 frames laid out in a 4x2 grid (indices 0..=7).
-// Idle:  0..=3, Walk: 4..=7.
-// Adjust these if your sheets differ.
 pub const ENEMY_FRAME_W: u32 = 32;
 pub const ENEMY_FRAME_H: u32 = 32;
 pub const ENEMY_COLUMNS: u32 = 4;
 pub const ENEMY_ROWS: u32 = 2;
 
-// Build a single TextureAtlasLayout and load textures for each enemy type.
 fn build_enemy_atlases(
     mut commands: Commands,
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
@@ -106,19 +97,16 @@ fn build_enemy_atlases(
     });
 }
 
-// Event you can send from anywhere to spawn an enemy
 #[derive(Event)]
 pub struct SpawnEnemy {
     pub position: Vec3,
     pub kind: EnemyType,
 }
 
-// Optional: put one enemy on screen so you see something
 fn seed_enemies(mut writer: EventWriter<SpawnEnemy>) {
     writer.write(SpawnEnemy { position: Vec3::new(200.0, 80.0, 3.0), kind: EnemyType::Goblin });
 }
 
-// Handle events and actually spawn the entity
 fn handle_spawn_enemy_events(
     mut commands: Commands,
     atlases: Res<EnemyAtlases>,
@@ -129,7 +117,6 @@ fn handle_spawn_enemy_events(
     }
 }
 
-// Helper that builds the enemy entity with a real atlas handle
 fn spawn_enemy_entity(
     commands: &mut Commands,
     atlases: &EnemyAtlases,
@@ -142,7 +129,6 @@ fn spawn_enemy_entity(
         EnemyType::Orc => atlases.orc.clone(),
     };
 
-    // Animator: two clips using indices 0..=3 and 4..=7
     let mut animation = SpriteSheetAnimation::new(0.15);
     animation.add_animation(
         "idle".to_string(),
@@ -158,7 +144,7 @@ fn spawn_enemy_entity(
         Sprite {
             image: texture_handle,
             texture_atlas: Some(TextureAtlas {
-                layout: atlases.layout.clone(), // <-- real layout handle (no weak_from_u128)
+                layout: atlases.layout.clone(),
                 index: 0,
             }),
             ..default()
@@ -169,7 +155,6 @@ fn spawn_enemy_entity(
     ));
 }
 
-// Simple movement along current direction (updated by AI)
 fn enemy_movement(
     mut enemy_query: Query<(&mut Transform, &Enemy)>,
     time: Res<Time>,
@@ -182,7 +167,6 @@ fn enemy_movement(
     }
 }
 
-// Very simple chase AI: if within detection range, face & walk toward player
 fn enemy_ai(
     mut enemy_query: Query<(&Transform, &mut Enemy, &mut SpriteSheetAnimation)>,
     player_query: Query<&Transform, With<crate::entities::player::Player>>,
