@@ -88,9 +88,9 @@ pub fn spawn_collectible(
     collectible_type: CollectibleType,
 ) {
     let (start_index, end_index, value) = match collectible_type {
-        CollectibleType::Strawberry => (0, 2, 5),
-        CollectibleType::Pear       => (3, 5, 10),
-        CollectibleType::Mango      => (6, 8, 15),
+        CollectibleType::Strawberry => (0, 0, 5),
+        CollectibleType::Pear       => (3, 3, 10),
+        CollectibleType::Mango      => (6, 6, 15),
     };
 
     let mut animation = SpriteSheetAnimation::new(0.1);
@@ -124,6 +124,6 @@ fn animate_collectibles(
     time: Res<Time>,
 ) {
     for mut transform in query.iter_mut() {
-        transform.translation.y += (time.elapsed_secs() * 2.0).sin() * 0.5;
+        transform.translation.y += (time.elapsed_secs() * 1.0).sin() * 0.5;
     }
 }
