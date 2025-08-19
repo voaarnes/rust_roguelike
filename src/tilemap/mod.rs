@@ -7,6 +7,8 @@ pub struct TilemapPlugin;
 
 impl Plugin for TilemapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, tile_loader::load_test_level);
+        app
+            .init_resource::<tilemap::TilemapConfig>()
+            .add_systems(Startup, tile_loader::load_test_level);
     }
 }

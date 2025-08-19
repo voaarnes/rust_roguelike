@@ -1,8 +1,6 @@
 use super::tilemap::{Tile, TileType, Tilemap, TilemapConfig, MapSizePx};
 use bevy::prelude::*;
 
-
-
 pub fn load_test_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -33,7 +31,6 @@ pub fn load_test_level(
 
     let tilemap = Tilemap::from_string(level_data);
 
-    // tileset + atlas layout (FIX: use a real handle, not weak_from_u128)
     let tileset_handle: Handle<Image> = asset_server.load("sprites/tileset.png");
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(config.tile_size as u32, config.tile_size as u32),
@@ -44,13 +41,10 @@ pub fn load_test_level(
     );
     let layout_handle = atlas_layouts.add(layout);
 
-    // Map size (in pixels) and centered origin
     let map_w = tilemap.width as f32 * config.tile_size;
     let map_h = tilemap.height as f32 * config.tile_size;
     commands.insert_resource(MapSizePx { w: map_w, h: map_h });
 
-    // Center the map at world (0,0).
-    // Place tile (0,0) at the top-left logically, but offset so the whole map is centered.
     let origin_x = -map_w * 0.5 + config.tile_size * 0.5;
     let origin_y = -map_h * 0.5 + config.tile_size * 0.5;
 
@@ -59,7 +53,6 @@ pub fn load_test_level(
             if let Some(tile_type) = tilemap.tiles[y][x] {
                 let tile_index = get_tile_index(tile_type);
 
-                // Keep "text line 0 is top row" by flipping y index
                 let world_pos = Vec3::new(
                     origin_x + (x as f32) * config.tile_size,
                     origin_y + ((tilemap.height - y - 1) as f32) * config.tile_size,
