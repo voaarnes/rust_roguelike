@@ -5,16 +5,36 @@ use crate::tilemap::tilemap::MapSizePx;
 #[derive(Component)]
 pub struct MainCamera;
 
+#[derive(Component)]
+pub struct GameCamera;
+
 pub fn spawn_camera(mut commands: Commands) {
+    // This camera is only for the main menu
     commands.spawn((
         Camera2d::default(),
         MainCamera,
     ));
 }
 
+pub fn spawn_game_camera(mut commands: Commands) {
+    commands.spawn((
+        Camera2d::default(),
+        GameCamera,
+    ));
+}
+
+pub fn cleanup_game_camera(
+    mut commands: Commands,
+    query: Query<Entity, With<GameCamera>>,
+) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
+}
+
 pub fn camera_follow_player(
-    player_q: Query<&Transform, (With<Player>, Without<MainCamera>)>,
-    mut cam_q: Query<&mut Transform, With<MainCamera>>,
+    player_q: Query<&Transform, (With<Player>, Without<GameCamera>)>,
+    mut cam_q: Query<&mut Transform, With<GameCamera>>,
     map_size: Option<Res<MapSizePx>>,
     windows: Query<&Window>,
 ) {
@@ -49,4 +69,7 @@ pub fn camera_follow_player(
     } else {
         cam_tf.translation.y = 0.0;
     }
+    
+    // Keep z at camera distance
+    cam_tf.translation.z = 999.9;
 }

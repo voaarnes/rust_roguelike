@@ -1,14 +1,15 @@
 use bevy::prelude::*;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
 use crate::tilemap::TilemapSet;
+use crate::states::GameState;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Startup, spawn_player.after(TilemapSet::LoadLevel))
-            .add_systems(Update, player_movement);
+            .add_systems(OnEnter(GameState::InGame), spawn_player.after(TilemapSet::LoadLevel))
+            .add_systems(Update, player_movement.run_if(in_state(GameState::InGame)));
     }
 }
 
@@ -49,6 +50,7 @@ fn spawn_player(
     animation.add_animation("attack".into(), AnimationClip { start_index: 8, end_index: 11, frame_duration: 0.05 });
     animation.play("idle", true);
 
+    // Spawn player at a floor position near the top-left of the map
     commands.spawn((
         Player::default(),
         Sprite {
@@ -56,7 +58,7 @@ fn spawn_player(
             texture_atlas: Some(TextureAtlas { layout: layout_handle, index: 0 }),
             ..Default::default()
         },
-        Transform::from_xyz(0.0, 0.0, 10.0),
+        Transform::from_xyz(-500.0, 200.0, 10.0),
         animation,
     ));
 }

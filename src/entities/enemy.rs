@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
 use crate::tilemap::TilemapSet;
+use crate::states::GameState;
 
 pub struct EnemyPlugin;
 
@@ -8,9 +9,9 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_event::<SpawnEnemy>()
-            .add_systems(Startup, (build_enemy_atlases, ApplyDeferred, seed_enemies).chain().after(TilemapSet::LoadLevel))
-            .add_systems(Update, handle_spawn_enemy_events)
-            .add_systems(Update, (enemy_ai, enemy_movement));
+            .add_systems(OnEnter(GameState::InGame), (build_enemy_atlases, ApplyDeferred, seed_enemies).chain().after(TilemapSet::LoadLevel))
+            .add_systems(Update, handle_spawn_enemy_events.run_if(in_state(GameState::InGame)))
+            .add_systems(Update, (enemy_ai, enemy_movement).run_if(in_state(GameState::InGame)));
     }
 }
 
