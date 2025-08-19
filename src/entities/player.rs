@@ -50,7 +50,14 @@ fn spawn_player(
     animation.add_animation("attack".into(), AnimationClip { start_index: 8, end_index: 11, frame_duration: 0.05 });
     animation.play("idle", true);
 
-    // Spawn player at a floor position near the top-left of the map
+    // Spawn player at position (2,2) in the tilemap, which should be a floor tile
+    // Map is 40x19 tiles, centered at (0,0), each tile is 32px
+    // So tile (2,2) from top-left would be at approximately:
+    let player_x = -608.0 + (2.0 * 32.0);  // Start from left edge, move 2 tiles right
+    let player_y = 272.0 - (2.0 * 32.0);   // Start from top edge, move 2 tiles down
+
+    info!("Spawning player at ({}, {})", player_x, player_y);
+
     commands.spawn((
         Player::default(),
         Sprite {
@@ -58,7 +65,7 @@ fn spawn_player(
             texture_atlas: Some(TextureAtlas { layout: layout_handle, index: 0 }),
             ..Default::default()
         },
-        Transform::from_xyz(-500.0, 200.0, 10.0),
+        Transform::from_xyz(player_x, player_y, 10.0),
         animation,
     ));
 }

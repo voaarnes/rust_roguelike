@@ -31,6 +31,13 @@ fn main() {
         .add_systems(Startup, setup::spawn_camera)
         .add_systems(OnEnter(states::GameState::InGame), setup::camera::spawn_game_camera)
         .add_systems(OnExit(states::GameState::InGame), setup::camera::cleanup_game_camera)
-        .add_systems(Update, setup::camera::camera_follow_player.run_if(in_state(states::GameState::InGame)))
+        .add_systems(
+            Update, 
+            (
+                setup::camera::camera_follow_player,
+                // Uncomment the next line to see debug info about positions
+                // setup::camera::debug_positions,
+            ).run_if(in_state(states::GameState::InGame))
+        )
         .run();
 }

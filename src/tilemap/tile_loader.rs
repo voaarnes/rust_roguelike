@@ -17,8 +17,8 @@ pub fn load_test_level(
 #.....#.....###...#.#..................#
 #......................................#
 #......................................#
-#...........^.^.^......................#
-#.......................^.^.^..........#
+#...........^^^^.......................#
+#......................................#
 #......................................#
 #.....CCCC.............................#
 #......................................#
@@ -43,6 +43,9 @@ pub fn load_test_level(
 
     let map_w = tilemap.width as f32 * config.tile_size;
     let map_h = tilemap.height as f32 * config.tile_size;
+    
+    info!("Creating map: {}x{} tiles, {:.0}x{:.0} pixels", tilemap.width, tilemap.height, map_w, map_h);
+    
     commands.insert_resource(MapSizePx { w: map_w, h: map_h });
 
     let origin_x = -map_w * 0.5 + config.tile_size * 0.5;
@@ -74,6 +77,8 @@ pub fn load_test_level(
             }
         }
     }
+    
+    info!("Map loaded successfully");
 }
 
 fn get_tile_index(tile_type: TileType) -> usize {
