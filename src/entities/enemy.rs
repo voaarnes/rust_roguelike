@@ -1,7 +1,6 @@
+// src/entities/enemy.rs
 use bevy::prelude::*;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
-use crate::tilemap::TilemapSet;
-use crate::states::GameState;
 
 pub struct EnemyPlugin;
 
@@ -9,9 +8,9 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_event::<SpawnEnemy>()
-            .add_systems(OnEnter(GameState::InGame), (build_enemy_atlases, ApplyDeferred, seed_enemies).chain().after(TilemapSet::LoadLevel))
-            .add_systems(Update, handle_spawn_enemy_events.run_if(in_state(GameState::InGame)))
-            .add_systems(Update, (enemy_ai, enemy_movement).run_if(in_state(GameState::InGame)));
+            .add_systems(Startup, (build_enemy_atlases, ApplyDeferred, seed_enemies))
+            .add_systems(Update, handle_spawn_enemy_events)
+            .add_systems(Update, (enemy_ai, enemy_movement));
     }
 }
 
@@ -105,7 +104,7 @@ pub struct SpawnEnemy {
 }
 
 fn seed_enemies(mut writer: EventWriter<SpawnEnemy>) {
-    writer.write(SpawnEnemy { position: Vec3::new(200.0, 80.0, 3.0), kind: EnemyType::Goblin });
+    writer.send(SpawnEnemy { position: Vec3::new(200.0, 80.0, 3.0), kind: EnemyType::Goblin });
 }
 
 fn handle_spawn_enemy_events(
@@ -172,7 +171,7 @@ fn enemy_ai(
     mut enemy_query: Query<(&Transform, &mut Enemy, &mut SpriteSheetAnimation)>,
     player_query: Query<&Transform, With<crate::entities::player::Player>>,
 ) {
-    if let Ok(player_tf) = player_query.single() {
+    if let Ok(player_tf) = player_query.get_single() {
         for (enemy_tf, mut enemy, mut anim) in enemy_query.iter_mut() {
             let to_player = player_tf.translation - enemy_tf.translation;
             let distance = to_player.length();
