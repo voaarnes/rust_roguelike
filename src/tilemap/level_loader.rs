@@ -34,7 +34,7 @@ pub fn load_test_level(
     let tilemap = Tilemap::from_string(level_data);
 
     // Load tileset and create atlas layout
-    let tileset_handle: Handle<Image> = asset_server.load("sprites/tileset_16x16_32px.png");
+    let tileset_handle: Handle<Image> = asset_server.load("sprites/tileset_16x16_32px_hd.png");
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(config.tile_size as u32, config.tile_size as u32),
         config.tileset_columns as u32,

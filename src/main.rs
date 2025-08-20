@@ -5,10 +5,9 @@ mod tilemap;
 mod entities;
 mod setup;
 mod constants;
+mod systems;
 
 use bevy::prelude::*;
-// If nothing from constants is used, comment the next line to silence the warning:
-// use constants::*;
 
 fn main() {
     App::new()
@@ -26,6 +25,7 @@ fn main() {
             tilemap::TilemapPlugin,
             entities::EntitiesPlugin,
             setup::SetupPlugin,
+            systems::SystemsPlugin,
         ))
         .run();
 }
