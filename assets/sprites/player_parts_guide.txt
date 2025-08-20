@@ -1,0 +1,56 @@
+PLAYER PARTS SPRITE SHEET GUIDE (player_parts.png)
+====================================================
+Create a 256x192 pixel sprite sheet (8 columns x 6 rows of 32x32 sprites)
+
+Layout (48 total sprites):
+Row 0 (indices 0-7): Head variations for fruits
+- 0: Default head
+- 1: Strawberry head
+- 2: Pear head
+- 3: Mango head
+- 4: Apple head
+- 5: Orange head
+- 6: Grape head
+- 7: Banana head
+
+Row 1 (indices 8-15): More head variations
+- 8: Cherry head
+- 9-15: Future expansions or animation frames
+
+Row 2 (indices 16-23): Chest/torso variations
+- 16: Default chest
+- 17: Strawberry chest
+- 18: Pear chest
+- 19: Mango chest
+- 20: Apple chest
+- 21: Orange chest
+- 22: Grape chest
+- 23: Banana chest
+
+Row 3 (indices 24-31): More chest variations
+- 24: Cherry chest
+- 25-31: Future expansions or animation frames
+
+Row 4 (indices 32-39): Legs variations
+- 32: Default legs
+- 33: Strawberry legs
+- 34: Pear legs
+- 35: Mango legs
+- 36: Apple legs
+- 37: Orange legs
+- 38: Grape legs
+- 39: Banana legs
+
+Row 5 (indices 40-47): More legs variations
+- 40: Cherry legs
+- 41-47: Future expansions or animation frames
+
+Each fruit should have a distinct visual theme:
+- Strawberry: Red with seeds pattern
+- Pear: Green with smooth texture
+- Mango: Orange-yellow gradient
+- Apple: Shiny red/green
+- Orange: Bright orange with texture
+- Grape: Purple cluster pattern
+- Banana: Yellow with slight curve
+- Cherry: Dark red with stem detail

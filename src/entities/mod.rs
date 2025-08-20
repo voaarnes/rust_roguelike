@@ -1,6 +1,8 @@
 pub mod player;
 pub mod enemy;
 pub mod collectible;
+pub mod powerup;
+pub mod fruit_spawner;
 
 use bevy::prelude::*;
 
@@ -12,6 +14,8 @@ impl Plugin for EntitiesPlugin {
             player::PlayerPlugin,
             enemy::EnemyPlugin,
             collectible::CollectiblePlugin,
+            powerup::PowerUpPlugin,
+            fruit_spawner::FruitSpawnerPlugin,
         ));
     }
 }

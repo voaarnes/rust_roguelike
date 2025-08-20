@@ -1,4 +1,3 @@
-// src/entities/collectible.rs
 use bevy::prelude::*;
 use crate::animation::sprite_sheet::{SpriteSheetAnimation, AnimationClip};
 
@@ -8,7 +7,7 @@ impl Plugin for CollectiblePlugin {
     fn build(&self, app: &mut App) {
         app
             .add_event::<SpawnCollectible>()
-            .add_systems(Startup, (build_collectible_atlas, ApplyDeferred, seed_collectibles))
+            .add_systems(Startup, (build_collectible_atlas, ApplyDeferred, seed_collectibles).chain())
             .add_systems(Update, handle_spawn_collectible_events)
             .add_systems(Update, animate_collectibles);
     }
@@ -66,9 +65,9 @@ pub struct SpawnCollectible {
 }
 
 fn seed_collectibles(mut writer: EventWriter<SpawnCollectible>) {
-    writer.send(SpawnCollectible { position: Vec3::new(-64.0, 0.0, 2.0), kind: CollectibleType::Strawberry });
-    writer.send(SpawnCollectible { position: Vec3::new(  0.0, 0.0, 2.0), kind: CollectibleType::Pear });
-    writer.send(SpawnCollectible { position: Vec3::new( 64.0, 0.0, 2.0), kind: CollectibleType::Mango });
+    writer.write(SpawnCollectible { position: Vec3::new(-64.0, 0.0, 2.0), kind: CollectibleType::Strawberry });
+    writer.write(SpawnCollectible { position: Vec3::new(  0.0, 0.0, 2.0), kind: CollectibleType::Pear });
+    writer.write(SpawnCollectible { position: Vec3::new( 64.0, 0.0, 2.0), kind: CollectibleType::Mango });
 }
 
 fn handle_spawn_collectible_events(
@@ -88,9 +87,9 @@ pub fn spawn_collectible(
     collectible_type: CollectibleType,
 ) {
     let (start_index, end_index, value) = match collectible_type {
-        CollectibleType::Strawberry => (0, 0, 5),
-        CollectibleType::Pear       => (3, 3, 10),
-        CollectibleType::Mango      => (6, 6, 15),
+        CollectibleType::Strawberry => (0, 2, 5),
+        CollectibleType::Pear       => (3, 5, 10),
+        CollectibleType::Mango      => (6, 8, 15),
     };
 
     let mut animation = SpriteSheetAnimation::new(0.1);
@@ -124,6 +123,6 @@ fn animate_collectibles(
     time: Res<Time>,
 ) {
     for mut transform in query.iter_mut() {
-        transform.translation.y += (time.elapsed_secs() * 1.0).sin() * 0.5;
+        transform.translation.y += (time.elapsed_secs() * 2.0).sin() * 0.5;
     }
 }

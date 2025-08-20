@@ -1,0 +1,15 @@
+FRUITS SPRITE SHEET GUIDE (fruits.png)
+=======================================
+Create a 256x32 pixel sprite sheet (8 columns x 1 row of 32x32 sprites)
+
+Fruit order (left to right):
+0. Strawberry - Red with green top
+1. Pear - Green/yellow gradient
+2. Mango - Orange/red gradient
+3. Apple - Red or green
+4. Orange - Bright orange
+5. Grape - Purple cluster
+6. Banana - Yellow curved
+7. Cherry - Red pair with stems
+
+Each fruit should be centered in its 32x32 cell with a slight glow or outline effect for visibility.
