@@ -411,8 +411,9 @@ pub fn update_player_body_parts(
     player_query: Query<(&PlayerVisuals, &Children), Changed<PlayerVisuals>>,
     mut parts_query: Query<(&mut Sprite, &PlayerBodyPart)>,
 ) {
+       
     for (visuals, children) in player_query.iter() {
-        for &child in children.iter() {
+        for child in children.iter() {
             if let Ok((mut sprite, part)) = parts_query.get_mut(child) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
                     atlas.index = match part.part_type {
@@ -423,5 +424,4 @@ pub fn update_player_body_parts(
                 }
             }
         }
-    }
-}
+    }}

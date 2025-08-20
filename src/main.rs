@@ -27,6 +27,6 @@ fn main() {
             ui::UIPlugin,
             stages::StagesPlugin,
         ))
-        .add_systems(Startup, setup::setup_camera)
+        .add_systems(Startup, setup::spawn_camera)
         .run();
 }
