@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::core::states::GameState;
+use crate::core::state::GameState;
 
 pub struct PauseMenuPlugin;
 

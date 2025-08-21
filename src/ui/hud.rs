@@ -75,26 +75,27 @@ fn update_hud(
     score_root: Query<Entity, With<ScoreText>>,
     wave_root: Query<Entity, With<WaveText>>,
     health_root: Query<Entity, With<HealthText>>,
-    mut health_color_q: Query<&mut TextColor, With<HealthText>>,
 ) {
-    if let Ok(root) = score_root.get_single() {
+    if let Ok(root) = score_root.single() {
         *writer.text(root, 0) = format!("Score: {}", stats.score);
     }
-    if let Ok(root) = wave_root.get_single() {
+    if let Ok(root) = wave_root.single() {
         *writer.text(root, 0) = format!("Wave: {}", wave.current_wave);
     }
-    if let Ok(h) = player_health_q.get_single() {
-        if let Ok(root) = health_root.get_single() {
+    if let Ok(h) = player_health_q.single() {
+        if let Ok(root) = health_root.single() {
+            // update text
             *writer.text(root, 0) = format!("Health: {}/{}", h.current, h.max);
-        }
-        if let Ok(mut color) = health_color_q.get_single_mut() {
-            color.0 = if h.percentage() > 0.6 {
+
+            // update color via writer to avoid the borrow conflict
+            let c = if h.percentage() > 0.6 {
                 Color::linear_rgb(0.0, 1.0, 0.0)
             } else if h.percentage() > 0.3 {
                 Color::linear_rgb(1.0, 1.0, 0.0)
             } else {
                 Color::linear_rgb(1.0, 0.0, 0.0)
             };
+            writer.color(root, 0).0 = c; // TextColor is a tuple struct around Color
         }
     }
 }

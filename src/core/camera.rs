@@ -32,12 +32,12 @@ pub fn setup_camera(mut commands: Commands) {
 }
 
 pub fn camera_follow_player(
-    player_q: Query<&Transform, With<crate::game::player::Player>>,
-    mut cam_q: Query<(&mut Transform, &MainCamera), With<Camera>>,
-    time: Res<Time>,
-) {
-    let Ok(player_tf) = player_q.single() else { return };
-    let Ok((mut cam_tf, cam)) = cam_q.single_mut() else { return };
+     player_q: Query<&Transform, (With<crate::game::player::Player>, Without<Camera>)>,
+     mut cam_q: Query<(&mut Transform, &MainCamera), (With<Camera>, Without<crate::game::player::Player>)>,
+     time: Res<Time>,
+ ) {
+     let Ok(player_tf) = player_q.single() else { return };
+     let Ok((mut cam_tf, cam)) = cam_q.single_mut() else { return };
     
     let target = player_tf.translation.truncate() + cam.offset;
     let current = cam_tf.translation.truncate();

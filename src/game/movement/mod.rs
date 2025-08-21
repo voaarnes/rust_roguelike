@@ -6,6 +6,7 @@ impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (
             apply_velocity,
+            init_collision_grid,
             handle_collisions,
             update_collision_grid,
         ).chain());
@@ -131,4 +132,13 @@ fn check_collision(pos1: Vec2, size1: Vec2, pos2: Vec2, size2: Vec2) -> bool {
     (pos1.x + half1.x > pos2.x - half2.x) &&
     (pos1.y - half1.y < pos2.y + half2.y) &&
     (pos1.y + half1.y > pos2.y - half2.y)
+}
+
+pub fn init_collision_grid(mut commands: Commands) {
+    // Pick sizes that make sense for your world; tweak as needed.
+    let world_width: f32 = 4096.0;
+    let world_height: f32 = 4096.0;
+    let cell_size: f32 = 64.0;
+
+    commands.insert_resource(CollisionGrid::new(world_width, world_height, cell_size));
 }

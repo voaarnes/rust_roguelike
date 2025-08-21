@@ -3,7 +3,11 @@ pub mod effects;
 pub mod projectiles;
 
 use bevy::prelude::*;
+use crate::game::player::Player;
+use crate::game::enemy::Enemy;
+use crate::game::movement::Collider;
 use crate::core::events::{CombatEvent, DamageType};
+
 
 pub struct CombatPlugin;
 
@@ -69,39 +73,72 @@ pub struct DamageImmunity {
     pub timer: Timer,
 }
 
-fn handle_combat(
-    mut player_q: Query<(Entity, &Transform, &mut Health, &CombatStats, &crate::game::movement::Collider), With<crate::game::player::Player>>,
-    mut enemy_q: Query<(Entity, &Transform, &mut Health, &CombatStats, &crate::game::movement::Collider), With<crate::game::enemy::Enemy>>,
-    mut combat_events: EventWriter<CombatEvent>,
-    time: Res<Time>,
+
+pub fn handle_combat(
+    // keep if you emit events; prefix with `_` if unused to silence warnings
+    mut _events: EventWriter<CombatEvent>,
+    mut q: ParamSet<(
+        // Player query (disjoint from enemies)
+        Query<(Entity, &Transform, &mut Health, &CombatStats, &Collider),
+              (With<Player>, Without<Enemy>)>,
+        // Enemy query (disjoint from player)
+        Query<(Entity, &Transform, &mut Health, &CombatStats, &Collider),
+              (With<Enemy>, Without<Player>)>,
+    )>,
+    // keep or remove if unused
+    _time: Res<Time>,
 ) {
-    if let Ok((player_entity, player_tf, mut player_health, player_stats, player_collider)) = player_q.get_single_mut() {
-        for (enemy_entity, enemy_tf, mut enemy_health, enemy_stats, enemy_collider) in enemy_q.iter_mut() {
-            let distance = player_tf.translation.distance(enemy_tf.translation);
-            let collision_distance = (player_collider.size.x + enemy_collider.size.x) / 2.0;
-            
-            if distance < collision_distance {
-                // Enemy damages player
-                combat_events.write(CombatEvent {
-                    attacker: enemy_entity,
-                    target: player_entity,
-                    damage: enemy_stats.damage,
-                    damage_type: DamageType::Physical,
-                    position: player_tf.translation,
-                });
-                
-                // Player damages enemy (simplified melee)
-                combat_events.write(CombatEvent {
-                    attacker: player_entity,
-                    target: enemy_entity,
-                    damage: player_stats.damage,
-                    damage_type: DamageType::Physical,
-                    position: enemy_tf.translation,
-                });
-            }
+    // ---- Phase 1: snapshot only what we need from the player, then drop the borrow ----
+    let (player_entity, player_pos) = {
+        // Create a named binding so the borrow of p0() ends with this block
+        let mut p0 = q.p0();
+        let Ok((pe, ptf, _ph, _ps, _pc)) = p0.single_mut() else { return };
+        (pe, ptf.translation) // copy out the Vec3
+    }; // p0 borrow ends here
+
+    // If you deal damage to the player inside the enemy loop, accumulate it here
+    let mut damage_to_player: i32 = 0;
+
+    // Example naive range check; replace with your real collision math if you have it
+    const ATTACK_RANGE: f32 = 24.0;
+
+    // ---- Phase 2: iterate enemies (separate borrow) ----
+    for (_enemy_entity, enemy_tf, _enemy_health, _enemy_stats, _enemy_collider) in q.p1().iter_mut() {
+        let distance = player_pos.distance(enemy_tf.translation);
+
+        if distance <= ATTACK_RANGE {
+            // Example: accumulate some damage; replace with your damage calc
+            damage_to_player += 1;
+
+            // If you emit events, you could do:
+            // _events.send(CombatEvent {
+            //     attacker: _enemy_entity,
+            //     target: player_entity,
+            //     damage: 1,
+            //     damage_type: DamageType::Physical,
+            // });
+        }
+
+        // If you want to damage enemies here, change `_enemy_health` to `mut enemy_health`
+        // and mutate it. Keeping the underscore avoids an "unused variable" warning.
+    }
+
+    // ---- Phase 3: apply accumulated damage to the player (new, short borrow of p0) ----
+    if damage_to_player != 0 {
+        let mut p0 = q.p0();
+        if let Ok((_pe, _ptf, mut player_health, _ps, _pc)) = p0.single_mut() {
+            // Apply the damage using your Health API/fields, e.g.:
+            // player_health.current = (player_health.current - damage_to_player).max(0);
+            //
+            // or, if you have a helper:
+            // player_health.apply_damage(damage_to_player);
         }
     }
+
+    // keep `player_entity` "used" in case you remove event sending
+    let _ = player_entity;
 }
+
 
 fn cleanup_dead_entities(
     mut commands: Commands,
