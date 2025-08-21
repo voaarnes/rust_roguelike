@@ -1,0 +1,7 @@
+{
+    "name": "Dungeon Level 2",
+    "tileset": "sprites/tileset.png",
+    "tile_size": 32,
+    "width": 58,
+    "height": 35
+}
