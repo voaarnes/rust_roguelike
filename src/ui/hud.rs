@@ -1,91 +1,133 @@
 use bevy::prelude::*;
-use crate::entities::player::PlayerStats;
+use crate::core::state::GameStats;
 
-pub struct HudPlugin;
+pub struct HUDPlugin;
 
-impl Plugin for HudPlugin {
+impl Plugin for HUDPlugin {
     fn build(&self, app: &mut App) {
         app
+            .init_resource::<GameStats>()
             .add_systems(Startup, setup_hud)
             .add_systems(Update, update_hud);
     }
 }
 
 #[derive(Component)]
+struct ScoreText;
+
+#[derive(Component)]
 struct HealthText;
 
 #[derive(Component)]
-struct SpeedText;
-
-#[derive(Component)]
-struct StatsText;
+struct WaveText;
 
 fn setup_hud(mut commands: Commands) {
+    // Score display
     commands.spawn((
-        Node {
+        TextBundle::from_section(
+            "Score: 0",
+            TextStyle {
+                font_size: 24.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        )
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            top: Val::Px(10.0),
+            left: Val::Px(10.0),
+            ..default()
+        }),
+        ScoreText,
+    ));
+    
+    // Health display  
+    commands.spawn((
+        TextBundle::from_section(
+            "Health: 100/100",
+            TextStyle {
+                font_size: 24.0,
+                color: Color::linear_rgb(0.0, 1.0, 0.0),
+                ..default()
+            },
+        )
+        .with_style(Style {
             position_type: PositionType::Absolute,
             bottom: Val::Px(10.0),
             left: Val::Px(10.0),
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(5.0),
             ..default()
-        },
-    )).with_children(|parent| {
-        parent.spawn((
-            Text::new("Health: 100/100"),
-            TextFont {
-                font_size: 20.0,
+        }),
+        HealthText,
+    ));
+    
+    // Wave display
+    commands.spawn((
+        TextBundle::from_section(
+            "Wave: 1",
+            TextStyle {
+                font_size: 24.0,
+                color: Color::WHITE,
                 ..default()
             },
-            TextColor(Color::srgb(1.0, 0.2, 0.2)),
-            HealthText,
-        ));
-        
-        parent.spawn((
-            Text::new("Speed: 1.0x"),
-            TextFont {
-                font_size: 20.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.2, 1.0, 0.2)),
-            SpeedText,
-        ));
-        
-        parent.spawn((
-            Text::new("Defense: 0 | Crit: 0%"),
-            TextFont {
-                font_size: 16.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.8, 0.8, 0.8)),
-            StatsText,
-        ));
-    });
+        )
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            top: Val::Px(10.0),
+            right: Val::Px(10.0),
+            ..default()
+        }),
+        WaveText,
+    ));
 }
 
 fn update_hud(
-    player_query: Query<&PlayerStats, With<crate::entities::player::Player>>,
-    mut health_text: Query<&mut Text, (With<HealthText>, Without<SpeedText>, Without<StatsText>)>,
-    mut speed_text: Query<&mut Text, (With<SpeedText>, Without<HealthText>, Without<StatsText>)>,
-    mut stats_text: Query<&mut Text, (With<StatsText>, Without<HealthText>, Without<SpeedText>)>,
+    mut score_q: Query<&mut Text, (With<ScoreText>, Without<HealthText>, Without<WaveText>)>,
+    mut health_q: Query<&mut Text, (With<HealthText>, Without<ScoreText>, Without<WaveText>)>,
+    mut wave_q: Query<&mut Text, (With<WaveText>, Without<ScoreText>, Without<HealthText>)>,
+    player_q: Query<&crate::game::combat::Health, With<crate::game::player::Player>>,
+    stats: Res<GameStats>,
+    wave_manager: Res<crate::game::spawning::WaveManager>,
 ) {
-    if let Ok(stats) = player_query.get_single() {
-        for mut text in health_text.iter_mut() {
-            let total_health = stats.get_total_health();
-            **text = format!("Health: {}/{}", total_health, total_health);
-        }
-        
-        for mut text in speed_text.iter_mut() {
-            **text = format!("Speed: {:.1}x", stats.speed_multiplier);
-        }
-        
-        for mut text in stats_text.iter_mut() {
-            **text = format!(
-                "Defense: {} | Crit: {:.0}% | Dodge: {:.0}%",
-                stats.defense,
-                stats.critical_chance * 100.0,
-                stats.dodge_chance * 100.0
+    for mut text in score_q.iter_mut() {
+        *text = Text::from_section(
+            format!("Score: {}", stats.score),
+            TextStyle {
+                font_size: 24.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        );
+    }
+    
+    if let Ok(health) = player_q.get_single() {
+        for mut text in health_q.iter_mut() {
+            let color = if health.percentage() > 0.6 {
+                Color::linear_rgb(0.0, 1.0, 0.0)
+            } else if health.percentage() > 0.3 {
+                Color::linear_rgb(1.0, 1.0, 0.0)
+            } else {
+                Color::linear_rgb(1.0, 0.0, 0.0)
+            };
+            
+            *text = Text::from_section(
+                format!("Health: {}/{}", health.current, health.max),
+                TextStyle {
+                    font_size: 24.0,
+                    color,
+                    ..default()
+                },
             );
         }
+    }
+    
+    for mut text in wave_q.iter_mut() {
+        *text = Text::from_section(
+            format!("Wave: {}", wave_manager.current_wave),
+            TextStyle {
+                font_size: 24.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        );
     }
 }

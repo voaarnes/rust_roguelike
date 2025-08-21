@@ -41,8 +41,9 @@ pub fn buffer_input_system(
     let current_time = time.elapsed_secs();
     
     // Clean old inputs
+    let buffer_time = buffer.buffer_time;
     buffer.buffer.retain(|action| {
-        current_time - action.timestamp < buffer.buffer_time
+        current_time - action.timestamp < buffer_time
     });
     
     // Add new inputs
@@ -73,8 +74,25 @@ pub fn buffer_input_system(
         });
     }
     
-    // Trim buffer if too large
     while buffer.buffer.len() > buffer.max_size {
         buffer.buffer.pop_front();
+    }
+}
+
+pub fn pause_game_system(
+    keys: Res<ButtonInput<KeyCode>>,
+    current_state: Res<State<crate::core::state::GameState>>,
+    mut next_state: ResMut<NextState<crate::core::state::GameState>>,
+) {
+    if keys.just_pressed(KeyCode::Escape) {
+        match current_state.get() {
+            crate::core::state::GameState::Playing => {
+                next_state.set(crate::core::state::GameState::Paused);
+            }
+            crate::core::state::GameState::Paused => {
+                next_state.set(crate::core::state::GameState::Playing);
+            }
+            _ => {}
+        }
     }
 }

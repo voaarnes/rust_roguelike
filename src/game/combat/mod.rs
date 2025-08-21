@@ -82,7 +82,7 @@ fn handle_combat(
             
             if distance < collision_distance {
                 // Enemy damages player
-                combat_events.send(CombatEvent {
+                combat_events.write(CombatEvent {
                     attacker: enemy_entity,
                     target: player_entity,
                     damage: enemy_stats.damage,
@@ -91,7 +91,7 @@ fn handle_combat(
                 });
                 
                 // Player damages enemy (simplified melee)
-                combat_events.send(CombatEvent {
+                combat_events.write(CombatEvent {
                     attacker: player_entity,
                     target: enemy_entity,
                     damage: player_stats.damage,
@@ -112,7 +112,7 @@ fn cleanup_dead_entities(
         if health.is_dead() {
             state.enemies_killed += 1;
             state.score += 10;
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

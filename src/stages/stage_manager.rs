@@ -68,7 +68,7 @@ fn check_stage_completion(
     mut complete_events: EventWriter<StageComplete>,
 ) {
     if current_stage.enemies_spawned > 0 && enemies.iter().count() == 0 {
-        complete_events.send(StageComplete {
+        complete_events.write(StageComplete {
             stage_number: current_stage.stage_number,
         });
     }
@@ -115,7 +115,7 @@ fn handle_stage_transition(
                 3.0,
             );
             
-            spawn_events.send(SpawnEnemy {
+            spawn_events.write(SpawnEnemy {
                 position,
                 kind: enemy_type,
             });

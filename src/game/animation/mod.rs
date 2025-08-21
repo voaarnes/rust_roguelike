@@ -76,14 +76,23 @@ fn animate_sprites(
         controller.timer.tick(time.delta());
         
         if controller.timer.just_finished() {
-            if let Some(clip) = controller.animations.get(&controller.current) {
-                controller.frame += 1;
-                if controller.frame > clip.end {
-                    if clip.looping {
-                        controller.frame = clip.start;
+            // Clone the current animation name to avoid borrow issues
+            let current_anim = controller.current.clone();
+            
+            if let Some(clip) = controller.animations.get(&current_anim) {
+                let next_frame = controller.frame + 1;
+                let should_loop = clip.looping;
+                let start = clip.start;
+                let end = clip.end;
+                
+                if next_frame > end {
+                    if should_loop {
+                        controller.frame = start;
                     } else {
-                        controller.frame = clip.end;
+                        controller.frame = end;
                     }
+                } else {
+                    controller.frame = next_frame;
                 }
                 
                 if let Some(atlas) = &mut sprite.texture_atlas {

@@ -6,11 +6,9 @@ mod utils;
 
 use bevy::prelude::*;
 use bevy::window::PresentMode;
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
 fn main() {
     App::new()
-        // Configure window and renderer
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Rust Roguelike - Survivor".into(),
@@ -21,12 +19,6 @@ fn main() {
             }),
             ..default()
         }))
-        // Development diagnostics (remove in release)
-        .add_plugins((
-            LogDiagnosticsPlugin::default(),
-            FrameTimeDiagnosticsPlugin,
-        ))
-        // Core game plugins
         .add_plugins((
             core::CorePlugin,
             game::GamePlugin,

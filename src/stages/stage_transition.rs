@@ -41,7 +41,7 @@ fn handle_transition(
         transition_timer.timer.tick(time.delta());
         
         if transition_timer.timer.just_finished() {
-            next_events.send(NextStage);
+            next_events.write(NextStage);
             transition_timer.active = false;
         }
     }

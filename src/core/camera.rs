@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::core_pipeline::core_2d::Camera2dBundle;
 
 #[derive(Component)]
 pub struct MainCamera {
@@ -43,7 +44,6 @@ pub fn camera_follow_player(
     
     let new_pos = current.lerp(target, cam.smoothing * time.delta_secs());
     
-    // Apply bounds if they exist
     let final_pos = if let Some(bounds) = cam.bounds {
         Vec2::new(
             new_pos.x.clamp(bounds.min.x, bounds.max.x),
@@ -58,11 +58,11 @@ pub fn camera_follow_player(
 }
 
 pub fn camera_shake_system(
-    mut cam_q: Query<(&mut Transform, &mut CameraShake)>,
+    mut cam_q: Query<(Entity, &mut Transform, &mut CameraShake)>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
-    for (mut transform, mut shake) in cam_q.iter_mut() {
+    for (entity, mut transform, mut shake) in cam_q.iter_mut() {
         shake.duration.tick(time.delta());
         
         if !shake.duration.finished() {
@@ -73,7 +73,7 @@ pub fn camera_shake_system(
             );
             transform.translation += offset.extend(0.0);
         } else {
-            commands.entity(transform.entity).remove::<CameraShake>();
+            commands.entity(entity).remove::<CameraShake>();
         }
     }
 }
