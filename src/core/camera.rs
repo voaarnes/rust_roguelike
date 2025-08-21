@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::core_pipeline::core_2d::Camera2dBundle;
+use bevy::math::Rect;
 
 #[derive(Component)]
 pub struct MainCamera {
@@ -26,18 +26,18 @@ pub struct CameraShake {
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn((
-        Camera2dBundle::default(),
+        Camera2d,
         MainCamera::default(),
     ));
 }
 
 pub fn camera_follow_player(
-    player_q: Query<&Transform, (With<crate::game::player::Player>, Without<MainCamera>)>,
-    mut cam_q: Query<(&mut Transform, &MainCamera), Without<crate::game::player::Player>>,
+    player_q: Query<&Transform, With<crate::game::player::Player>>,
+    mut cam_q: Query<(&mut Transform, &MainCamera), With<Camera>>,
     time: Res<Time>,
 ) {
-    let Ok(player_tf) = player_q.get_single() else { return };
-    let Ok((mut cam_tf, cam)) = cam_q.get_single_mut() else { return };
+    let Ok(player_tf) = player_q.single() else { return };
+    let Ok((mut cam_tf, cam)) = cam_q.single_mut() else { return };
     
     let target = player_tf.translation.truncate() + cam.offset;
     let current = cam_tf.translation.truncate();

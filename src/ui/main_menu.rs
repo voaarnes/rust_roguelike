@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::states::GameState;
+use crate::core::states::GameState;
 
 pub struct MainMenuPlugin;
 
@@ -115,7 +115,7 @@ fn handle_main_menu_input(
         match *interaction {
             Interaction::Pressed => {
                 if play.is_some() {
-                    next_state.set(GameState::InGame);
+                    next_state.set(GameState::Playing);
                 } else if quit.is_some() {
                     app_exit_events.write(AppExit::Success);
                 }

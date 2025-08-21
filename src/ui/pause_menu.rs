@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::states::GameState;
+use crate::core::states::GameState;
 
 pub struct PauseMenuPlugin;
 
@@ -127,7 +127,7 @@ fn handle_pause_menu_input(
         match *interaction {
             Interaction::Pressed => {
                 if resume.is_some() {
-                    next_state.set(GameState::InGame);
+                    next_state.set(GameState::Playing);
                 } else if main_menu.is_some() {
                     // Clean up all game entities when returning to main menu
                     for entity in &game_entities {

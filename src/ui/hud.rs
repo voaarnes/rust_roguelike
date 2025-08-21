@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 use crate::core::state::GameStats;
+use crate::game::spawning::WaveManager;
+use crate::game::player::Player;
+use crate::game::combat::Health;
 
 pub struct HUDPlugin;
 
@@ -14,120 +17,84 @@ impl Plugin for HUDPlugin {
 
 #[derive(Component)]
 struct ScoreText;
-
 #[derive(Component)]
 struct HealthText;
-
 #[derive(Component)]
 struct WaveText;
 
 fn setup_hud(mut commands: Commands) {
-    // Score display
+    // Score (top-left)
     commands.spawn((
-        TextBundle::from_section(
-            "Score: 0",
-            TextStyle {
-                font_size: 24.0,
-                color: Color::WHITE,
-                ..default()
-            },
-        )
-        .with_style(Style {
+        Text::new("Score: 0"),
+        TextFont { font_size: 24.0, ..default() },
+        TextColor(Color::WHITE),
+        Node {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             left: Val::Px(10.0),
             ..default()
-        }),
+        },
         ScoreText,
     ));
-    
-    // Health display  
+
+    // Health (bottom-left)
     commands.spawn((
-        TextBundle::from_section(
-            "Health: 100/100",
-            TextStyle {
-                font_size: 24.0,
-                color: Color::linear_rgb(0.0, 1.0, 0.0),
-                ..default()
-            },
-        )
-        .with_style(Style {
+        Text::new("Health: 100/100"),
+        TextFont { font_size: 24.0, ..default() },
+        TextColor(Color::linear_rgb(0.0, 1.0, 0.0)),
+        Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(10.0),
             left: Val::Px(10.0),
             ..default()
-        }),
+        },
         HealthText,
     ));
-    
-    // Wave display
+
+    // Wave (top-right)
     commands.spawn((
-        TextBundle::from_section(
-            "Wave: 1",
-            TextStyle {
-                font_size: 24.0,
-                color: Color::WHITE,
-                ..default()
-            },
-        )
-        .with_style(Style {
+        Text::new("Wave: 1"),
+        TextFont { font_size: 24.0, ..default() },
+        TextColor(Color::WHITE),
+        Node {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             right: Val::Px(10.0),
             ..default()
-        }),
+        },
         WaveText,
     ));
 }
 
 fn update_hud(
-    mut score_q: Query<&mut Text, (With<ScoreText>, Without<HealthText>, Without<WaveText>)>,
-    mut health_q: Query<&mut Text, (With<HealthText>, Without<ScoreText>, Without<WaveText>)>,
-    mut wave_q: Query<&mut Text, (With<WaveText>, Without<ScoreText>, Without<HealthText>)>,
-    player_q: Query<&crate::game::combat::Health, With<crate::game::player::Player>>,
     stats: Res<GameStats>,
-    wave_manager: Res<crate::game::spawning::WaveManager>,
+    wave: Res<WaveManager>,
+    player_health_q: Query<&Health, With<Player>>,
+    // text updating is done via TextUiWriter in 0.15+
+    mut writer: TextUiWriter,
+    score_root: Query<Entity, With<ScoreText>>,
+    wave_root: Query<Entity, With<WaveText>>,
+    health_root: Query<Entity, With<HealthText>>,
+    mut health_color_q: Query<&mut TextColor, With<HealthText>>,
 ) {
-    for mut text in score_q.iter_mut() {
-        *text = Text::from_section(
-            format!("Score: {}", stats.score),
-            TextStyle {
-                font_size: 24.0,
-                color: Color::WHITE,
-                ..default()
-            },
-        );
+    if let Ok(root) = score_root.get_single() {
+        *writer.text(root, 0) = format!("Score: {}", stats.score);
     }
-    
-    if let Ok(health) = player_q.get_single() {
-        for mut text in health_q.iter_mut() {
-            let color = if health.percentage() > 0.6 {
+    if let Ok(root) = wave_root.get_single() {
+        *writer.text(root, 0) = format!("Wave: {}", wave.current_wave);
+    }
+    if let Ok(h) = player_health_q.get_single() {
+        if let Ok(root) = health_root.get_single() {
+            *writer.text(root, 0) = format!("Health: {}/{}", h.current, h.max);
+        }
+        if let Ok(mut color) = health_color_q.get_single_mut() {
+            color.0 = if h.percentage() > 0.6 {
                 Color::linear_rgb(0.0, 1.0, 0.0)
-            } else if health.percentage() > 0.3 {
+            } else if h.percentage() > 0.3 {
                 Color::linear_rgb(1.0, 1.0, 0.0)
             } else {
                 Color::linear_rgb(1.0, 0.0, 0.0)
             };
-            
-            *text = Text::from_section(
-                format!("Health: {}/{}", health.current, health.max),
-                TextStyle {
-                    font_size: 24.0,
-                    color,
-                    ..default()
-                },
-            );
         }
-    }
-    
-    for mut text in wave_q.iter_mut() {
-        *text = Text::from_section(
-            format!("Wave: {}", wave_manager.current_wave),
-            TextStyle {
-                font_size: 24.0,
-                color: Color::WHITE,
-                ..default()
-            },
-        );
     }
 }

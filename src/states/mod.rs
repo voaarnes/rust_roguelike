@@ -14,7 +14,7 @@ impl Plugin for StatesPlugin {
 pub enum GameState {
     #[default]
     MainMenu,
-    InGame,
+    Playing,
     Paused,
 }
 
@@ -25,8 +25,8 @@ fn handle_pause_input(
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         match state.get() {
-            GameState::InGame => next_state.set(GameState::Paused),
-            GameState::Paused => next_state.set(GameState::InGame),
+            GameState::Playing => next_state.set(GameState::Paused),
+            GameState::Paused => next_state.set(GameState::Playing),
             _ => {}
         }
     }
