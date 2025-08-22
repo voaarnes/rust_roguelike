@@ -224,7 +224,7 @@ fn enemy_ai_system(
     player_q: Query<&Transform, With<crate::game::player::Player>>,
     time: Res<Time>,
 ) {
-    let Ok(player_tf) = player_q.get_single() else { return };
+    let Ok(player_tf) = player_q.single() else { return };
     
     for (mut enemy, enemy_tf, mut velocity, mut anim) in enemy_q.iter_mut() {
         enemy.behavior_timer.tick(time.delta());

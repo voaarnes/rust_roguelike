@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use crate::game::player::Player;
 use crate::game::enemy::Enemy;
 use crate::game::movement::Collider;
-use crate::core::events::{CombatEvent, DamageType};
+use crate::core::events::CombatEvent;
 
 
 pub struct CombatPlugin;

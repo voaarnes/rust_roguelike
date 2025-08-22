@@ -23,6 +23,24 @@ pub fn load_level(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     config: Res<TilemapConfig>,
 ) {
+    spawn_level(&mut commands, &asset_server, &mut texture_atlas_layouts, &config);
+}
+
+pub fn load_test_level(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    config: Res<TilemapConfig>,
+) {
+    spawn_level(&mut commands, &asset_server, &mut texture_atlas_layouts, &config);
+}
+
+fn spawn_level(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    config: &Res<TilemapConfig>,
+) {
     let level_data = r#"
 ################################################
 #..............................................#
@@ -151,6 +169,13 @@ pub fn cleanup_level(
     for e in tiles.iter() {
         commands.entity(e).despawn();
     }
+}
+
+pub fn despawn_level(
+    mut commands: Commands,
+    tiles: Query<Entity, With<Tile>>,
+) {
+    cleanup_level(commands, tiles);
 }
 
 fn get_tile_index(tile_type: TileType) -> usize {

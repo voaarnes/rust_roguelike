@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::core::events::{CombatEvent, DamageType};
+use crate::core::events::DamageType;
 
 #[derive(Component)]
 pub struct Projectile {

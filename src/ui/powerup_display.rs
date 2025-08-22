@@ -55,7 +55,7 @@ fn update_powerup_display(
     player_query: Query<&PowerUpSlots, With<crate::game::player::Player>>,
     mut slot_query: Query<(&PowerUpSlotUI, &mut BackgroundColor)>,
 ) {
-    if let Ok(powerup_slots) = player_query.get_single() {
+    if let Ok(powerup_slots) = player_query.single() {
         for (slot_ui, mut bg_color) in slot_query.iter_mut() {
             if slot_ui.slot_index < powerup_slots.slots.len() {
                 *bg_color = match powerup_slots.slots[slot_ui.slot_index] {

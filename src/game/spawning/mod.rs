@@ -59,7 +59,7 @@ fn spawn_wave_system(
         // Boss wave every 5 waves
         if wave_manager.current_wave % 5 == 0 && !wave_manager.boss_spawned {
             wave_manager.boss_spawned = true;
-            if let Ok(player_tf) = player_q.get_single() {
+            if let Ok(player_tf) = player_q.single() {
                 boss_events.write(SpawnBossEvent {
                     position: player_tf.translation + Vec3::new(300.0, 0.0, 3.0),
                     boss_type: choose_boss_type(wave_manager.current_wave),
@@ -70,7 +70,7 @@ fn spawn_wave_system(
     
     // Spawn enemies
     if wave_manager.spawn_timer.just_finished() && wave_manager.enemies_remaining > 0 {
-        if let Ok(player_tf) = player_q.get_single() {
+        if let Ok(player_tf) = player_q.single() {
             let mut rng = rand::thread_rng();
             let spawn_count = (3.0 * wave_manager.difficulty_multiplier) as u32;
             
