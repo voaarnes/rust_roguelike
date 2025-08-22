@@ -90,3 +90,49 @@ fn animate_collectibles(
         transform.rotation = Quat::from_rotation_z((time.elapsed_secs() * 2.0).sin() * 0.1);
     }
 }
+
+// Update fruit pickup to use FIFO queue
+fn handle_fruit_pickup(
+    mut commands: Commands,
+    mut player_q: Query<(&Transform, &mut crate::game::player::PlayerStats), With<crate::game::player::Player>>,
+    collectible_q: Query<(Entity, &Transform, &Collectible, &crate::game::movement::Collider)>,
+    mut powerup_q: Query<&mut crate::entities::powerup::PowerUpSlots, With<crate::game::player::Player>>,
+) {
+    let Ok((player_tf, mut player_stats)) = player_q.single_mut() else { return };
+    
+    for (collectible_entity, collectible_tf, collectible, _collider) in collectible_q.iter() {
+        let distance = player_tf.translation.distance(collectible_tf.translation);
+        
+        // Check if close enough to pick up (within player + collectible radius)
+        if distance < 40.0 {
+            match collectible.collectible_type {
+                CollectibleType::Coin => {
+                    player_stats.coins_collected += collectible.value as u32;
+                    println!("Picked up {} coins! Total: {}", collectible.value, player_stats.coins_collected);
+                }
+                CollectibleType::Fruit(fruit_type) => {
+                    if let Ok(mut powerup_slots) = powerup_q.single_mut() {
+                        let powerup = match fruit_type {
+                            0 | 1 => crate::entities::powerup::PowerUpType::SpeedBoost,      // Strawberry, Pear
+                            2 | 3 => crate::entities::powerup::PowerUpType::DamageBoost,     // Mango, Apple
+                            4 | 5 => crate::entities::powerup::PowerUpType::HealthBoost,     // Orange, Grape
+                            6 | 7 => crate::entities::powerup::PowerUpType::ShieldBoost,     // Banana, Cherry
+                            _ => crate::entities::powerup::PowerUpType::SpeedBoost,
+                        };
+                        
+                        // Use FIFO queue to add powerup
+                        if let Some(dropped) = powerup_slots.add_powerup(powerup) {
+                            println!("Gained power-up: {:?}, dropped: {:?}", powerup, dropped);
+                        } else {
+                            println!("Gained power-up: {:?}", powerup);
+                        }
+                    }
+                }
+                _ => {}
+            }
+            
+            // Remove the collectible
+            commands.entity(collectible_entity).despawn();
+        }
+    }
+}

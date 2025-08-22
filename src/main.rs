@@ -34,3 +34,7 @@ fn main() {
         ))
         .run();
 }
+
+// Add this to your main.rs plugin list
+// .add_plugins(crate::world::collision::TileCollisionPlugin)
+// .add_plugins(crate::game::player_visual::PlayerVisualPlugin)

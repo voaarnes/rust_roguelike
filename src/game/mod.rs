@@ -32,3 +32,6 @@ impl Plugin for GamePlugin {
             ));
     }
 }
+
+// Add player visual module
+pub mod player_visual;
