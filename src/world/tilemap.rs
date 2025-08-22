@@ -17,6 +17,14 @@ pub struct TilemapConfig {
     pub tileset_rows: usize,
 }
 
+
+#[derive(Component)]
+pub struct AnimatedTile {
+    pub frames: Vec<usize>,
+    pub current_frame: usize,
+    pub timer: Timer,
+}
+
 impl Default for TilemapConfig {
     fn default() -> Self {
         Self {

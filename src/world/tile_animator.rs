@@ -3,16 +3,18 @@ use super::tilemap::AnimatedTile;
 
 pub fn animate_tiles(
     time: Res<Time>,
-    mut query: Query<(&mut AnimatedTile, &mut TextureAtlasSprite)>, // <-- use TextureAtlasSprite
+    mut q: Query<(&mut AnimatedTile, &mut Sprite)>,
 ) {
-    for (mut animated_tile, mut sprite) in query.iter_mut() {
-        animated_tile.timer.tick(time.delta());
+    for (mut anim, mut sprite) in q.iter_mut() {
+        anim.timer.tick(time.delta());
 
-        if animated_tile.timer.just_finished() {
-            animated_tile.current_frame =
-                (animated_tile.current_frame + 1) % animated_tile.frames.len();
+        if anim.timer.just_finished() {
+            anim.current_frame = (anim.current_frame + 1) % anim.frames.len();
 
-            sprite.index = animated_tile.frames[animated_tile.current_frame];
+            // In 0.16, atlas is on Sprite; just bump its index.
+            if let Some(atlas) = &mut sprite.texture_atlas {
+                atlas.index = anim.frames[anim.current_frame];
+            }
         }
     }
 }

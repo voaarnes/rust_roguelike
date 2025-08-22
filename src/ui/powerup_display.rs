@@ -24,31 +24,27 @@ pub fn setup_powerup_ui(mut commands: Commands) {
     // Main container
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    bottom: Val::Px(10.0),
-                    left: Val::Px(10.0),
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                },
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(10.0),
+                left: Val::Px(10.0),
+                flex_direction: FlexDirection::Row,
                 ..default()
             },
+            // optional: give the container a transparent bg
+            BackgroundColor(Color::Srgba(Srgba::new(0.0, 0.0, 0.0, 0.0))),
             PowerupUI,
         ))
         .with_children(|parent| {
             for i in 0..4 {
                 parent.spawn((
-                    NodeBundle {
-                        style: Style {
-                            width: Val::Px(48.0),
-                            height: Val::Px(48.0),
-                            margin: UiRect::all(Val::Px(5.0)),
-                            ..default()
-                        },
-                        background_color: BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                    Node {
+                        width: Val::Px(48.0),
+                        height: Val::Px(48.0),
+                        margin: UiRect::all(Val::Px(5.0)),
                         ..default()
                     },
+                    BackgroundColor(Color::Srgba(Srgba::new(0.1, 0.1, 0.1, 0.8))),
                     PowerupSlotUI { slot_index: i },
                 ));
             }
@@ -63,11 +59,11 @@ pub fn update_powerup_display(
         for (slot_ui, mut bg_color) in slot_query.iter_mut() {
             if slot_ui.slot_index < powerup_slots.slots.len() {
                 *bg_color = match powerup_slots.slots[slot_ui.slot_index] {
-                    Some(PowerUpType::SpeedBoost)  => BackgroundColor(Color::linear_rgb(0.0, 1.0, 0.0)),
-                    Some(PowerUpType::DamageBoost) => BackgroundColor(Color::linear_rgb(1.0, 0.0, 0.0)),
-                    Some(PowerUpType::HealthBoost) => BackgroundColor(Color::linear_rgb(0.0, 0.0, 1.0)),
-                    Some(PowerUpType::ShieldBoost) => BackgroundColor(Color::linear_rgb(1.0, 1.0, 0.0)),
-                    None => BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.8)),
+                    Some(PowerUpType::SpeedBoost)  => BackgroundColor(Color::LinearRgba(LinearRgba::new(0.0, 1.0, 0.0, 1.0))),
+                    Some(PowerUpType::DamageBoost) => BackgroundColor(Color::LinearRgba(LinearRgba::new(1.0, 0.0, 0.0, 1.0))),
+                    Some(PowerUpType::HealthBoost) => BackgroundColor(Color::LinearRgba(LinearRgba::new(0.0, 0.0, 1.0, 1.0))),
+                    Some(PowerUpType::ShieldBoost) => BackgroundColor(Color::LinearRgba(LinearRgba::new(1.0, 1.0, 0.0, 1.0))),
+                    None => BackgroundColor(Color::Srgba(Srgba::new(0.2, 0.2, 0.2, 0.8))),
                 };
             }
         }

@@ -110,15 +110,10 @@ fn spawn_level(
                 _ => None,
             };
             
+
             if let Some(tile_type) = tile_type {
-                let world_pos = Vec3::new(
-                    origin_x + (x as f32) * config.tile_size,
-                    origin_y + ((height - y - 1) as f32) * config.tile_size,
-                    0.0,
-                );
-                
                 let tile_index = get_tile_index(tile_type);
-                
+
                 let mut entity_commands = commands.spawn((
                     Sprite {
                         image: tileset_handle.clone(),
@@ -133,26 +128,30 @@ fn spawn_level(
                         tile_type,
                         walkable: is_walkable(tile_type),
                     },
+                    TextureAtlasSprite::new(tile_index), // important: this gives you per-tile sprite.index
                 ));
-                
-                // Add collision for walls
-                if tile_type == TileType::Wall {
-                    entity_commands.insert((
-                        Collider { size: Vec2::splat(config.tile_size) },
-                        Wall,
-                    ));
-                }
-                
-                // Add interactive components
+
+                // ✅ Add AnimatedTile if this tile type animates
                 match tile_type {
-                    TileType::Door => {
-                        entity_commands.insert(Interactive {
-                            interaction_type: InteractionType::Door,
+                    TileType::Water => {
+                        entity_commands.insert(AnimatedTile {
+                            frames: vec![45, 46, 47, 48], // indexes from your tileset
+                            current_frame: 0,
+                            timer: Timer::from_seconds(0.5, TimerMode::Repeating),
                         });
                     }
-                    TileType::Chest => {
-                        entity_commands.insert(Interactive {
-                            interaction_type: InteractionType::Chest,
+                    TileType::Lava => {
+                        entity_commands.insert(AnimatedTile {
+                            frames: vec![49, 50, 51, 52],
+                            current_frame: 0,
+                            timer: Timer::from_seconds(0.3, TimerMode::Repeating),
+                        });
+                    }
+                    TileType::Portal => {
+                        entity_commands.insert(AnimatedTile {
+                            frames: vec![53, 54, 55, 56],
+                            current_frame: 0,
+                            timer: Timer::from_seconds(0.2, TimerMode::Repeating),
                         });
                     }
                     _ => {}
