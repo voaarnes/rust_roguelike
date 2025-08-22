@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::game::movement::Collider;
-use crate::world::tilemap::{Tile, TileType, TilemapConfig};
+use crate::world::tilemap::{Tile, TileType, TilemapConfig, AnimatedTile};
 
 #[derive(Component)]
 pub struct Wall;
@@ -50,11 +50,11 @@ fn spawn_level(
 #.....#.....#.#...#.#.........####.............#
 #.....#.....###...#.#..........................#
 #..............................................#
-#...####....####....####....####....####......#
-#...#..#....#..#....#..#....#..#....#..#......#
-#...#..######..######..######..######..#......#
+#...####....####....####....####....####.......#
+#...#..#....#..#....#..#....#..#....#..#.......#
+#...#..######..######..######..######..#.......#
 #...#..........................................#
-#...####....####....####....####....####......#
+#...####....####....####....####....####.......#
 #..............................................#
 #.....CCCC......................CCCC...........#
 #..............................................#
@@ -62,12 +62,12 @@ fn spawn_level(
 #..........................................^^^^#
 #..........................................^^^^#
 #..............................................#
-#...~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..#
-#...~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..#
+#...~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..~~~~~...#
+#...~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..~~~~~...#
 #..............................................#
-#..####....####....####....####....####....####
-#..#..#....#..#....#..#....#..#....#..#....#..#
-#..#..######..######..######..######..######..#
+#..####....####....####....####....####....###.#
+#..#..#....#..#....#..#....#..#....#..#....#...#
+#..#..######..######..######..######..######...#
 #..............................................#
 #..............................................#
 #......^^^^....................................#
@@ -83,7 +83,7 @@ fn spawn_level(
     let height = lines.len();
     let width = lines.iter().map(|l| l.len()).max().unwrap_or(0);
     
-    let tileset_handle: Handle<Image> = asset_server.load("sprites/tileset.png");
+    let tileset_handle: Handle<Image> = asset_server.load("sprites/tileset_16x16_32px.png");
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(config.tile_size as u32, config.tile_size as u32),
         config.tileset_columns as u32,
@@ -114,6 +114,12 @@ fn spawn_level(
             if let Some(tile_type) = tile_type {
                 let tile_index = get_tile_index(tile_type);
 
+                let world_pos = Vec3::new(
+                    origin_x + x as f32 * config.tile_size,
+                    origin_y + (height as f32 - 1.0 - y as f32) * config.tile_size,
+                    0.0,
+                );
+
                 let mut entity_commands = commands.spawn((
                     Sprite {
                         image: tileset_handle.clone(),
@@ -128,7 +134,7 @@ fn spawn_level(
                         tile_type,
                         walkable: is_walkable(tile_type),
                     },
-                    TextureAtlasSprite::new(tile_index), // important: this gives you per-tile sprite.index
+                    // TextureAtlasSprite::new(tile_index), // important: this gives you per-tile sprite.index
                 ));
 
                 // ✅ Add AnimatedTile if this tile type animates
