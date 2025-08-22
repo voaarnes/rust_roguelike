@@ -1,6 +1,7 @@
 mod core;
 mod game;
 mod ui;
+mod world;
 
 use bevy::prelude::*;
 
@@ -18,6 +19,7 @@ fn main() {
         .add_plugins((
             core::CorePlugin,
             game::GamePlugin,
+            world::WorldPlugin,
             ui::UIPlugin,
         ))
         .run();
