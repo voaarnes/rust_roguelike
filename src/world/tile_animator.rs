@@ -1,19 +1,18 @@
 use bevy::prelude::*;
-use super::tilemap::AnimatedField;
+use super::tilemap::AnimatedTile;
 
 pub fn animate_tiles(
-    mut query: Query<(&mut AnimatedField, &mut Sprite)>,
     time: Res<Time>,
+    mut query: Query<(&mut AnimatedTile, &mut TextureAtlasSprite)>, // <-- use TextureAtlasSprite
 ) {
-    for (mut animated, mut sprite) in query.iter_mut() {
-        animated.timer.tick(time.delta());
-        
-        if animated.timer.just_finished() {
-            animated.current_frame = (animated.current_frame + 1) % animated.frames.len();
-            
-            if let Some(atlas) = &mut sprite.texture_atlas {
-                atlas.index = animated.frames[animated.current_frame];
-            }
+    for (mut animated_tile, mut sprite) in query.iter_mut() {
+        animated_tile.timer.tick(time.delta());
+
+        if animated_tile.timer.just_finished() {
+            animated_tile.current_frame =
+                (animated_tile.current_frame + 1) % animated_tile.frames.len();
+
+            sprite.index = animated_tile.frames[animated_tile.current_frame];
         }
     }
 }
