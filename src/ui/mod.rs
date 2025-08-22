@@ -2,7 +2,8 @@ pub mod main_menu;
 pub mod pause_menu;
 pub mod hud;
 pub mod health_bars;
-//pub mod minimap;
+pub mod minimap;
+pub mod powerup_display;
 
 use bevy::prelude::*;
 
@@ -15,7 +16,8 @@ impl Plugin for UIPlugin {
             main_menu::MainMenuPlugin,
             pause_menu::PauseMenuPlugin,
             health_bars::HealthBarPlugin,
-//            minimap::MinimapPlugin,
+            minimap::MinimapPlugin,
+            powerup_display::PowerUpDisplayPlugin,
         ));
     }
 }

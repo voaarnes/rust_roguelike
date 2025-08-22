@@ -111,7 +111,7 @@ pub fn handle_combat(
             damage_to_player += 1;
 
             // If you emit events, you could do:
-            // _events.send(CombatEvent {
+            // _events.write(CombatEvent {
             //     attacker: _enemy_entity,
             //     target: player_entity,
             //     damage: 1,

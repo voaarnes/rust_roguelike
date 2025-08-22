@@ -1,46 +1,71 @@
 use bevy::prelude::*;
-use bevy::math::UVec2;
-use bevy::sprite::{TextureAtlas, TextureAtlasLayout};
-use crate::game::movement::Collider; // reuse your existing Collider
+use crate::game::movement::Collider;
+use crate::world::tilemap::{Tile, TileType, TilemapConfig};
 
-use super::tilemap::{
-    Tilemap, TilemapConfig, Tile, AnimatedTile, TilemapLayer,
-    DamageZone, Interactive, InteractionType,
-    MapSizePx, TileType, LayerType,
-};
+#[derive(Component)]
+pub struct Wall;
 
-pub fn load_test_level(
+#[derive(Component)]
+pub struct Interactive {
+    pub interaction_type: InteractionType,
+}
+
+#[derive(Clone, Copy)]
+pub enum InteractionType {
+    Door,
+    Chest,
+    Portal,
+}
+
+pub fn load_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     config: Res<TilemapConfig>,
 ) {
     let level_data = r#"
-########################################
-#......................................#
-#..gggggg..###...###...###.............#
-#..gggggg..#.....#.#...#.#.............#
-#..gggggg..###...#.#...###.............#
-#..........#.....#.#...#.#.............#
-#..........#.....###...#.#.............#
-#......................................#
-#...wwwwww.............................#
-#...wwwwww..^^^^.......................#
-#...wwwwww.............................#
-#..................########............#
-#.....CCCC.........ssssssss............#
-#..................ssssssss............#
-#..................ssssssss............#
-#...........P..................~~~~~~~~#
-#..............................~~~~~~~~#
-#..............................~~~~~~~~#
-#...LLLLLLLLLLLLLLLLLL.........~~~~~~~~#
-########################################
+################################################
+#..............................................#
+#.....###...###...###.........####.............#
+#.....#.....#.#...#.#.........#..#.............#
+#.....###...#.#...###.........#..#.............#
+#.....#.....#.#...#.#.........####.............#
+#.....#.....###...#.#..........................#
+#..............................................#
+#...####....####....####....####....####......#
+#...#..#....#..#....#..#....#..#....#..#......#
+#...#..######..######..######..######..#......#
+#...#..........................................#
+#...####....####....####....####....####......#
+#..............................................#
+#.....CCCC......................CCCC...........#
+#..............................................#
+#...################....################.......#
+#..........................................^^^^#
+#..........................................^^^^#
+#..............................................#
+#...~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..#
+#...~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..~~~~~..#
+#..............................................#
+#..####....####....####....####....####....####
+#..#..#....#..#....#..#....#..#....#..#....#..#
+#..#..######..######..######..######..######..#
+#..............................................#
+#..............................................#
+#......^^^^....................................#
+#......^^^^....................................#
+################################################
 "#;
 
-    let tilemap = Tilemap::from_string(level_data);
-
-    let tileset: Handle<Image> = asset_server.load("sprites/tileset_16x16_32px_hd.png");
+    let lines: Vec<&str> = level_data
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .collect();
+    
+    let height = lines.len();
+    let width = lines.iter().map(|l| l.len()).max().unwrap_or(0);
+    
+    let tileset_handle: Handle<Image> = asset_server.load("sprites/tileset.png");
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(config.tile_size as u32, config.tile_size as u32),
         config.tileset_columns as u32,
@@ -48,82 +73,99 @@ pub fn load_test_level(
         None,
         None,
     );
-    let layout_handle = atlas_layouts.add(layout);
-
-    let map_w = tilemap.width as f32 * config.tile_size;
-    let map_h = tilemap.height as f32 * config.tile_size;
-    commands.insert_resource(MapSizePx { w: map_w, h: map_h });
-
+    let layout_handle = texture_atlas_layouts.add(layout);
+    
+    let map_w = width as f32 * config.tile_size;
+    let map_h = height as f32 * config.tile_size;
     let origin_x = -map_w * 0.5 + config.tile_size * 0.5;
     let origin_y = -map_h * 0.5 + config.tile_size * 0.5;
-
-    for y in 0..tilemap.height {
-        for x in 0..tilemap.width {
-            if let Some(ch) = tilemap.tiles[y][x] {
-                if let Some(def) = config.tile_definitions.get(&ch) {
-                    let pos = Vec3::new(
-                        origin_x + (x as f32) * config.tile_size,
-                        origin_y + ((tilemap.height - y - 1) as f32) * config.tile_size,
-                        layer_z(def.layer),
-                    );
-
-                    let mut e = commands.spawn((
-                        Sprite {
-                            image: tileset.clone(),
-                            texture_atlas: Some(TextureAtlas { layout: layout_handle.clone(), index: def.base_index }),
-                            ..default()
-                        },
-                        Transform::from_translation(pos),
-                        Tile { tile_type: def.tile_type, walkable: def.walkable, tile_index: def.base_index, layer: def.layer },
-                        TilemapLayer { layer: def.layer },
+    
+    for (y, line) in lines.iter().enumerate() {
+        for (x, ch) in line.chars().enumerate() {
+            let tile_type = match ch {
+                '#' => Some(TileType::Wall),
+                '.' => Some(TileType::Floor),
+                'D' => Some(TileType::Door),
+                'C' => Some(TileType::Chest),
+                '^' => Some(TileType::Spike),
+                '~' => Some(TileType::Water),
+                _ => None,
+            };
+            
+            if let Some(tile_type) = tile_type {
+                let world_pos = Vec3::new(
+                    origin_x + (x as f32) * config.tile_size,
+                    origin_y + ((height - y - 1) as f32) * config.tile_size,
+                    0.0,
+                );
+                
+                let tile_index = get_tile_index(tile_type);
+                
+                let mut entity_commands = commands.spawn((
+                    Sprite {
+                        image: tileset_handle.clone(),
+                        texture_atlas: Some(TextureAtlas {
+                            layout: layout_handle.clone(),
+                            index: tile_index,
+                        }),
+                        ..default()
+                    },
+                    Transform::from_translation(world_pos),
+                    Tile {
+                        tile_type,
+                        walkable: is_walkable(tile_type),
+                    },
+                ));
+                
+                // Add collision for walls
+                if tile_type == TileType::Wall {
+                    entity_commands.insert((
+                        Collider { size: Vec2::splat(config.tile_size) },
+                        Wall,
                     ));
-
-                    if def.animated {
-                        e.insert(AnimatedTile {
-                            frames: def.animation_frames.clone(),
-                            current_frame: 0,
-                            timer: Timer::from_seconds(def.animation_speed, TimerMode::Repeating),
+                }
+                
+                // Add interactive components
+                match tile_type {
+                    TileType::Door => {
+                        entity_commands.insert(Interactive {
+                            interaction_type: InteractionType::Door,
                         });
                     }
-
-                    if !def.walkable && matches!(def.tile_type, TileType::Wall) {
-                        e.insert(Collider);
+                    TileType::Chest => {
+                        entity_commands.insert(Interactive {
+                            interaction_type: InteractionType::Chest,
+                        });
                     }
-
-                    match def.tile_type {
-                        TileType::Spike => { e.insert(DamageZone { damage: 10 }); }
-                        TileType::Lava  => { e.insert(DamageZone { damage: 20 }); }
-                        _ => {}
-                    }
-
-                    match def.tile_type {
-                        TileType::Door   => e.insert(Interactive { interaction_type: InteractionType::Door }),
-                        TileType::Chest  => e.insert(Interactive { interaction_type: InteractionType::Chest }),
-                        TileType::Portal => e.insert(Interactive { interaction_type: InteractionType::Portal }),
-                        _ => {}
-                    }
+                    _ => {}
                 }
             }
         }
     }
-
-    info!("Level loaded: {}x{} tiles", tilemap.width, tilemap.height);
 }
 
-fn layer_z(layer: LayerType) -> f32 {
-    match layer {
-        LayerType::Background => 0.0,
-        LayerType::Collision  => 1.0,
-        LayerType::Decoration => 2.0,
-        LayerType::Overlay    => 3.0,
-    }
-}
-
-pub fn despawn_level(
+pub fn cleanup_level(
     mut commands: Commands,
-    q: Query<Entity, Or<(With<Tile>, With<TilemapLayer>, With<AnimatedTile>)>>,
+    tiles: Query<Entity, With<Tile>>,
 ) {
-    for e in &q {
-        commands.entity(e).despawn_recursive();
+    for e in tiles.iter() {
+        commands.entity(e).despawn();
     }
+}
+
+fn get_tile_index(tile_type: TileType) -> usize {
+    match tile_type {
+        TileType::Floor => 1,
+        TileType::Wall => 17,
+        TileType::Door => 33,
+        TileType::Chest => 37,
+        TileType::Spike => 41,
+        TileType::Water => 45,
+        TileType::Portal => 49,
+        _ => 0,
+    }
+}
+
+fn is_walkable(tile_type: TileType) -> bool {
+    matches!(tile_type, TileType::Floor | TileType::Door)
 }

@@ -1,17 +1,24 @@
 mod core;
 mod game;
+mod entities; // Bridge module for compatibility
 mod ui;
 mod world;
+mod utils;
+mod stages;
+mod setup;
+mod states;
 
 use bevy::prelude::*;
+use bevy::window::PresentMode;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: "Rust Roguelike".into(),
+                title: "Rust Roguelike - Survivor".into(),
                 resolution: (1280.0, 720.0).into(),
-                resizable: false,
+                present_mode: PresentMode::AutoVsync,
+                fit_canvas_to_parent: true,
                 ..default()
             }),
             ..default()
@@ -19,8 +26,11 @@ fn main() {
         .add_plugins((
             core::CorePlugin,
             game::GamePlugin,
-            world::WorldPlugin,
             ui::UIPlugin,
+            world::WorldPlugin,
+            utils::UtilsPlugin,
+            stages::StagesPlugin,
+            states::StatesPlugin,
         ))
         .run();
 }

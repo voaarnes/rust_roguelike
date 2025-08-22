@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 use crate::core::input::{InputBuffer, Action};
 use crate::game::animation::{AnimationController, AnimationClip};
+use crate::entities::powerup::PowerUpSlots;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app
-            .init_resource::<PlayerStats>()
+            .init_resource::<PlayerResources>()
             .add_systems(Startup, spawn_player)
             .add_systems(Update, (
                 player_input_system,
@@ -24,6 +25,25 @@ pub struct Player {
 }
 
 #[derive(Component)]
+pub struct PlayerStats {
+    pub kills: u32,
+    pub coins_collected: u32,
+    pub damage_dealt: u32,
+    pub damage_taken: u32,
+}
+
+impl Default for PlayerStats {
+    fn default() -> Self {
+        Self {
+            kills: 0,
+            coins_collected: 0,
+            damage_dealt: 0,
+            damage_taken: 0,
+        }
+    }
+}
+
+#[derive(Component)]
 pub struct PlayerController {
     pub move_speed: f32,
     pub dash_speed: f32,
@@ -32,7 +52,7 @@ pub struct PlayerController {
 }
 
 #[derive(Resource, Default)]
-pub struct PlayerStats {
+pub struct PlayerResources {
     pub strength: u32,
     pub agility: u32,
     pub intelligence: u32,
@@ -84,7 +104,9 @@ fn spawn_player(
 
     commands.spawn((
         Player::default(),
+        PlayerStats::default(),
         PlayerController::default(),
+        PowerUpSlots::new(4),
         crate::game::combat::Health::new(100),
         crate::game::combat::CombatStats {
             damage: 10,
@@ -115,7 +137,6 @@ fn player_input_system(
     for (mut velocity, mut controller, mut anim) in player_q.iter_mut() {
         controller.dash_cooldown.tick(time.delta());
         
-        // Process buffered inputs
         for input_action in input.buffer.iter() {
             match input_action.action {
                 Action::Move(dir) => {
@@ -141,12 +162,10 @@ fn player_input_system(
             }
         }
         
-        // Stop dashing
         if controller.is_dashing && anim.is_finished() {
             controller.is_dashing = false;
         }
         
-        // Return to idle if not moving
         if velocity.0.length() < 0.1 && anim.current == "walk" {
             anim.play("idle");
         }
@@ -155,12 +174,10 @@ fn player_input_system(
 
 fn update_player_stats(
     player_q: Query<&Player>,
-    mut stats: ResMut<PlayerStats>,
+    mut _stats: ResMut<PlayerResources>,
 ) {
-    // Update stats based on level, equipment, etc.
     for player in player_q.iter() {
-        // Calculate stat bonuses
-        let level_bonus = player.level as u32;
-        // Apply bonuses to stats...
+        let _level_bonus = player.level as u32;
+        // Calculate stat bonuses based on level
     }
 }

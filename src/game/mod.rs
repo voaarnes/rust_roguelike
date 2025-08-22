@@ -1,8 +1,6 @@
-use bevy::prelude::*;
-use crate::world::WorldPlugin;
-
 pub mod player;
 pub mod enemy;
+pub mod collectible;
 pub mod combat;
 pub mod movement;
 pub mod spawning;
@@ -12,6 +10,7 @@ pub mod items;
 pub mod animation;
 pub mod audio;
 
+use bevy::prelude::*;
 
 pub struct GamePlugin;
 
@@ -19,17 +18,17 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugins((
+                player::PlayerPlugin,
                 enemy::EnemyPlugin,
+                collectible::CollectiblePlugin,
                 combat::CombatPlugin,
                 movement::MovementPlugin,
-               player::PlayerPlugin,
                 spawning::SpawningPlugin,
                 progression::ProgressionPlugin,
                 abilities::AbilitiesPlugin,
                 items::ItemsPlugin,
                 animation::AnimationPlugin,
                 audio::AudioPlugin,
-                WorldPlugin,
             ));
     }
 }
