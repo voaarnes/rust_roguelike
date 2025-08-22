@@ -1,7 +1,8 @@
 use bevy::prelude::*;
-use crate::core::input::{InputBuffer, Action};
 use crate::game::animation::{AnimationController, AnimationClip};
 use crate::entities::powerup::PowerUpSlots;
+use crate::game::movement::{Velocity, Collider};
+use crate::game::combat::{Health, CombatStats};
 
 pub struct PlayerPlugin;
 
@@ -107,15 +108,15 @@ fn spawn_player(
         PlayerStats::default(),
         PlayerController::default(),
         PowerUpSlots::new(4),
-        crate::game::combat::Health::new(100),
-        crate::game::combat::CombatStats {
+        Health::new(100),
+        CombatStats {
             damage: 10,
             armor: 5,
             crit_chance: 0.1,
             crit_multiplier: 2.0,
         },
-        crate::game::movement::Velocity(Vec2::ZERO),
-        crate::game::movement::Collider { size: Vec2::splat(28.0) },
+        Velocity(Vec2::ZERO),
+        Collider { size: Vec2::splat(28.0) },
         Sprite {
             image: texture,
             texture_atlas: Some(TextureAtlas {
@@ -129,55 +130,59 @@ fn spawn_player(
     ));
 }
 
+// NEW: Direct input system that works properly
 fn player_input_system(
-    mut player_q: Query<(&mut crate::game::movement::Velocity, &mut PlayerController, &mut AnimationController), With<Player>>,
-    input: Res<InputBuffer>,
-    time: Res<Time>,
+    mut player_q: Query<(&mut Velocity, &mut AnimationController, &PlayerController), With<Player>>,
+    keys: Res<ButtonInput<KeyCode>>,
+    _time: Res<Time>,
 ) {
-    for (mut velocity, mut controller, mut anim) in player_q.iter_mut() {
-        controller.dash_cooldown.tick(time.delta());
+    let Ok((mut velocity, mut anim, controller)) = player_q.single_mut() else { return };
+    
+    let mut movement = Vec2::ZERO;
+    
+    // Handle WASD movement
+    if keys.pressed(KeyCode::KeyW) { movement.y += 1.0; }
+    if keys.pressed(KeyCode::KeyS) { movement.y -= 1.0; }
+    if keys.pressed(KeyCode::KeyA) { movement.x -= 1.0; }
+    if keys.pressed(KeyCode::KeyD) { movement.x += 1.0; }
+    
+    // Normalize diagonal movement
+    if movement.length() > 0.0 {
+        movement = movement.normalize();
+        velocity.0 = movement * controller.move_speed;
         
-        for input_action in input.buffer.iter() {
-            match input_action.action {
-                Action::Move(dir) => {
-                    if !controller.is_dashing {
-                        velocity.0 = dir * controller.move_speed;
-                        if anim.current != "walk" && dir.length() > 0.0 {
-                            anim.play("walk");
-                        }
-                    }
-                }
-                Action::Dash => {
-                    if controller.dash_cooldown.finished() && !controller.is_dashing {
-                        controller.is_dashing = true;
-                        controller.dash_cooldown.reset();
-                        velocity.0 *= 2.5;
-                        anim.play("dash");
-                    }
-                }
-                Action::Attack => {
-                    anim.play("attack");
-                }
-                _ => {}
-            }
+        // Play walk animation
+        if anim.current != "walk" {
+            anim.play("walk");
         }
+    } else {
+        velocity.0 = Vec2::ZERO;
         
-        if controller.is_dashing && anim.is_finished() {
-            controller.is_dashing = false;
-        }
-        
-        if velocity.0.length() < 0.1 && anim.current == "walk" {
+        // Play idle animation
+        if anim.current != "idle" {
             anim.play("idle");
+        }
+    }
+    
+    // Handle dash
+    if keys.just_pressed(KeyCode::ShiftLeft) && !controller.is_dashing {
+        if movement.length() > 0.0 {
+            velocity.0 = movement * controller.dash_speed;
+            anim.play("dash");
         }
     }
 }
 
 fn update_player_stats(
-    player_q: Query<&Player>,
-    mut _stats: ResMut<PlayerResources>,
+    mut player_q: Query<&mut Player>,
+    _time: Res<Time>,
 ) {
-    for player in player_q.iter() {
-        let _level_bonus = player.level as u32;
-        // Calculate stat bonuses based on level
+    for mut player in player_q.iter_mut() {
+        // Simple level progression
+        if player.experience >= player.exp_to_next_level {
+            player.level += 1;
+            player.experience = 0;
+            player.exp_to_next_level = player.level * 100;
+        }
     }
 }

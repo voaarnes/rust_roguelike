@@ -1,3 +1,8 @@
+
+#!/bin/bash
+
+# Fix the borrowing issue in the animation system
+cat > src/game/animation/mod.rs << 'EOF'
 use bevy::prelude::*;
 use std::collections::HashMap;
 
@@ -97,3 +102,6 @@ fn update_animations(
         }
     }
 }
+EOF
+
+echo "Fixed animation system borrowing issue!"

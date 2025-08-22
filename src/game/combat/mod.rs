@@ -6,8 +6,6 @@ use bevy::prelude::*;
 use crate::game::player::Player;
 use crate::game::enemy::Enemy;
 use crate::game::movement::Collider;
-use crate::core::events::CombatEvent;
-
 
 pub struct CombatPlugin;
 
@@ -21,6 +19,7 @@ impl Plugin for CombatPlugin {
                 effects::update_status_effects,
                 projectiles::update_projectiles,
                 cleanup_dead_entities,
+                health_regeneration,
             ));
     }
 }
@@ -38,7 +37,7 @@ impl Health {
         Self {
             current: max,
             max,
-            regeneration: 0.0,
+            regeneration: 1.0, // 1 HP per second
             regen_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
         }
     }
@@ -73,72 +72,72 @@ pub struct DamageImmunity {
     pub timer: Timer,
 }
 
-
-pub fn handle_combat(
-    // keep if you emit events; prefix with `_` if unused to silence warnings
-    mut _events: EventWriter<CombatEvent>,
-    mut q: ParamSet<(
-        // Player query (disjoint from enemies)
-        Query<(Entity, &Transform, &mut Health, &CombatStats, &Collider),
-              (With<Player>, Without<Enemy>)>,
-        // Enemy query (disjoint from player)
-        Query<(Entity, &Transform, &mut Health, &CombatStats, &Collider),
-              (With<Enemy>, Without<Player>)>,
-    )>,
-    // keep or remove if unused
-    _time: Res<Time>,
-) {
-    // ---- Phase 1: snapshot only what we need from the player, then drop the borrow ----
-    let (player_entity, player_pos) = {
-        // Create a named binding so the borrow of p0() ends with this block
-        let mut p0 = q.p0();
-        let Ok((pe, ptf, _ph, _ps, _pc)) = p0.single_mut() else { return };
-        (pe, ptf.translation) // copy out the Vec3
-    }; // p0 borrow ends here
-
-    // If you deal damage to the player inside the enemy loop, accumulate it here
-    let mut damage_to_player: i32 = 0;
-
-    // Example naive range check; replace with your real collision math if you have it
-    const ATTACK_RANGE: f32 = 24.0;
-
-    // ---- Phase 2: iterate enemies (separate borrow) ----
-    for (_enemy_entity, enemy_tf, _enemy_health, _enemy_stats, _enemy_collider) in q.p1().iter_mut() {
-        let distance = player_pos.distance(enemy_tf.translation);
-
-        if distance <= ATTACK_RANGE {
-            // Example: accumulate some damage; replace with your damage calc
-            damage_to_player += 1;
-
-            // If you emit events, you could do:
-            // _events.write(CombatEvent {
-            //     attacker: _enemy_entity,
-            //     target: player_entity,
-            //     damage: 1,
-            //     damage_type: DamageType::Physical,
-            // });
-        }
-
-        // If you want to damage enemies here, change `_enemy_health` to `mut enemy_health`
-        // and mutate it. Keeping the underscore avoids an "unused variable" warning.
-    }
-
-    // ---- Phase 3: apply accumulated damage to the player (new, short borrow of p0) ----
-    if damage_to_player != 0 {
-        let mut p0 = q.p0();
-        if let Ok((_pe, _ptf, mut player_health, _ps, _pc)) = p0.single_mut() {
-            // Apply the damage using your Health API/fields, e.g.:
-            // player_health.current = (player_health.current - damage_to_player).max(0);
-            //
-            // or, if you have a helper:
-            // player_health.apply_damage(damage_to_player);
-        }
-    }
-
-    // keep `player_entity` "used" in case you remove event sending
-    let _ = player_entity;
+#[derive(Component)]
+pub struct LastDamageTime {
+    pub timer: Timer,
 }
 
+impl Default for LastDamageTime {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
+        }
+    }
+}
+
+pub fn handle_combat(
+    mut player_q: Query<(Entity, &Transform, &mut Health, &CombatStats, &Collider, Option<&mut LastDamageTime>), (With<Player>, Without<Enemy>)>,
+    mut enemy_q: Query<(&Transform, &mut Health, &CombatStats, &Collider), (With<Enemy>, Without<Player>)>,
+    mut commands: Commands,
+    time: Res<Time>,
+) {
+    let Ok((player_entity, player_tf, mut player_health, player_stats, player_collider, player_damage_time)) = player_q.single_mut() else { return };
+    
+    // Update player damage immunity timer
+    let mut can_take_damage = true;
+    if let Some(mut damage_time) = player_damage_time {
+        damage_time.timer.tick(time.delta());
+        can_take_damage = damage_time.timer.finished();
+    }
+    
+    for (enemy_tf, mut enemy_health, enemy_stats, enemy_collider) in enemy_q.iter_mut() {
+        let distance = player_tf.translation.distance(enemy_tf.translation);
+        let collision_distance = (player_collider.size.x + enemy_collider.size.x) / 2.0;
+        
+        // Check collision for damage
+        if distance <= collision_distance {
+            // Enemy damages player
+            if can_take_damage {
+                let damage = (enemy_stats.damage - player_stats.armor).max(1);
+                player_health.take_damage(damage);
+                println!("Player took {} damage! Health: {}/{}", damage, player_health.current, player_health.max);
+                
+                // Add damage immunity
+                commands.entity(player_entity).insert(LastDamageTime::default());
+            }
+            
+            // Player damages enemy (on attack input)
+            // For now, continuous damage when touching
+            enemy_health.take_damage(1);
+            if enemy_health.is_dead() {
+                println!("Enemy defeated!");
+            }
+        }
+    }
+}
+
+fn health_regeneration(
+    mut query: Query<&mut Health>,
+    time: Res<Time>,
+) {
+    for mut health in query.iter_mut() {
+        health.regen_timer.tick(time.delta());
+        if health.regen_timer.just_finished() && health.current < health.max {
+            let regen_amount = health.regeneration as i32;
+            health.heal(regen_amount);
+        }
+    }
+}
 
 fn cleanup_dead_entities(
     mut commands: Commands,

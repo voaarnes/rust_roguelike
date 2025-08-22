@@ -28,6 +28,7 @@ pub struct Enemy {
     pub attack_range: f32,
     pub patrol_origin: Vec2,
     pub behavior_timer: Timer,
+    pub move_speed: f32,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -84,8 +85,8 @@ fn load_enemy_assets(
     asset_server: Res<AssetServer>,
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    // Load textures
-    enemy_assets.textures.push(asset_server.load("sprites/player_x.png"));
+    // Load textures - using fallback texture for now
+    enemy_assets.textures.push(asset_server.load("sprites/test_p_sprite.png"));
     
     // Create layouts
     let layout = TextureAtlasLayout::from_grid(
@@ -118,11 +119,11 @@ fn spawn_enemy(
     enemy_type: EnemyType,
 ) {
     let (health, damage, armor, speed, color) = match enemy_type {
-        EnemyType::Goblin => (30, 5, 0, 100.0, Color::linear_rgb(0.0, 0.8, 0.0)),
-        EnemyType::Skeleton => (50, 8, 2, 75.0, Color::linear_rgb(0.9, 0.9, 0.9)),
-        EnemyType::Orc => (80, 12, 5, 50.0, Color::linear_rgb(0.6, 0.4, 0.0)),
-        EnemyType::DarkKnight => (150, 20, 10, 60.0, Color::linear_rgb(0.2, 0.0, 0.2)),
-        EnemyType::Necromancer => (100, 15, 3, 40.0, Color::linear_rgb(0.5, 0.0, 0.5)),
+        EnemyType::Goblin => (30, 5, 0, 80.0, Color::linear_rgb(0.0, 0.8, 0.0)),
+        EnemyType::Skeleton => (50, 8, 2, 60.0, Color::linear_rgb(0.9, 0.9, 0.9)),
+        EnemyType::Orc => (80, 12, 5, 40.0, Color::linear_rgb(0.6, 0.4, 0.0)),
+        EnemyType::DarkKnight => (150, 20, 10, 50.0, Color::linear_rgb(0.2, 0.0, 0.2)),
+        EnemyType::Necromancer => (100, 15, 3, 30.0, Color::linear_rgb(0.5, 0.0, 0.5)),
         _ => (100, 10, 5, 50.0, Color::linear_rgb(1.0, 1.0, 1.0)),
     };
 
@@ -131,37 +132,40 @@ fn spawn_enemy(
     anim.add_animation("walk", AnimationClip::new(4, 7, 0.15, true));
     anim.play("idle");
 
-    commands.spawn((
-        Enemy {
-            enemy_type,
-            ai_state: AIState::Idle,
-            detection_range: 300.0,
-            attack_range: 40.0,
-            patrol_origin: position.truncate(),
-            behavior_timer: Timer::from_seconds(2.0, TimerMode::Repeating),
-        },
-        Health::new(health),
-        CombatStats {
-            damage,
-            armor,
-            crit_chance: 0.05,
-            crit_multiplier: 1.5,
-        },
-        Velocity(Vec2::ZERO),
-        Collider { size: Vec2::splat(28.0) },
-        Sprite {
-            image: assets.textures[0].clone(),
-            texture_atlas: Some(TextureAtlas {
-                layout: assets.layouts[0].clone(),
-                index: 0,
-            }),
-            color,
-            custom_size: Some(Vec2::splat(32.0)),
-            ..default()
-        },
-        Transform::from_translation(position),
-        anim,
-    ));
+    if let (Some(texture), Some(layout)) = (assets.textures.first(), assets.layouts.first()) {
+        commands.spawn((
+            Enemy {
+                enemy_type,
+                ai_state: AIState::Idle,
+                detection_range: 300.0,
+                attack_range: 40.0,
+                patrol_origin: position.truncate(),
+                behavior_timer: Timer::from_seconds(2.0, TimerMode::Repeating),
+                move_speed: speed,
+            },
+            Health::new(health),
+            CombatStats {
+                damage,
+                armor,
+                crit_chance: 0.1,
+                crit_multiplier: 1.5,
+            },
+            Velocity(Vec2::ZERO),
+            Collider { size: Vec2::splat(28.0) },
+            Sprite {
+                image: texture.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: layout.clone(),
+                    index: 0,
+                }),
+                color,
+                custom_size: Some(Vec2::splat(32.0)),
+                ..default()
+            },
+            Transform::from_translation(position),
+            anim,
+        ));
+    }
 }
 
 fn spawn_boss(
@@ -170,58 +174,61 @@ fn spawn_boss(
     position: Vec3,
     boss_type: EnemyType,
 ) {
-    let (health, damage, armor) = match boss_type {
-        EnemyType::GoblinKing => (500, 25, 10),
-        EnemyType::LichLord => (800, 30, 15),
-        EnemyType::DragonKnight => (1200, 40, 20),
-        _ => (500, 20, 10),
+    let (health, damage, armor, speed, color) = match boss_type {
+        EnemyType::GoblinKing => (500, 25, 5, 30.0, Color::linear_rgb(0.0, 1.0, 0.0)),
+        EnemyType::LichLord => (800, 40, 10, 20.0, Color::linear_rgb(0.5, 0.0, 1.0)),
+        EnemyType::DragonKnight => (1200, 60, 15, 25.0, Color::linear_rgb(1.0, 0.0, 0.0)),
+        _ => (500, 25, 5, 30.0, Color::linear_rgb(1.0, 1.0, 1.0)),
     };
 
     let mut anim = AnimationController::new();
-    anim.add_animation("idle", AnimationClip::new(0, 3, 0.4, true));
-    anim.add_animation("walk", AnimationClip::new(4, 7, 0.2, true));
+    anim.add_animation("idle", AnimationClip::new(0, 3, 0.3, true));
+    anim.add_animation("walk", AnimationClip::new(4, 7, 0.15, true));
     anim.play("idle");
 
-    commands.spawn((
-        Enemy {
-            enemy_type: boss_type,
-            ai_state: AIState::Idle,
-            detection_range: 500.0,
-            attack_range: 60.0,
-            patrol_origin: position.truncate(),
-            behavior_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
-        },
-        Boss {
-            phase: 1,
-            enrage_timer: Timer::from_seconds(180.0, TimerMode::Once),
-        },
-        Health::new(health),
-        CombatStats {
-            damage,
-            armor,
-            crit_chance: 0.15,
-            crit_multiplier: 2.0,
-        },
-        Velocity(Vec2::ZERO),
-        Collider { size: Vec2::splat(64.0) },
-        Sprite {
-            image: assets.textures[0].clone(),
-            texture_atlas: Some(TextureAtlas {
-                layout: assets.layouts[0].clone(),
-                index: 0,
-            }),
-            color: Color::linear_rgb(1.0, 0.0, 0.0),
-            custom_size: Some(Vec2::splat(64.0)),
-            ..default()
-        },
-        Transform::from_translation(position),
-        anim,
-    ));
+    if let (Some(texture), Some(layout)) = (assets.textures.first(), assets.layouts.first()) {
+        commands.spawn((
+            Enemy {
+                enemy_type: boss_type,
+                ai_state: AIState::Idle,
+                detection_range: 500.0,
+                attack_range: 60.0,
+                patrol_origin: position.truncate(),
+                behavior_timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+                move_speed: speed,
+            },
+            Boss {
+                phase: 1,
+                enrage_timer: Timer::from_seconds(10.0, TimerMode::Once),
+            },
+            Health::new(health),
+            CombatStats {
+                damage,
+                armor,
+                crit_chance: 0.2,
+                crit_multiplier: 2.0,
+            },
+            Velocity(Vec2::ZERO),
+            Collider { size: Vec2::splat(48.0) },
+            Sprite {
+                image: texture.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: layout.clone(),
+                    index: 0,
+                }),
+                color,
+                custom_size: Some(Vec2::splat(64.0)),
+                ..default()
+            },
+            Transform::from_translation(position),
+            anim,
+        ));
+    }
 }
 
 fn enemy_ai_system(
     mut enemy_q: Query<(&mut Enemy, &Transform, &mut Velocity, &mut AnimationController)>,
-    player_q: Query<&Transform, With<crate::game::player::Player>>,
+    player_q: Query<&Transform, (With<crate::game::player::Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) {
     let Ok(player_tf) = player_q.single() else { return };
@@ -235,80 +242,44 @@ fn enemy_ai_system(
         // State machine
         match enemy.ai_state {
             AIState::Idle => {
-                if distance < enemy.detection_range {
-                    enemy.ai_state = AIState::Chasing;
-                } else if enemy.behavior_timer.just_finished() {
-                    enemy.ai_state = AIState::Patrolling;
-                }
-            }
-            AIState::Patrolling => {
-                // Simple patrol behavior
-                let patrol_target = enemy.patrol_origin + Vec2::new(
-                    (time.elapsed_secs() * 0.5).sin() * 100.0,
-                    (time.elapsed_secs() * 0.5).cos() * 100.0,
-                );
-                let to_patrol = (patrol_target - enemy_tf.translation.truncate()).normalize_or_zero();
-                velocity.0 = to_patrol * 30.0;
-                
+                velocity.0 = Vec2::ZERO;
                 if distance < enemy.detection_range {
                     enemy.ai_state = AIState::Chasing;
                 }
-                
-                if anim.current != "walk" {
-                    anim.play("walk");
+                if anim.current != "idle" {
+                    anim.play("idle");
                 }
             }
             AIState::Chasing => {
-                if distance < enemy.attack_range {
-                    enemy.ai_state = AIState::Attacking;
-                    velocity.0 = Vec2::ZERO;
-                } else if distance > enemy.detection_range * 1.5 {
+                if distance > enemy.detection_range * 1.5 {
                     enemy.ai_state = AIState::Idle;
-                    velocity.0 = Vec2::ZERO;
                 } else {
+                    // Move towards player
                     let direction = to_player.truncate().normalize_or_zero();
-                    velocity.0 = direction * 75.0;
+                    velocity.0 = direction * enemy.move_speed;
+                    
                     if anim.current != "walk" {
                         anim.play("walk");
                     }
                 }
             }
-            AIState::Attacking => {
+            _ => {
                 velocity.0 = Vec2::ZERO;
-                if distance > enemy.attack_range {
-                    enemy.ai_state = AIState::Chasing;
-                }
-                // Attack logic handled in combat system
             }
-            AIState::Fleeing => {
-                let direction = -to_player.truncate().normalize_or_zero();
-                velocity.0 = direction * 100.0;
-                if distance > enemy.detection_range {
-                    enemy.ai_state = AIState::Idle;
-                }
-            }
-            AIState::Stunned => {
-                velocity.0 = Vec2::ZERO;
-                if enemy.behavior_timer.just_finished() {
-                    enemy.ai_state = AIState::Idle;
-                }
-            }
-        }
-        
-        // Stop animation when idle
-        if velocity.0.length() < 0.1 && anim.current == "walk" {
-            anim.play("idle");
         }
     }
 }
 
 fn update_enemy_behavior(
-    mut enemy_q: Query<(&mut Enemy, &Health)>,
+    mut boss_q: Query<(&mut Boss, &mut Enemy, &Health)>,
+    _time: Res<Time>,
 ) {
-    for (mut enemy, health) in enemy_q.iter_mut() {
-        // Flee when health is low
-        if health.percentage() < 0.2 && enemy.ai_state != AIState::Fleeing {
-            enemy.ai_state = AIState::Fleeing;
+    for (mut boss, mut enemy, health) in boss_q.iter_mut() {
+        // Boss gets more aggressive at low health
+        if health.percentage() < 0.3 && boss.phase == 1 {
+            boss.phase = 2;
+            enemy.move_speed *= 1.5;
+            println!("Boss entered phase 2!");
         }
     }
 }

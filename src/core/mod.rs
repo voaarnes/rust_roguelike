@@ -19,16 +19,26 @@ impl Plugin for CorePlugin {
             .init_resource::<config::GameConfig>()
             .init_resource::<input::InputBuffer>()
             .init_resource::<save_system::SaveData>()
+            .init_resource::<state::GameStats>()
             // Events
             .add_event::<events::GameEvent>()
             .add_event::<events::PlayerEvent>()
             .add_event::<events::CombatEvent>()
             // Systems
-            .add_systems(Startup, camera::setup_camera)
+            .add_systems(Startup, (
+                camera::setup_camera,
+                start_game,
+            ))
             .add_systems(Update, (
                 input::buffer_input_system,
                 camera::camera_follow_player.run_if(in_state(state::GameState::Playing)),
                 save_system::auto_save_system,
+                input::pause_game_system,
             ));
     }
+}
+
+fn start_game(mut next_state: ResMut<NextState<state::GameState>>) {
+    // Auto-start the game
+    next_state.set(state::GameState::Playing);
 }

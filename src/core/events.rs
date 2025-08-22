@@ -1,19 +1,14 @@
 use bevy::prelude::*;
 
 #[derive(Event)]
-pub enum GameEvent {
-    LevelCompleted { level: usize },
-    BossDefeated { boss_type: String },
-    AchievementUnlocked { achievement_id: String },
-    QuestCompleted { quest_id: String },
+pub struct GameEvent {
+    pub event_type: GameEventType,
 }
 
 #[derive(Event)]
-pub enum PlayerEvent {
-    LevelUp { new_level: u32 },
-    SkillUnlocked { skill_id: String },
-    ItemPickup { item_id: String, quantity: u32 },
-    Death,
+pub struct PlayerEvent {
+    pub player: Entity,
+    pub event_type: PlayerEventType,
 }
 
 #[derive(Event)]
@@ -26,11 +21,25 @@ pub struct CombatEvent {
 }
 
 #[derive(Clone, Copy)]
+pub enum GameEventType {
+    WaveCompleted,
+    BossDefeated,
+    PlayerLevelUp,
+}
+
+#[derive(Clone, Copy)]
+pub enum PlayerEventType {
+    LevelUp,
+    PowerUpGained,
+    Died,
+}
+
+#[derive(Clone, Copy)]
 pub enum DamageType {
     Physical,
     Magic,
     Fire,
     Ice,
     Poison,
-    True, // Ignores armor
+    True,
 }

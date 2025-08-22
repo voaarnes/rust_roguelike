@@ -1,15 +1,16 @@
 use bevy::prelude::*;
-use crate::game::animation::{AnimationController, AnimationClip};
+use crate::game::player::{Player, PlayerStats};
+use crate::game::movement::Collider;
+use crate::entities::powerup::{PowerUpSlots, PowerUpType};
 
 pub struct CollectiblePlugin;
 
 impl Plugin for CollectiblePlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_event::<SpawnCollectible>()
-            .init_resource::<CollectibleAssets>()
-            .add_systems(Startup, load_collectible_assets)
-            .add_systems(Update, (handle_spawn_events, animate_collectibles));
+        app.add_systems(Update, (
+            handle_collectible_pickup,
+            animate_collectibles,
+        ));
     }
 }
 
@@ -25,81 +26,58 @@ pub enum CollectibleType {
     Gem,
     HealthPotion,
     ManaPotion,
+    Fruit(u8), // 0-7 for different fruit types
 }
 
-#[derive(Event)]
-pub struct SpawnCollectible {
-    pub position: Vec3,
-    pub collectible_type: CollectibleType,
-}
-
-#[derive(Resource, Default)]
-pub struct CollectibleAssets {
-    pub coin_texture: Handle<Image>,
-    pub gem_texture: Handle<Image>,
-    pub layouts: Vec<Handle<TextureAtlasLayout>>,
-}
-
-fn load_collectible_assets(
-    mut assets: ResMut<CollectibleAssets>,
-    asset_server: Res<AssetServer>,
-    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    assets.coin_texture = asset_server.load("sprites/meyveler.png");
-    assets.gem_texture = asset_server.load("sprites/meyveler.png");
-    
-    let layout = TextureAtlasLayout::from_grid(
-        UVec2::new(32, 32),
-        3, 3,
-        None, None,
-    );
-    assets.layouts.push(layouts.add(layout));
-}
-
-fn handle_spawn_events(
+fn handle_collectible_pickup(
     mut commands: Commands,
-    mut events: EventReader<SpawnCollectible>,
-    assets: Res<CollectibleAssets>,
+    mut player_q: Query<(&Transform, &mut PlayerStats), With<Player>>,
+    collectible_q: Query<(Entity, &Transform, &Collectible, &Collider)>,
+    mut powerup_q: Query<&mut PowerUpSlots, With<Player>>,
 ) {
-    for event in events.read() {
-        spawn_collectible(&mut commands, &assets, event.position, event.collectible_type);
+    let Ok((player_tf, mut player_stats)) = player_q.single_mut() else { return };
+    
+    for (collectible_entity, collectible_tf, collectible, _collider) in collectible_q.iter() {
+        let distance = player_tf.translation.distance(collectible_tf.translation);
+        
+        // Check if close enough to pick up (within player + collectible radius)
+        if distance < 40.0 {
+            match collectible.collectible_type {
+                CollectibleType::Coin => {
+                    player_stats.coins_collected += collectible.value as u32;
+                    println!("Picked up {} coins! Total: {}", collectible.value, player_stats.coins_collected);
+                }
+                CollectibleType::Fruit(fruit_type) => {
+                    if let Ok(mut powerup_slots) = powerup_q.single_mut() {
+                        let powerup = match fruit_type {
+                            0 | 1 => PowerUpType::SpeedBoost,      // Strawberry, Pear
+                            2 | 3 => PowerUpType::DamageBoost,     // Mango, Apple
+                            4 | 5 => PowerUpType::HealthBoost,     // Orange, Grape
+                            6 | 7 => PowerUpType::ShieldBoost,     // Banana, Cherry
+                            _ => PowerUpType::SpeedBoost,
+                        };
+                        
+                        // Find empty slot and add powerup
+                        for slot in powerup_slots.slots.iter_mut() {
+                            if slot.is_none() {
+                                *slot = Some(powerup);
+                                println!("Gained power-up: {:?}", powerup);
+                                break;
+                            }
+                        }
+                    }
+                }
+                CollectibleType::HealthPotion => {
+                    // Handle health potion
+                    println!("Picked up health potion!");
+                }
+                _ => {}
+            }
+            
+            // Remove the collectible
+            commands.entity(collectible_entity).despawn();
+        }
     }
-}
-
-pub fn spawn_collectible(
-    commands: &mut Commands,
-    assets: &CollectibleAssets,
-    position: Vec3,
-    collectible_type: CollectibleType,
-) {
-    let (texture, value, start_index) = match collectible_type {
-        CollectibleType::Coin => (assets.coin_texture.clone(), 1, 0),
-        CollectibleType::Gem => (assets.gem_texture.clone(), 10, 3),
-        CollectibleType::HealthPotion => (assets.coin_texture.clone(), 0, 6),
-        CollectibleType::ManaPotion => (assets.coin_texture.clone(), 0, 7),
-    };
-    
-    let mut anim = AnimationController::new();
-    anim.add_animation("spin", AnimationClip::new(start_index, start_index + 2, 0.1, true));
-    anim.play("spin");
-    
-    commands.spawn((
-        Sprite {
-            image: texture,
-            texture_atlas: if !assets.layouts.is_empty() {
-                Some(TextureAtlas {
-                    layout: assets.layouts[0].clone(),
-                    index: start_index,
-                })
-            } else {
-                None
-            },
-            ..default()
-        },
-        Transform::from_translation(position),
-        Collectible { collectible_type, value },
-        anim,
-    ));
 }
 
 fn animate_collectibles(
@@ -107,6 +85,8 @@ fn animate_collectibles(
     time: Res<Time>,
 ) {
     for mut transform in query.iter_mut() {
-        transform.translation.y += (time.elapsed_secs() * 2.0).sin() * 0.5;
+        // Add a subtle floating animation
+        transform.translation.y += (time.elapsed_secs() * 3.0 + transform.translation.x * 0.01).sin() * 0.3;
+        transform.rotation = Quat::from_rotation_z((time.elapsed_secs() * 2.0).sin() * 0.1);
     }
 }

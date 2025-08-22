@@ -4,12 +4,13 @@ pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            apply_velocity,
-            init_collision_grid,
-            handle_collisions,
-            update_collision_grid,
-        ).chain());
+        app
+            .init_resource::<CollisionGrid>()
+            .add_systems(Update, (
+                apply_velocity,
+                handle_collisions,
+                update_collision_grid,
+            ).chain());
     }
 }
 
@@ -72,13 +73,10 @@ fn apply_velocity(
 }
 
 fn handle_collisions(
-    mut movable_q: Query<(Entity, &mut Transform, &Collider, &Velocity), Without<Static>>,
+    mut movable_q: Query<(&mut Transform, &Collider), Without<Static>>,
     static_q: Query<(&Transform, &Collider), With<Static>>,
-    collision_grid: Res<CollisionGrid>,
 ) {
-    for (entity, mut transform, collider, velocity) in movable_q.iter_mut() {
-        let nearby = collision_grid.get_nearby_entities(transform.translation.truncate(), 100.0);
-        
+    for (mut transform, collider) in movable_q.iter_mut() {
         for (static_tf, static_collider) in static_q.iter() {
             if check_collision(
                 transform.translation.truncate(),
@@ -86,7 +84,7 @@ fn handle_collisions(
                 static_tf.translation.truncate(),
                 static_collider.size,
             ) {
-                // Simple push-back collision
+                // Simple push-back collision resolution
                 let diff = transform.translation - static_tf.translation;
                 let overlap = (collider.size + static_collider.size) / 2.0 - diff.truncate().abs();
                 
@@ -106,6 +104,11 @@ fn update_collision_grid(
     mut grid: ResMut<CollisionGrid>,
     query: Query<(Entity, &Transform, &Collider)>,
 ) {
+    // Initialize grid if empty
+    if grid.cells.is_empty() {
+        *grid = CollisionGrid::new(4096.0, 4096.0, 64.0);
+    }
+    
     // Clear grid
     for row in grid.cells.iter_mut() {
         for cell in row.iter_mut() {
@@ -115,8 +118,8 @@ fn update_collision_grid(
     
     // Populate grid
     for (entity, transform, _) in query.iter() {
-        let x = ((transform.translation.x + 1000.0) / grid.cell_size) as usize;
-        let y = ((transform.translation.y + 1000.0) / grid.cell_size) as usize;
+        let x = ((transform.translation.x + 2048.0) / grid.cell_size) as usize;
+        let y = ((transform.translation.y + 2048.0) / grid.cell_size) as usize;
         
         if x < grid.width && y < grid.height {
             grid.cells[y][x].push(entity);
@@ -132,13 +135,4 @@ fn check_collision(pos1: Vec2, size1: Vec2, pos2: Vec2, size2: Vec2) -> bool {
     (pos1.x + half1.x > pos2.x - half2.x) &&
     (pos1.y - half1.y < pos2.y + half2.y) &&
     (pos1.y + half1.y > pos2.y - half2.y)
-}
-
-pub fn init_collision_grid(mut commands: Commands) {
-    // Pick sizes that make sense for your world; tweak as needed.
-    let world_width: f32 = 4096.0;
-    let world_height: f32 = 4096.0;
-    let cell_size: f32 = 64.0;
-
-    commands.insert_resource(CollisionGrid::new(world_width, world_height, cell_size));
 }
