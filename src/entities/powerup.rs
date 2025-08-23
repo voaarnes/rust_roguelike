@@ -1,3 +1,4 @@
+
 use bevy::prelude::*;
 use std::collections::VecDeque;
 
@@ -9,10 +10,10 @@ pub struct PowerUpSlots {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PowerUpType {
-    SpeedBoost,      // Strawberry/Pear (indices 0,1)
-    DamageBoost,     // Mango/Apple (indices 2,3)
-    HealthBoost,     // Orange/Grape (indices 4,5)
-    ShieldBoost,     // Banana/Cherry (indices 6,7)
+    SpeedBoost,      // Strawberry/Pear
+    DamageBoost,     // Mango/Apple  
+    HealthBoost,     // Orange/Grape
+    ShieldBoost,     // Banana/Cherry
 }
 
 impl PowerUpSlots {
@@ -24,13 +25,23 @@ impl PowerUpSlots {
     }
     
     pub fn add_powerup(&mut self, powerup: PowerUpType) -> Option<PowerUpType> {
+        // Debug print the state before adding
+        println!("Before adding {:?}:", powerup);
+        println!("  Current slots: {:?}", self.slots);
+        
         let dropped = if self.slots.len() >= self.max_slots {
-            self.slots.pop_back() // Remove oldest (FIFO)
+            self.slots.pop_back() // Remove oldest (back of deque)
         } else {
             None
         };
         
         self.slots.push_front(powerup); // Add newest to front
+        
+        // Debug print the state after adding
+        println!("After adding:");
+        println!("  New slots: {:?}", self.slots);
+        println!("  Dropped: {:?}", dropped);
+        
         dropped
     }
     
@@ -46,29 +57,18 @@ impl PowerUpSlots {
         vec
     }
     
-    // Get the newest fruit (head)
+    // Get the newest fruit (head) - index 0 in deque
     pub fn get_head_fruit(&self) -> Option<PowerUpType> {
-        self.slots.front().copied()
+        self.slots.get(0).copied()
     }
     
-    // Get the middle fruit (torso/chest)
+    // Get the middle fruit (torso) - index 1 in deque
     pub fn get_torso_fruit(&self) -> Option<PowerUpType> {
-        if self.slots.len() >= 2 {
-            self.slots.get(1).copied()
-        } else {
-            None
-        }
+        self.slots.get(1).copied()
     }
     
-    // Get the oldest fruit (legs)
+    // Get the oldest fruit (legs) - index 2 in deque
     pub fn get_legs_fruit(&self) -> Option<PowerUpType> {
-        if self.slots.len() >= 3 {
-            self.slots.get(2).copied()
-        } else if self.slots.len() >= 2 {
-            // If we only have 2 fruits, legs get the oldest one
-            self.slots.get(1).copied()
-        } else {
-            None
-        }
+        self.slots.get(2).copied()
     }
 }

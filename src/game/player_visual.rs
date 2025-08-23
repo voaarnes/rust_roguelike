@@ -73,13 +73,13 @@ fn setup_player_parts(
     );
     let layout_handle = layouts.add(layout);
     
-    // Spawn head
+    // Spawn head with default grey (index 0)
     let head_entity = commands.spawn((
         Sprite {
             image: texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: layout_handle.clone(),
-                index: 0, // Default grey head
+                index: 0,
             }),
             ..default()
         },
@@ -87,13 +87,13 @@ fn setup_player_parts(
         PlayerPartType { part_type: PartType::Head },
     )).id();
     
-    // Spawn chest
+    // Spawn chest with default grey (index 16)
     let chest_entity = commands.spawn((
         Sprite {
             image: texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: layout_handle.clone(),
-                index: 16, // Default grey chest
+                index: 16,
             }),
             ..default()
         },
@@ -101,13 +101,13 @@ fn setup_player_parts(
         PlayerPartType { part_type: PartType::Chest },
     )).id();
     
-    // Spawn legs
+    // Spawn legs with default grey (index 32)
     let legs_entity = commands.spawn((
         Sprite {
             image: texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: layout_handle.clone(),
-                index: 32, // Default grey legs
+                index: 32,
             }),
             ..default()
         },
@@ -115,24 +115,21 @@ fn setup_player_parts(
         PlayerPartType { part_type: PartType::Legs },
     )).id();
     
-    // Update PlayerParts
     player_parts.head_entity = Some(head_entity);
     player_parts.chest_entity = Some(chest_entity);
     player_parts.legs_entity = Some(legs_entity);
     player_parts.initialized = true;
     
-    // Make parts children of player
     commands.entity(player_entity).add_children(&[head_entity, chest_entity, legs_entity]);
     
     // Hide the original sprite
     player_sprite.color = Color::srgba(1.0, 1.0, 1.0, 0.0);
     
-    println!("Player parts setup complete! Head: {:?}, Chest: {:?}, Legs: {:?}", 
-             head_entity, chest_entity, legs_entity);
+    println!("Player parts setup complete!");
 }
 
 fn update_player_appearance(
-    player_query: Query<(&PlayerParts, &PowerUpSlots), With<Player>>,
+    player_query: Query<(&PlayerParts, &PowerUpSlots), (With<Player>, Changed<PowerUpSlots>)>,
     mut part_query: Query<&mut Sprite>,
 ) {
     for (player_parts, powerup_slots) in player_query.iter() {
@@ -140,32 +137,28 @@ fn update_player_appearance(
             continue;
         }
         
-        let head_fruit = powerup_slots.get_head_fruit();
-        let torso_fruit = powerup_slots.get_torso_fruit();
-        let legs_fruit = powerup_slots.get_legs_fruit();
+        // Get fruits based on their position in the queue
+        let head_fruit = powerup_slots.get_head_fruit();    // Newest (index 0)
+        let torso_fruit = powerup_slots.get_torso_fruit();  // Middle (index 1)
+        let legs_fruit = powerup_slots.get_legs_fruit();     // Oldest (index 2)
+        
+        println!("Updating appearance - Head: {:?}, Torso: {:?}, Legs: {:?}", 
+                 head_fruit, torso_fruit, legs_fruit);
         
         // Update head
         if let Some(head_entity) = player_parts.head_entity {
             if let Ok(mut sprite) = part_query.get_mut(head_entity) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
-                    let new_index = get_head_sprite_index(head_fruit);
-                    if atlas.index != new_index {
-                        atlas.index = new_index;
-                        println!("Updated head to index {} for fruit {:?}", new_index, head_fruit);
-                    }
+                    atlas.index = get_head_sprite_index(head_fruit);
                 }
             }
         }
         
-        // Update chest
+        // Update chest - FIX: Use torso_fruit, not head_fruit!
         if let Some(chest_entity) = player_parts.chest_entity {
             if let Ok(mut sprite) = part_query.get_mut(chest_entity) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
-                    let new_index = get_chest_sprite_index(torso_fruit);
-                    if atlas.index != new_index {
-                        atlas.index = new_index;
-                        println!("Updated chest to index {} for fruit {:?}", new_index, torso_fruit);
-                    }
+                    atlas.index = get_chest_sprite_index(torso_fruit);
                 }
             }
         }
@@ -174,43 +167,43 @@ fn update_player_appearance(
         if let Some(legs_entity) = player_parts.legs_entity {
             if let Ok(mut sprite) = part_query.get_mut(legs_entity) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
-                    let new_index = get_legs_sprite_index(legs_fruit);
-                    if atlas.index != new_index {
-                        atlas.index = new_index;
-                        println!("Updated legs to index {} for fruit {:?}", new_index, legs_fruit);
-                    }
+                    atlas.index = get_legs_sprite_index(legs_fruit);
                 }
             }
         }
     }
 }
 
+// Based on player_parts_guide.txt - Row 0
 fn get_head_sprite_index(powerup: Option<PowerUpType>) -> usize {
     match powerup {
-        Some(PowerUpType::SpeedBoost) => 1,
-        Some(PowerUpType::DamageBoost) => 3,
-        Some(PowerUpType::HealthBoost) => 5,
-        Some(PowerUpType::ShieldBoost) => 7,
-        None => 0,
+        Some(PowerUpType::SpeedBoost) => 1,      // Strawberry
+        Some(PowerUpType::DamageBoost) => 3,     // Mango
+        Some(PowerUpType::HealthBoost) => 5,     // Orange
+        Some(PowerUpType::ShieldBoost) => 7,     // Banana
+        None => 0,                                // Default grey
     }
 }
 
+// Based on player_parts_guide.txt - Row 2
 fn get_chest_sprite_index(powerup: Option<PowerUpType>) -> usize {
     match powerup {
-        Some(PowerUpType::SpeedBoost) => 17,
-        Some(PowerUpType::DamageBoost) => 19,
-        Some(PowerUpType::HealthBoost) => 21,
-        Some(PowerUpType::ShieldBoost) => 23,
-        None => 16,
+        Some(PowerUpType::SpeedBoost) => 17,     // Strawberry
+        Some(PowerUpType::DamageBoost) => 19,    // Mango
+        Some(PowerUpType::HealthBoost) => 21,    // Orange
+        Some(PowerUpType::ShieldBoost) => 23,    // Banana
+        None => 16,                               // Default grey
     }
 }
 
+// Based on player_parts_guide.txt - Row 4
 fn get_legs_sprite_index(powerup: Option<PowerUpType>) -> usize {
     match powerup {
-        Some(PowerUpType::SpeedBoost) => 33,
-        Some(PowerUpType::DamageBoost) => 35,
-        Some(PowerUpType::HealthBoost) => 37,
-        Some(PowerUpType::ShieldBoost) => 39,
-        None => 32,
+        Some(PowerUpType::SpeedBoost) => 33,     // Strawberry
+        Some(PowerUpType::DamageBoost) => 35,    // Mango
+        Some(PowerUpType::HealthBoost) => 37,    // Orange
+        Some(PowerUpType::ShieldBoost) => 39,    // Banana
+        None => 32,                               // Default grey
     }
 }
+
