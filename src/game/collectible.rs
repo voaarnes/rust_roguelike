@@ -1,5 +1,3 @@
-// src/game/collectible.rs
-
 use bevy::prelude::*;
 use crate::game::player::{Player, PlayerStats};
 use crate::game::movement::Collider;
@@ -58,10 +56,7 @@ fn handle_collectible_pickup(
                             _ => PowerUpType::SpeedBoost,
                         };
         
-                        // Use the new add_fruit method to preserve fruit type
-                        powerup_slots.add_fruit(fruit_type, powerup);
-                        
-                        // Use the new add_fruit method to preserve fruit type
+                        // FIX: Only call add_fruit once!
                         if let Some(dropped) = powerup_slots.add_fruit(fruit_type, powerup) {
                             println!("Gained power-up: {:?}, dropped: {:?}", powerup, dropped.powerup);
                         } else {
