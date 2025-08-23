@@ -70,7 +70,6 @@ fn handle_collectible_pickup(
                     }
                 }
                 CollectibleType::HealthPotion => {
-                    // Handle health potion
                     println!("Picked up health potion!");
                 }
                 _ => {}

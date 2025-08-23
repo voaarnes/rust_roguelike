@@ -129,6 +129,7 @@ fn spawn_wave_system(
     }
 }
 
+
 fn spawn_collectibles(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -137,10 +138,9 @@ fn spawn_collectibles(
     collectible_q: Query<&Transform, With<crate::game::collectible::Collectible>>,
     _time: Res<Time>,
 ) {
-    // Only spawn collectibles if there aren't too many already
     if collectible_q.iter().count() < 10 {
         if let Ok(player_tf) = player_q.single() {
-            if rand::random::<f32>() < 0.02 { // 2% chance per frame
+            if rand::random::<f32>() < 0.02 {
                 let mut rng = rand::thread_rng();
                 let angle = rng.gen_range(0.0..std::f32::consts::TAU);
                 let distance = rng.gen_range(100.0..300.0);
@@ -149,18 +149,22 @@ fn spawn_collectibles(
                     player_tf.translation.y + angle.sin() * distance,
                     2.0,
                 );
-                
-                // Spawn fruit collectible
-                let texture = asset_server.load("sprites/fruits.png");
+
+                // Texture atlas has 8 frames (0..7)
+                let texture = asset_server.load("sprites/meyveler.png");
                 let layout = TextureAtlasLayout::from_grid(
                     UVec2::new(32, 32),
-                    8, 1,
+                    7, 1, 
                     None, None,
                 );
                 let layout_handle = layouts.add(layout);
-                
-                let fruit_type = rng.gen_range(0..8);
-                
+
+                let fruit_type = rng.gen_range(0..7);
+
+                println!("fruit spawn {}", fruit_type);
+
+                let scale = if fruit_type == 6 { 1.0 } else { 2.0 }; // double size except #7
+
                 commands.spawn((
                     crate::game::collectible::Collectible {
                         collectible_type: crate::game::collectible::CollectibleType::Fruit(fruit_type),
@@ -174,7 +178,9 @@ fn spawn_collectibles(
                         }),
                         ..default()
                     },
-                    Transform::from_translation(spawn_pos),
+
+                    // Scale only the visuals; collider below stays the same size.
+                    Transform::from_translation(spawn_pos).with_scale(Vec3::splat(scale)),
                     crate::game::movement::Collider { size: Vec2::splat(24.0) },
                 ));
             }
