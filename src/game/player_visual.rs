@@ -1,7 +1,8 @@
+// src/game/player_visual.rs
 
 use bevy::prelude::*;
 use crate::game::player::Player;
-use crate::entities::powerup::{PowerUpSlots, PowerUpType};
+use crate::entities::powerup::PowerUpSlots;
 
 pub struct PlayerVisualPlugin;
 
@@ -137,12 +138,12 @@ fn update_player_appearance(
             continue;
         }
         
-        // Get fruits based on their position in the queue
+        // Get actual fruit types (not power-up types) based on their position in the queue
         let head_fruit = powerup_slots.get_head_fruit();    // Newest (index 0)
         let torso_fruit = powerup_slots.get_torso_fruit();  // Middle (index 1)
         let legs_fruit = powerup_slots.get_legs_fruit();     // Oldest (index 2)
         
-        println!("Updating appearance - Head: {:?}, Torso: {:?}, Legs: {:?}", 
+        println!("Updating appearance - Head fruit: {:?}, Torso fruit: {:?}, Legs fruit: {:?}", 
                  head_fruit, torso_fruit, legs_fruit);
         
         // Update head
@@ -154,7 +155,7 @@ fn update_player_appearance(
             }
         }
         
-        // Update chest - FIX: Use torso_fruit, not head_fruit!
+        // Update chest with torso fruit
         if let Some(chest_entity) = player_parts.chest_entity {
             if let Ok(mut sprite) = part_query.get_mut(chest_entity) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
@@ -174,36 +175,48 @@ fn update_player_appearance(
     }
 }
 
+// Map fruit types directly to sprite indices
 // Based on player_parts_guide.txt - Row 0
-fn get_head_sprite_index(powerup: Option<PowerUpType>) -> usize {
-    match powerup {
-        Some(PowerUpType::SpeedBoost) => 1,      // Strawberry
-        Some(PowerUpType::DamageBoost) => 3,     // Mango
-        Some(PowerUpType::HealthBoost) => 5,     // Orange
-        Some(PowerUpType::ShieldBoost) => 7,     // Banana
-        None => 0,                                // Default grey
+fn get_head_sprite_index(fruit_type: Option<u8>) -> usize {
+    match fruit_type {
+        Some(0) => 1,  // Strawberry
+        Some(1) => 2,  // Pear
+        Some(2) => 3,  // Mango
+        Some(3) => 4,  // Apple
+        Some(4) => 5,  // Orange
+        Some(5) => 6,  // Grape
+        Some(6) => 7,  // Banana
+        Some(7) => 8,  // Cherry (Row 1, index 8)
+        _ => 0,        // Default grey
     }
 }
 
 // Based on player_parts_guide.txt - Row 2
-fn get_chest_sprite_index(powerup: Option<PowerUpType>) -> usize {
-    match powerup {
-        Some(PowerUpType::SpeedBoost) => 17,     // Strawberry
-        Some(PowerUpType::DamageBoost) => 19,    // Mango
-        Some(PowerUpType::HealthBoost) => 21,    // Orange
-        Some(PowerUpType::ShieldBoost) => 23,    // Banana
-        None => 16,                               // Default grey
+fn get_chest_sprite_index(fruit_type: Option<u8>) -> usize {
+    match fruit_type {
+        Some(0) => 17, // Strawberry
+        Some(1) => 18, // Pear
+        Some(2) => 19, // Mango
+        Some(3) => 20, // Apple
+        Some(4) => 21, // Orange
+        Some(5) => 22, // Grape
+        Some(6) => 23, // Banana
+        Some(7) => 24, // Cherry (Row 3, index 24)
+        _ => 16,       // Default grey
     }
 }
 
 // Based on player_parts_guide.txt - Row 4
-fn get_legs_sprite_index(powerup: Option<PowerUpType>) -> usize {
-    match powerup {
-        Some(PowerUpType::SpeedBoost) => 33,     // Strawberry
-        Some(PowerUpType::DamageBoost) => 35,    // Mango
-        Some(PowerUpType::HealthBoost) => 37,    // Orange
-        Some(PowerUpType::ShieldBoost) => 39,    // Banana
-        None => 32,                               // Default grey
+fn get_legs_sprite_index(fruit_type: Option<u8>) -> usize {
+    match fruit_type {
+        Some(0) => 33, // Strawberry
+        Some(1) => 34, // Pear
+        Some(2) => 35, // Mango
+        Some(3) => 36, // Apple
+        Some(4) => 37, // Orange
+        Some(5) => 38, // Grape
+        Some(6) => 39, // Banana
+        Some(7) => 40, // Cherry (Row 5, index 40)
+        _ => 32,       // Default grey
     }
 }
-
