@@ -34,7 +34,7 @@ pub struct AnimatedTile {
     pub timer: Timer,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Tile {
     pub tile_type: TileType,
     pub walkable: bool,

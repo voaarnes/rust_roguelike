@@ -47,6 +47,8 @@ fn handle_collectible_pickup(
                     player_stats.coins_collected += collectible.value as u32;
                     println!("Picked up {} coins! Total: {}", collectible.value, player_stats.coins_collected);
                 }
+
+
                 CollectibleType::Fruit(fruit_type) => {
                     if let Ok(mut powerup_slots) = powerup_q.single_mut() {
                         let powerup = match fruit_type {
@@ -56,14 +58,12 @@ fn handle_collectible_pickup(
                             6 | 7 => PowerUpType::ShieldBoost,     // Banana, Cherry
                             _ => PowerUpType::SpeedBoost,
                         };
-                        
-                        // Find empty slot and add powerup
-                        for slot in powerup_slots.slots.iter_mut() {
-                            if slot.is_none() {
-                                *slot = Some(powerup);
-                                println!("Gained power-up: {:?}", powerup);
-                                break;
-                            }
+        
+                        // Now correctly handles Option<PowerUpType> return
+                        if let Some(dropped) = powerup_slots.add_powerup(powerup) {
+                            println!("Gained power-up: {:?}, dropped: {:?}", powerup, dropped);
+                        } else {
+                            println!("Gained power-up: {:?}", powerup);
                         }
                     }
                 }

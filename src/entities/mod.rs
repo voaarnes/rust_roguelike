@@ -6,6 +6,9 @@ pub mod collectible {
     pub use crate::game::collectible::*;
 }
 
+
+
+// src/entities/mod.rs
 pub mod powerup {
     use bevy::prelude::*;
     
@@ -35,26 +38,50 @@ pub mod powerup {
             self.slots.clone()
         }
         
-        pub fn add_powerup(&mut self, powerup: PowerUpType) -> bool {
+        // Fixed: Now returns Option<PowerUpType> for the dropped item
+        pub fn add_powerup(&mut self, powerup: PowerUpType) -> Option<PowerUpType> {
             // Find first empty slot
             for slot in &mut self.slots {
                 if slot.is_none() {
                     *slot = Some(powerup);
-                    return true;
+                    return None; // Nothing was dropped
                 }
             }
             
             // If no empty slot, replace the oldest (first) one
-            if !self.slots.is_empty() {
-                // Shift all elements left and add new one at the end
-                for i in 0..self.slots.len() - 1 {
-                    self.slots[i] = self.slots[i + 1];
-                }
-                self.slots[self.slots.len() - 1] = Some(powerup);
-                return true;
+            let dropped = self.slots[0]; // Save what we're dropping
+            
+            // Shift all elements left
+            for i in 0..self.slots.len() - 1 {
+                self.slots[i] = self.slots[i + 1];
             }
             
-            false
+            // Add new powerup at the end
+            let last_idx = self.slots.len() - 1;
+            self.slots[last_idx] = Some(powerup);
+            
+            dropped // Return what was dropped
+        }
+        
+        // Add missing methods
+        pub fn get_head_fruit(&self) -> Option<PowerUpType> {
+            // Head is the newest (last added)
+            for i in (0..self.slots.len()).rev() {
+                if self.slots[i].is_some() {
+                    return self.slots[i];
+                }
+            }
+            None
+        }
+        
+        pub fn get_legs_fruit(&self) -> Option<PowerUpType> {
+            // Legs is the oldest (first non-empty)
+            for i in 0..self.slots.len() {
+                if self.slots[i].is_some() {
+                    return self.slots[i];
+                }
+            }
+            None
         }
     }
 }

@@ -108,9 +108,10 @@ fn spawn_level(
                 '~' => Some(TileType::Water),
                 _ => None,
             };
-            
+
             if let Some(tile_type) = tile_type {
                 let tile = Tile::new(tile_type);
+                let tile_walkable = tile.walkable;  // Save walkable state before move
 
                 let world_pos = Vec3::new(
                     origin_x + x as f32 * config.tile_size,
@@ -128,9 +129,14 @@ fn spawn_level(
                         ..default()
                     },
                     Transform::from_translation(world_pos),
-                    tile,
+                    tile,  // tile is moved here
                 ));
 
+                // Use the saved walkable state instead of tile.walkable
+                if !tile_walkable {
+                    entity_commands.insert(Wall);
+                    entity_commands.insert(Collider { size: Vec2::splat(config.tile_size) });
+                }
                 // Add AnimatedTile for water, lava, and portals
                 match tile_type {
                     TileType::Water => {
@@ -197,7 +203,7 @@ pub fn cleanup_level(
 }
 
 pub fn despawn_level(
-    mut commands: Commands,
+    commands: Commands,
     tiles: Query<Entity, With<Tile>>,
 ) {
     cleanup_level(commands, tiles);
