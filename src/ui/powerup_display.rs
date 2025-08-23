@@ -53,9 +53,9 @@ fn update_powerup_display(
             if slot_ui.slot_index < slots_vec.len() {
                 *bg_color = match slots_vec[slot_ui.slot_index] {
                     Some(PowerUpType::SpeedBoost) => BackgroundColor(Color::linear_rgb(1.0, 0.0, 0.0)),    // Red for strawberry
-                    Some(PowerUpType::DamageBoost) => BackgroundColor(Color::linear_rgb(1.0, 0.5, 0.0)),    // Orange for mango
-                    Some(PowerUpType::HealthBoost) => BackgroundColor(Color::linear_rgb(1.0, 0.65, 0.0)),   // Orange 
-                    Some(PowerUpType::ShieldBoost) => BackgroundColor(Color::linear_rgb(1.0, 1.0, 0.0)),    // Yellow for banana
+                    Some(PowerUpType::DamageBoost) => BackgroundColor(Color::linear_rgb(1.0, 0.5, 0.0)),    // Orange for mango/pineapple
+                    Some(PowerUpType::HealthBoost) => BackgroundColor(Color::linear_rgb(1.0, 0.65, 0.0)),   // Orange for apple/carrot
+                    Some(PowerUpType::ShieldBoost) => BackgroundColor(Color::linear_rgb(1.0, 1.0, 0.0)),    // Yellow for coconut
                     None => BackgroundColor(Color::linear_rgba(0.2, 0.2, 0.2, 0.8)),
                 };
             } else {

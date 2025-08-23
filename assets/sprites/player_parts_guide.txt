@@ -8,42 +8,39 @@ Row 0 (indices 0-7): Head variations for fruits
 - 1: Strawberry head (red with seeds pattern)
 - 2: Pear head (green/yellow gradient)
 - 3: Mango head (orange/red gradient)
-- 4: Apple head (shiny red/green)
-- 5: Orange head (bright orange with texture)
-- 6: Grape head (purple cluster pattern) - DEFAULT
-- 7: Banana head (yellow with slight curve)
+- 4: Pineapple head (yellow with diamond pattern)
+- 5: Apple head (shiny red/green)
+- 6: Carrot head (orange with leafy top)
+- 7: Coconut head (brown with fibrous texture)
 
 Row 1 (indices 8-15): More head variations
-- 8: Cherry head (dark red with stem detail)
-- 9-15: Future expansions or animation frames
+- 8-15: Future expansions or animation frames
 
 Row 2 (indices 16-23): Chest/torso variations
 - 16: Default chest
 - 17: Strawberry chest (red with seeds pattern)
 - 18: Pear chest (green/yellow gradient)
 - 19: Mango chest (orange/red gradient)
-- 20: Apple chest (shiny red/green)
-- 21: Orange chest (bright orange with texture)
-- 22: Grape chest (purple cluster pattern) - DEFAULT
-- 23: Banana chest (yellow with slight curve)
+- 20: Pineapple chest (yellow with diamond pattern)
+- 21: Apple chest (shiny red/green)
+- 22: Carrot chest (orange with leafy top)
+- 23: Coconut chest (brown with fibrous texture)
 
 Row 3 (indices 24-31): More chest variations
-- 24: Cherry chest (dark red with stem detail)
-- 25-31: Future expansions or animation frames
+- 24-31: Future expansions or animation frames
 
 Row 4 (indices 32-39): Legs variations
 - 32: Default legs
 - 33: Strawberry legs (red with seeds pattern)
 - 34: Pear legs (green/yellow gradient)
 - 35: Mango legs (orange/red gradient)
-- 36: Apple legs (shiny red/green)
-- 37: Orange legs (bright orange with texture)
-- 38: Grape legs (purple cluster pattern) - DEFAULT
-- 39: Banana legs (yellow with slight curve)
+- 36: Pineapple legs (yellow with diamond pattern)
+- 37: Apple legs (shiny red/green)
+- 38: Carrot legs (orange with leafy top)
+- 39: Coconut legs (brown with fibrous texture)
 
 Row 5 (indices 40-47): More legs variations
-- 40: Cherry legs (dark red with stem detail)
-- 41-47: Future expansions or animation frames
+- 40-47: Future expansions or animation frames
 
 Each fruit should have a distinct visual theme that carries through head, chest, and legs.
-The grape design (indices 6, 22, 38) should be used as the default when no fruits are equipped.
+The default design (indices 0, 16, 32) should be used when no fruits are equipped.

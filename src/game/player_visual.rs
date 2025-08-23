@@ -182,11 +182,10 @@ fn get_head_sprite_index(fruit_type: Option<u8>) -> usize {
         Some(0) => 1,  // Strawberry
         Some(1) => 2,  // Pear
         Some(2) => 3,  // Mango
-        Some(3) => 4,  // Apple
-        Some(4) => 5,  // Orange
-        Some(5) => 6,  // Grape
-        Some(6) => 7,  // Banana
-        Some(7) => 8,  // Cherry (Row 1, index 8)
+        Some(3) => 4,  // Pineapple
+        Some(4) => 5,  // Apple
+        Some(5) => 6,  // Carrot
+        Some(6) => 7,  // Coconut
         _ => 0,        // Default grey
     }
 }
@@ -197,11 +196,10 @@ fn get_chest_sprite_index(fruit_type: Option<u8>) -> usize {
         Some(0) => 17, // Strawberry
         Some(1) => 18, // Pear
         Some(2) => 19, // Mango
-        Some(3) => 20, // Apple
-        Some(4) => 21, // Orange
-        Some(5) => 22, // Grape
-        Some(6) => 23, // Banana
-        Some(7) => 24, // Cherry (Row 3, index 24)
+        Some(3) => 20, // Pineapple
+        Some(4) => 21, // Apple
+        Some(5) => 22, // Carrot
+        Some(6) => 23, // Coconut
         _ => 16,       // Default grey
     }
 }
@@ -212,11 +210,10 @@ fn get_legs_sprite_index(fruit_type: Option<u8>) -> usize {
         Some(0) => 33, // Strawberry
         Some(1) => 34, // Pear
         Some(2) => 35, // Mango
-        Some(3) => 36, // Apple
-        Some(4) => 37, // Orange
-        Some(5) => 38, // Grape
-        Some(6) => 39, // Banana
-        Some(7) => 40, // Cherry (Row 5, index 40)
+        Some(3) => 36, // Pineapple
+        Some(4) => 37, // Apple
+        Some(5) => 38, // Carrot
+        Some(6) => 39, // Coconut
         _ => 32,       // Default grey
     }
 }

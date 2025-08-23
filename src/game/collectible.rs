@@ -53,9 +53,9 @@ fn handle_collectible_pickup(
                     if let Ok(mut powerup_slots) = powerup_q.single_mut() {
                         let powerup = match fruit_type {
                             0 | 1 => PowerUpType::SpeedBoost,      // Strawberry, Pear
-                            2 | 3 => PowerUpType::DamageBoost,     // Mango, Apple
-                            4 | 5 => PowerUpType::HealthBoost,     // Orange, Grape
-                            6 | 7 => PowerUpType::ShieldBoost,     // Banana, Cherry
+                            2 | 3 => PowerUpType::DamageBoost,     // Mango, Pineapple
+                            4 | 5 => PowerUpType::HealthBoost,     // Apple, Carrot
+                            6 => PowerUpType::ShieldBoost,         // Coconut
                             _ => PowerUpType::SpeedBoost,
                         };
         

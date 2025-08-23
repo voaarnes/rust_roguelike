@@ -19,9 +19,9 @@ pub struct FruitSlot {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PowerUpType {
     SpeedBoost,      // Strawberry/Pear
-    DamageBoost,     // Mango/Apple  
-    HealthBoost,     // Orange/Grape
-    ShieldBoost,     // Banana/Cherry
+    DamageBoost,     // Mango/Pineapple  
+    HealthBoost,     // Apple/Carrot
+    ShieldBoost,     // Coconut
 }
 
 impl PowerUpSlots {
@@ -63,8 +63,8 @@ impl PowerUpSlots {
         let fruit_type = match powerup {
             PowerUpType::SpeedBoost => 0,   // Strawberry
             PowerUpType::DamageBoost => 2,  // Mango
-            PowerUpType::HealthBoost => 4,  // Orange
-            PowerUpType::ShieldBoost => 6,  // Banana
+            PowerUpType::HealthBoost => 4,  // Apple
+            PowerUpType::ShieldBoost => 6,  // Coconut
         };
         
         self.add_fruit(fruit_type, powerup).map(|slot| slot.powerup)
