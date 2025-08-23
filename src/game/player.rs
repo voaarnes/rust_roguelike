@@ -1,9 +1,9 @@
-use crate::game::player_visual::PlayerParts;
 use bevy::prelude::*;
 use crate::game::animation::{AnimationController, AnimationClip};
 use crate::entities::powerup::PowerUpSlots;
 use crate::game::movement::{Velocity, Collider};
 use crate::game::combat::{Health, CombatStats};
+use crate::game::player_visual::PlayerParts;
 
 pub struct PlayerPlugin;
 
@@ -127,12 +127,11 @@ fn spawn_player(
                 layout: layout_handle,
                 index: 0,
             }),
-            // Keep visible for now - we'll hide it once parts are working
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 10.0),
         anim_controller,
-        PlayerParts::default(), // Add this component
+        PlayerParts::default(),  // ADD THIS COMPONENT
     ));
     
     println!("Player spawned with PowerUpSlots and PlayerParts!");

@@ -9,6 +9,7 @@ pub mod abilities;
 pub mod items;
 pub mod animation;
 pub mod audio;
+pub mod player_visual;
 
 use bevy::prelude::*;
 
@@ -19,6 +20,7 @@ impl Plugin for GamePlugin {
         app
             .add_plugins((
                 player::PlayerPlugin,
+                player_visual::PlayerVisualPlugin,
                 enemy::EnemyPlugin,
                 collectible::CollectiblePlugin,
                 combat::CombatPlugin,
@@ -33,5 +35,3 @@ impl Plugin for GamePlugin {
     }
 }
 
-// Add player visual module
-pub mod player_visual;
