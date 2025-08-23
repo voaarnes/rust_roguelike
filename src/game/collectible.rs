@@ -47,7 +47,6 @@ fn handle_collectible_pickup(
             match collectible.collectible_type {
                 CollectibleType::Coin => {
                     player_stats.coins_collected += collectible.value as u32;
-                    println!("Picked up {} coins! Total: {}", collectible.value, player_stats.coins_collected);
                 }
                 CollectibleType::Fruit(fruit_type) => {
                     if let Ok(mut powerup_slots) = powerup_q.single_mut() {
@@ -59,8 +58,9 @@ fn handle_collectible_pickup(
                             _ => PowerUpType::SpeedBoost,
                         };
         
-                        println!("Picking up fruit type {} -> {:?}", fruit_type, powerup);
-        
+                        // Use the new add_fruit method to preserve fruit type
+                        powerup_slots.add_fruit(fruit_type, powerup);
+                        
                         // Use the new add_fruit method to preserve fruit type
                         if let Some(dropped) = powerup_slots.add_fruit(fruit_type, powerup) {
                             println!("Gained power-up: {:?}, dropped: {:?}", powerup, dropped.powerup);

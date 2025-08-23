@@ -1,23 +1,27 @@
+// Core game state management
+
 use bevy::prelude::*;
 
+/// Main game states that control the overall flow of the application
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameState {
     #[default]
-    MainMenu,
-    Playing,
-    Paused,
-    GameOver,
-    Victory,
+    MainMenu,    // Title screen and menu
+    Playing,     // Active gameplay
+    Paused,      // Game paused
+    GameOver,    // Player died
+    Victory,     // Player won (future use)
 }
 
+/// Sub-states within the Playing state for more granular control
 #[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub enum PlayState {
     #[default]
-    Exploring,
-    Combat,
-    Shopping,
-    Dialogue,
-    Transitioning,
+    Exploring,      // Normal gameplay
+    Combat,         // Combat encounters (future use)
+    Shopping,       // Item shop (future use)
+    Dialogue,       // NPC dialogue (future use)
+    Transitioning,  // Level transitions
 }
 
 #[derive(Resource)]

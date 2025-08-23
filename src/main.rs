@@ -1,3 +1,10 @@
+/*!
+ * Rust Roguelike - Survivor
+ * 
+ * A Vampire Survivors-inspired roguelike game built with Bevy 0.16.
+ * Players collect fruit power-ups to survive waves of enemies.
+ */
+
 mod core;
 mod game;
 mod entities; // Bridge module for compatibility
@@ -35,6 +42,3 @@ fn main() {
         .run();
 }
 
-// Add this to your main.rs plugin list
-// .add_plugins(crate::world::collision::TileCollisionPlugin)
-// .add_plugins(crate::game::player_visual::PlayerVisualPlugin)

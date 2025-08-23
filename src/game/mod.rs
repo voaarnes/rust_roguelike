@@ -1,18 +1,21 @@
-pub mod player;
-pub mod enemy;
-pub mod collectible;
-pub mod combat;
-pub mod movement;
-pub mod spawning;
-pub mod progression;
-pub mod abilities;
-pub mod items;
-pub mod animation;
-pub mod audio;
-pub mod player_visual;
+// Game module - Contains all gameplay-related systems and components
+
+pub mod player;          // Player entity and movement systems
+pub mod enemy;           // Enemy AI and spawning
+pub mod collectible;     // Fruit and coin collection
+pub mod combat;          // Combat mechanics and damage
+pub mod movement;        // Movement utilities
+pub mod spawning;        // Wave-based enemy spawning
+pub mod progression;     // Level progression system
+pub mod abilities;       // Player abilities (future expansion)
+pub mod items;           // Item system (future expansion)
+pub mod animation;       // Animation controller
+pub mod audio;           // Game audio systems
+pub mod player_visual;   // Player visual customization based on fruits
 
 use bevy::prelude::*;
 
+/// Plugin that registers all game-related systems
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {

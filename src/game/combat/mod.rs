@@ -110,18 +110,13 @@ pub fn handle_combat(
             if can_take_damage {
                 let damage = (enemy_stats.damage - player_stats.armor).max(1);
                 player_health.take_damage(damage);
-                println!("Player took {} damage! Health: {}/{}", damage, player_health.current, player_health.max);
                 
-                // Add damage immunity
+                // Add damage immunity period
                 commands.entity(player_entity).insert(LastDamageTime::default());
             }
             
-            // Player damages enemy (on attack input)
-            // For now, continuous damage when touching
+            // Player damages enemy (continuous damage when touching)
             enemy_health.take_damage(1);
-            if enemy_health.is_dead() {
-                println!("Enemy defeated!");
-            }
         }
     }
 }

@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use crate::game::player::Player;
 use crate::entities::powerup::PowerUpSlots;
 
+/// Plugin that manages player visual appearance based on equipped fruits
 pub struct PlayerVisualPlugin;
 
 impl Plugin for PlayerVisualPlugin {
@@ -13,11 +14,10 @@ impl Plugin for PlayerVisualPlugin {
                 setup_player_parts.run_if(player_needs_parts),
                 update_player_appearance,
             ).chain());
-        
-        println!("PlayerVisualPlugin initialized!");
     }
 }
 
+/// Component tracking the player's visual parts (head, chest, legs)
 #[derive(Component, Default, Debug)]
 pub struct PlayerParts {
     pub head_entity: Option<Entity>,
@@ -26,6 +26,7 @@ pub struct PlayerParts {
     pub initialized: bool,
 }
 
+/// Marker component to identify which body part a sprite represents
 #[derive(Component)]
 pub struct PlayerPartType {
     pub part_type: PartType,
@@ -48,14 +49,13 @@ fn player_needs_parts(
     }
 }
 
+/// System to set up player visual parts when a player entity is created
 fn setup_player_parts(
     mut commands: Commands,
     mut player_query: Query<(Entity, &mut PlayerParts, &mut Sprite), With<Player>>,
     asset_server: Res<AssetServer>,
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    println!("Attempting to setup player parts...");
-    
     let Ok((player_entity, mut player_parts, mut player_sprite)) = player_query.single_mut() else {
         return;
     };
@@ -63,8 +63,6 @@ fn setup_player_parts(
     if player_parts.initialized {
         return;
     }
-    
-    println!("Setting up player parts for entity {:?}", player_entity);
     
     let texture = asset_server.load("sprites/player_parts.png");
     let layout = TextureAtlasLayout::from_grid(
@@ -123,12 +121,11 @@ fn setup_player_parts(
     
     commands.entity(player_entity).add_children(&[head_entity, chest_entity, legs_entity]);
     
-    // Hide the original sprite
+    // Hide the original sprite since we're using parts now
     player_sprite.color = Color::srgba(1.0, 1.0, 1.0, 0.0);
-    
-    println!("Player parts setup complete!");
 }
 
+/// System to update player appearance based on equipped fruits
 fn update_player_appearance(
     player_query: Query<(&PlayerParts, &PowerUpSlots), (With<Player>, Changed<PowerUpSlots>)>,
     mut part_query: Query<&mut Sprite>,
@@ -138,15 +135,12 @@ fn update_player_appearance(
             continue;
         }
         
-        // Get actual fruit types (not power-up types) based on their position in the queue
+        // Get fruit types for visual updates based on slot position
         let head_fruit = powerup_slots.get_head_fruit();    // Newest (index 0)
         let torso_fruit = powerup_slots.get_torso_fruit();  // Middle (index 1)
         let legs_fruit = powerup_slots.get_legs_fruit();     // Oldest (index 2)
         
-        println!("Updating appearance - Head fruit: {:?}, Torso fruit: {:?}, Legs fruit: {:?}", 
-                 head_fruit, torso_fruit, legs_fruit);
-        
-        // Update head
+        // Update head sprite
         if let Some(head_entity) = player_parts.head_entity {
             if let Ok(mut sprite) = part_query.get_mut(head_entity) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
@@ -155,7 +149,7 @@ fn update_player_appearance(
             }
         }
         
-        // Update chest with torso fruit
+        // Update chest sprite
         if let Some(chest_entity) = player_parts.chest_entity {
             if let Ok(mut sprite) = part_query.get_mut(chest_entity) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
@@ -164,7 +158,7 @@ fn update_player_appearance(
             }
         }
         
-        // Update legs
+        // Update legs sprite
         if let Some(legs_entity) = player_parts.legs_entity {
             if let Ok(mut sprite) = part_query.get_mut(legs_entity) {
                 if let Some(atlas) = &mut sprite.texture_atlas {
@@ -175,8 +169,7 @@ fn update_player_appearance(
     }
 }
 
-// Map fruit types directly to sprite indices
-// Based on player_parts_guide.txt - Row 0
+/// Map fruit types to head sprite indices (Row 0 in sprite sheet)
 fn get_head_sprite_index(fruit_type: Option<u8>) -> usize {
     match fruit_type {
         Some(0) => 1,  // Strawberry
@@ -190,7 +183,7 @@ fn get_head_sprite_index(fruit_type: Option<u8>) -> usize {
     }
 }
 
-// Based on player_parts_guide.txt - Row 2
+/// Map fruit types to chest sprite indices (Row 2 in sprite sheet)
 fn get_chest_sprite_index(fruit_type: Option<u8>) -> usize {
     match fruit_type {
         Some(0) => 17, // Strawberry
@@ -204,7 +197,7 @@ fn get_chest_sprite_index(fruit_type: Option<u8>) -> usize {
     }
 }
 
-// Based on player_parts_guide.txt - Row 4
+/// Map fruit types to legs sprite indices (Row 4 in sprite sheet)
 fn get_legs_sprite_index(fruit_type: Option<u8>) -> usize {
     match fruit_type {
         Some(0) => 33, // Strawberry

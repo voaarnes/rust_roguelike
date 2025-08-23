@@ -19,16 +19,15 @@ fn handle_experience() {
     // Experience and leveling logic
 }
 
+/// System to check if player should progress to the next level
 fn check_level_progression(
     wave_manager: Res<WaveManager>,
     mut game_stats: ResMut<GameStats>,
     _next_state: ResMut<NextState<GameState>>,
 ) {
-    // Progress to next level after defeating boss waves
+    // Progress to next level after defeating boss waves (every 5th wave)
     if wave_manager.current_wave > 0 && wave_manager.current_wave % 5 == 0 && wave_manager.wave_complete {
         game_stats.current_level += 1;
-        println!("Progressed to level {}!", game_stats.current_level);
-        
         // Could transition to a level selection screen or continue
         // For now, just continue playing
     }

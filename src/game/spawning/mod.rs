@@ -82,8 +82,6 @@ fn spawn_wave_system(
         wave_manager.boss_spawned = false;
         wave_manager.wave_timer.reset();
         
-        println!("Starting wave {}", wave_manager.current_wave);
-        
         // Boss wave every 5 waves
         if wave_manager.current_wave % 5 == 0 {
             wave_manager.boss_spawned = true;
@@ -92,7 +90,6 @@ fn spawn_wave_system(
                     position: player_tf.translation + Vec3::new(300.0, 0.0, 3.0),
                     boss_type: choose_boss_type(wave_manager.current_wave),
                 });
-                println!("Spawning boss!");
             }
         }
     }
@@ -160,10 +157,7 @@ fn spawn_collectibles(
                 let layout_handle = layouts.add(layout);
 
                 let fruit_type = rng.gen_range(0..7);
-
-                println!("fruit spawn {}", fruit_type);
-
-                let scale = if fruit_type == 6 { 1.0 } else { 2.0 }; // double size except #7
+                let scale = if fruit_type == 6 { 1.0 } else { 2.0 }; // Coconut is smaller
 
                 commands.spawn((
                     crate::game::collectible::Collectible {

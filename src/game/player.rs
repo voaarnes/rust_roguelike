@@ -131,12 +131,11 @@ fn spawn_player(
         },
         Transform::from_xyz(0.0, 0.0, 10.0),
         anim_controller,
-        PlayerParts::default(),  // ADD THIS COMPONENT
+        PlayerParts::default(),
     ));
-    
-    println!("Player spawned with PowerUpSlots and PlayerParts!");
 }
 
+/// System to handle player input and movement
 fn player_input_system(
     mut player_q: Query<(&mut Velocity, &mut AnimationController, &PlayerController), With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,

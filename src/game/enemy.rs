@@ -275,11 +275,10 @@ fn update_enemy_behavior(
     _time: Res<Time>,
 ) {
     for (mut boss, mut enemy, health) in boss_q.iter_mut() {
-        // Boss gets more aggressive at low health
+        // Boss gets more aggressive at low health - enter phase 2
         if health.percentage() < 0.3 && boss.phase == 1 {
             boss.phase = 2;
             enemy.move_speed *= 1.5;
-            println!("Boss entered phase 2!");
         }
     }
 }
