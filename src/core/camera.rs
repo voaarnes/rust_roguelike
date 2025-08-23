@@ -11,7 +11,7 @@ pub struct MainCamera {
 impl Default for MainCamera {
     fn default() -> Self {
         Self {
-            smoothing: 5.0,
+            smoothing: 8.0, // More responsive camera for mobile
             offset: Vec2::ZERO,
             bounds: None,
         }

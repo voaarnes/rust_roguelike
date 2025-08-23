@@ -23,7 +23,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Rust Roguelike - Survivor".into(),
-                resolution: (1280.0, 720.0).into(),
+                resolution: (360.0, 640.0).into(), // Phone dimensions (9:16 aspect ratio)
                 present_mode: PresentMode::AutoVsync,
                 fit_canvas_to_parent: true,
                 ..default()

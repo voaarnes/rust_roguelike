@@ -64,21 +64,21 @@ fn setup_player_parts(
         return;
     }
     
-    let texture = asset_server.load("sprites/player_parts.png");
+    let texture = asset_server.load("sprites/playe_tmp_sprite.png");
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(32, 32),
-        8, 6,
+        7, 3,
         None, None,
     );
     let layout_handle = layouts.add(layout);
     
-    // Spawn head with default grey (index 0)
+    // Spawn head with default (first column, row 0)
     let head_entity = commands.spawn((
         Sprite {
             image: texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: layout_handle.clone(),
-                index: 0,
+                index: 0, // Default head (column 0, row 0)
             }),
             ..default()
         },
@@ -86,13 +86,13 @@ fn setup_player_parts(
         PlayerPartType { part_type: PartType::Head },
     )).id();
     
-    // Spawn chest with default grey (index 16)
+    // Spawn chest with default (first column, row 1)
     let chest_entity = commands.spawn((
         Sprite {
             image: texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: layout_handle.clone(),
-                index: 16,
+                index: 7, // Default chest (column 0, row 1)
             }),
             ..default()
         },
@@ -100,13 +100,13 @@ fn setup_player_parts(
         PlayerPartType { part_type: PartType::Chest },
     )).id();
     
-    // Spawn legs with default grey (index 32)
+    // Spawn legs with default (first column, row 2)
     let legs_entity = commands.spawn((
         Sprite {
             image: texture.clone(),
             texture_atlas: Some(TextureAtlas {
                 layout: layout_handle.clone(),
-                index: 32,
+                index: 14, // Default legs (column 0, row 2)
             }),
             ..default()
         },
@@ -169,44 +169,44 @@ fn update_player_appearance(
     }
 }
 
-/// Map fruit types to head sprite indices (Row 0 in sprite sheet)
+/// Map fruit types to head sprite indices (Row 0: indices 0-6)
 fn get_head_sprite_index(fruit_type: Option<u8>) -> usize {
     match fruit_type {
-        Some(0) => 1,  // Strawberry
-        Some(1) => 2,  // Pear
-        Some(2) => 3,  // Mango
-        Some(3) => 4,  // Pineapple
-        Some(4) => 5,  // Apple
-        Some(5) => 6,  // Carrot
-        Some(6) => 7,  // Coconut
-        _ => 0,        // Default grey
+        Some(0) => 0,  // Strawberry (column 0, row 0)
+        Some(1) => 1,  // Pear (column 1, row 0)
+        Some(2) => 2,  // Mango (column 2, row 0)
+        Some(3) => 3,  // Pineapple (column 3, row 0)
+        Some(4) => 4,  // Apple (column 4, row 0)
+        Some(5) => 5,  // Carrot (column 5, row 0)
+        Some(6) => 6,  // Coconut (column 6, row 0)
+        _ => 0,        // Default (column 0, row 0)
     }
 }
 
-/// Map fruit types to chest sprite indices (Row 2 in sprite sheet)
+/// Map fruit types to chest sprite indices (Row 1: indices 7-13)
 fn get_chest_sprite_index(fruit_type: Option<u8>) -> usize {
     match fruit_type {
-        Some(0) => 17, // Strawberry
-        Some(1) => 18, // Pear
-        Some(2) => 19, // Mango
-        Some(3) => 20, // Pineapple
-        Some(4) => 21, // Apple
-        Some(5) => 22, // Carrot
-        Some(6) => 23, // Coconut
-        _ => 16,       // Default grey
+        Some(0) => 7,  // Strawberry (column 0, row 1)
+        Some(1) => 8,  // Pear (column 1, row 1)
+        Some(2) => 9,  // Mango (column 2, row 1)
+        Some(3) => 10, // Pineapple (column 3, row 1)
+        Some(4) => 11, // Apple (column 4, row 1)
+        Some(5) => 12, // Carrot (column 5, row 1)
+        Some(6) => 13, // Coconut (column 6, row 1)
+        _ => 7,        // Default (column 0, row 1)
     }
 }
 
-/// Map fruit types to legs sprite indices (Row 4 in sprite sheet)
+/// Map fruit types to legs sprite indices (Row 2: indices 14-20)
 fn get_legs_sprite_index(fruit_type: Option<u8>) -> usize {
     match fruit_type {
-        Some(0) => 33, // Strawberry
-        Some(1) => 34, // Pear
-        Some(2) => 35, // Mango
-        Some(3) => 36, // Pineapple
-        Some(4) => 37, // Apple
-        Some(5) => 38, // Carrot
-        Some(6) => 39, // Coconut
-        _ => 32,       // Default grey
+        Some(0) => 14, // Strawberry (column 0, row 2)
+        Some(1) => 15, // Pear (column 1, row 2)
+        Some(2) => 16, // Mango (column 2, row 2)
+        Some(3) => 17, // Pineapple (column 3, row 2)
+        Some(4) => 18, // Apple (column 4, row 2)
+        Some(5) => 19, // Carrot (column 5, row 2)
+        Some(6) => 20, // Coconut (column 6, row 2)
+        _ => 14,       // Default (column 0, row 2)
     }
 }
