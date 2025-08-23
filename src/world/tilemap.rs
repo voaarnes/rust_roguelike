@@ -17,14 +17,6 @@ pub struct TilemapConfig {
     pub tileset_rows: usize,
 }
 
-
-#[derive(Component)]
-pub struct AnimatedTile {
-    pub frames: Vec<usize>,
-    pub current_frame: usize,
-    pub timer: Timer,
-}
-
 impl Default for TilemapConfig {
     fn default() -> Self {
         Self {
@@ -36,23 +28,10 @@ impl Default for TilemapConfig {
 }
 
 #[derive(Component)]
-pub struct Tile {
-    pub tile_type: TileType,
-    pub walkable: bool,
-}
-
-#[derive(Clone, Copy, PartialEq)]
-pub enum TileType {
-    Floor,
-    Wall,
-    Door,
-    Chest,
-    Spike,
-    Water,
-    Portal,
-    Lava,
-    Grass,
-    Stone,
+pub struct AnimatedTile {
+    pub frames: Vec<usize>,
+    pub current_frame: usize,
+    pub timer: Timer,
 }
 
 #[derive(Component)]

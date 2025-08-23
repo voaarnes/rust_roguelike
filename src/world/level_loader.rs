@@ -69,7 +69,6 @@ fn spawn_level(
 #..#..#....#..#....#..#....#..#....#..#....#...#
 #..#..######..######..######..######..######...#
 #..............................................#
-#..............................................#
 #......^^^^....................................#
 #......^^^^....................................#
 ################################################
@@ -110,9 +109,8 @@ fn spawn_level(
                 _ => None,
             };
             
-
             if let Some(tile_type) = tile_type {
-                let tile_index = get_tile_index(tile_type);
+                let tile = Tile::new(tile_type);
 
                 let world_pos = Vec3::new(
                     origin_x + x as f32 * config.tile_size,
@@ -125,23 +123,19 @@ fn spawn_level(
                         image: tileset_handle.clone(),
                         texture_atlas: Some(TextureAtlas {
                             layout: layout_handle.clone(),
-                            index: tile_index,
+                            index: tile.tile_index,
                         }),
                         ..default()
                     },
                     Transform::from_translation(world_pos),
-                    Tile {
-                        tile_type,
-                        walkable: is_walkable(tile_type),
-                    },
-                    // TextureAtlasSprite::new(tile_index), // important: this gives you per-tile sprite.index
+                    tile,
                 ));
 
-                // ✅ Add AnimatedTile if this tile type animates
+                // Add AnimatedTile for water, lava, and portals
                 match tile_type {
                     TileType::Water => {
                         entity_commands.insert(AnimatedTile {
-                            frames: vec![45, 46, 47, 48], // indexes from your tileset
+                            frames: vec![45, 46, 47, 48],
                             current_frame: 0,
                             timer: Timer::from_seconds(0.5, TimerMode::Repeating),
                         });
@@ -158,6 +152,32 @@ fn spawn_level(
                             frames: vec![53, 54, 55, 56],
                             current_frame: 0,
                             timer: Timer::from_seconds(0.2, TimerMode::Repeating),
+                        });
+                    }
+                    _ => {}
+                }
+                
+                // Add wall collider for non-walkable tiles
+                if !tile.walkable {
+                    entity_commands.insert(Wall);
+                    entity_commands.insert(Collider { size: Vec2::splat(config.tile_size) });
+                }
+                
+                // Add interactive components
+                match tile_type {
+                    TileType::Door => {
+                        entity_commands.insert(Interactive {
+                            interaction_type: InteractionType::Door,
+                        });
+                    }
+                    TileType::Chest => {
+                        entity_commands.insert(Interactive {
+                            interaction_type: InteractionType::Chest,
+                        });
+                    }
+                    TileType::Portal => {
+                        entity_commands.insert(Interactive {
+                            interaction_type: InteractionType::Portal,
                         });
                     }
                     _ => {}
@@ -181,21 +201,4 @@ pub fn despawn_level(
     tiles: Query<Entity, With<Tile>>,
 ) {
     cleanup_level(commands, tiles);
-}
-
-fn get_tile_index(tile_type: TileType) -> usize {
-    match tile_type {
-        TileType::Floor => 1,
-        TileType::Wall => 17,
-        TileType::Door => 33,
-        TileType::Chest => 37,
-        TileType::Spike => 41,
-        TileType::Water => 45,
-        TileType::Portal => 49,
-        _ => 0,
-    }
-}
-
-fn is_walkable(tile_type: TileType) -> bool {
-    matches!(tile_type, TileType::Floor | TileType::Door)
 }

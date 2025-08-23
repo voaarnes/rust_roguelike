@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::world::tilemap::{Tile, TileType};
+use crate::world::tilemap::Tile;
 use crate::game::movement::{Velocity, Collider};
 use crate::game::player::Player;
 
