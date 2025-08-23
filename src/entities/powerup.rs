@@ -9,10 +9,10 @@ pub struct PowerUpSlots {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PowerUpType {
-    SpeedBoost,
-    DamageBoost,
-    HealthBoost,
-    ShieldBoost,
+    SpeedBoost,      // Strawberry/Pear (indices 0,1)
+    DamageBoost,     // Mango/Apple (indices 2,3)
+    HealthBoost,     // Orange/Grape (indices 4,5)
+    ShieldBoost,     // Banana/Cherry (indices 6,7)
 }
 
 impl PowerUpSlots {
@@ -46,13 +46,27 @@ impl PowerUpSlots {
         vec
     }
     
+    // Get the newest fruit (head)
     pub fn get_head_fruit(&self) -> Option<PowerUpType> {
         self.slots.front().copied()
     }
     
-    pub fn get_legs_fruit(&self) -> Option<PowerUpType> {
+    // Get the middle fruit (torso/chest)
+    pub fn get_torso_fruit(&self) -> Option<PowerUpType> {
         if self.slots.len() >= 2 {
-            self.slots.get(self.slots.len() - 1).copied()
+            self.slots.get(1).copied()
+        } else {
+            None
+        }
+    }
+    
+    // Get the oldest fruit (legs)
+    pub fn get_legs_fruit(&self) -> Option<PowerUpType> {
+        if self.slots.len() >= 3 {
+            self.slots.get(2).copied()
+        } else if self.slots.len() >= 2 {
+            // If we only have 2 fruits, legs get the oldest one
+            self.slots.get(1).copied()
         } else {
             None
         }

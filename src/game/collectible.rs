@@ -48,18 +48,21 @@ fn handle_collectible_pickup(
                     println!("Picked up {} coins! Total: {}", collectible.value, player_stats.coins_collected);
                 }
 
-
                 CollectibleType::Fruit(fruit_type) => {
                     if let Ok(mut powerup_slots) = powerup_q.single_mut() {
                         let powerup = match fruit_type {
-                            0 | 1 => PowerUpType::SpeedBoost,      // Strawberry, Pear
-                            2 | 3 => PowerUpType::DamageBoost,     // Mango, Apple
-                            4 | 5 => PowerUpType::HealthBoost,     // Orange, Grape
-                            6 | 7 => PowerUpType::ShieldBoost,     // Banana, Cherry
+                            0 => PowerUpType::SpeedBoost,      // Strawberry
+                            1 => PowerUpType::SpeedBoost,      // Pear (alternative strawberry)
+                            2 => PowerUpType::DamageBoost,     // Mango
+                            3 => PowerUpType::DamageBoost,     // Apple (alternative mango)
+                            4 => PowerUpType::HealthBoost,     // Orange
+                            5 => PowerUpType::HealthBoost,     // Grape (alternative orange)
+                            6 => PowerUpType::ShieldBoost,     // Banana
+                            7 => PowerUpType::ShieldBoost,     // Cherry (alternative banana)
                             _ => PowerUpType::SpeedBoost,
                         };
         
-                        // Now correctly handles Option<PowerUpType> return
+                        // Use FIFO queue to add powerup
                         if let Some(dropped) = powerup_slots.add_powerup(powerup) {
                             println!("Gained power-up: {:?}, dropped: {:?}", powerup, dropped);
                         } else {
@@ -67,6 +70,7 @@ fn handle_collectible_pickup(
                         }
                     }
                 }
+
                 CollectibleType::HealthPotion => {
                     // Handle health potion
                     println!("Picked up health potion!");

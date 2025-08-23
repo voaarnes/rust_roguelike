@@ -6,7 +6,7 @@ pub struct PowerUpDisplayPlugin;
 impl Plugin for PowerUpDisplayPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_powerup_display)
-           .add_systems(Update, update_powerup_display);
+           .add_systems(Update, update_powerup_display_with_fifo);
     }
 }
 
@@ -14,6 +14,7 @@ impl Plugin for PowerUpDisplayPlugin {
 pub struct PowerUpSlotUI {
     pub slot_index: usize,
 }
+
 
 fn setup_powerup_display(mut commands: Commands) {
     commands
@@ -26,7 +27,7 @@ fn setup_powerup_display(mut commands: Commands) {
             ..default()
         })
         .with_children(|parent| {
-            for i in 0..4 {
+            for i in 0..3 {  // Changed from 4 to 3
                 parent.spawn((
                     Node {
                         width: Val::Px(50.0),
@@ -39,25 +40,6 @@ fn setup_powerup_display(mut commands: Commands) {
                 ));
             }
         });
-}
-
-fn update_powerup_display(
-    player_query: Query<&PowerUpSlots, With<crate::game::player::Player>>,
-    mut slot_query: Query<(&PowerUpSlotUI, &mut BackgroundColor)>,
-) {
-    if let Ok(powerup_slots) = player_query.single() {
-        for (slot_ui, mut bg_color) in slot_query.iter_mut() {
-            if slot_ui.slot_index < powerup_slots.slots.len() {
-                *bg_color = match powerup_slots.slots[slot_ui.slot_index] {
-                    Some(PowerUpType::SpeedBoost) => BackgroundColor(Color::linear_rgb(0.0, 1.0, 0.0)),
-                    Some(PowerUpType::DamageBoost) => BackgroundColor(Color::linear_rgb(1.0, 0.0, 0.0)),
-                    Some(PowerUpType::HealthBoost) => BackgroundColor(Color::linear_rgb(0.0, 0.0, 1.0)),
-                    Some(PowerUpType::ShieldBoost) => BackgroundColor(Color::linear_rgb(1.0, 1.0, 0.0)),
-                    None => BackgroundColor(Color::linear_rgba(0.2, 0.2, 0.2, 0.8)),
-                };
-            }
-        }
-    }
 }
 
 fn update_powerup_display_with_fifo(

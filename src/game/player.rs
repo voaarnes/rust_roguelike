@@ -1,3 +1,4 @@
+use crate::game::player_visual::PlayerParts;
 use bevy::prelude::*;
 use crate::game::animation::{AnimationController, AnimationClip};
 use crate::entities::powerup::PowerUpSlots;
@@ -83,6 +84,9 @@ impl Default for PlayerController {
     }
 }
 
+
+
+
 fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -95,19 +99,19 @@ fn spawn_player(
         None, None,
     );
     let layout_handle = layouts.add(layout);
-
+    
     let mut anim_controller = AnimationController::new();
     anim_controller.add_animation("idle", AnimationClip::new(0, 3, 0.2, true));
     anim_controller.add_animation("walk", AnimationClip::new(4, 7, 0.1, true));
     anim_controller.add_animation("attack", AnimationClip::new(8, 11, 0.05, false));
     anim_controller.add_animation("dash", AnimationClip::new(12, 15, 0.05, false));
     anim_controller.play("idle");
-
+    
     commands.spawn((
         Player::default(),
         PlayerStats::default(),
         PlayerController::default(),
-        PowerUpSlots::new(4),
+        PowerUpSlots::new(3),
         Health::new(100),
         CombatStats {
             damage: 10,
@@ -123,14 +127,17 @@ fn spawn_player(
                 layout: layout_handle,
                 index: 0,
             }),
+            // Keep visible for now - we'll hide it once parts are working
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 10.0),
         anim_controller,
+        PlayerParts::default(), // Add this component
     ));
+    
+    println!("Player spawned with PowerUpSlots and PlayerParts!");
 }
 
-// NEW: Direct input system that works properly
 fn player_input_system(
     mut player_q: Query<(&mut Velocity, &mut AnimationController, &PlayerController), With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
