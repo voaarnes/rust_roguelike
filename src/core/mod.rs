@@ -32,6 +32,7 @@ impl Plugin for CorePlugin {
             .add_systems(Update, (
                 input::buffer_input_system,
                 camera::camera_follow_player.run_if(in_state(state::GameState::Playing)),
+                camera::camera_shake_system.run_if(in_state(state::GameState::Playing)).after(camera::camera_follow_player),
                 save_system::auto_save_system,
                 input::pause_game_system,
             ));

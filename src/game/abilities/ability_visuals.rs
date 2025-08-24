@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use super::*;
+use crate::core::camera::CameraShake;
 
 pub struct AbilityVisualsPlugin;
 
@@ -23,7 +24,7 @@ impl Plugin for AbilityVisualsPlugin {
                     update_aura_effects,
                     animate_projectile_sprites,
                     animate_area_effect_sprites,
-                    update_screen_effects,
+                    update_chromatic_aberration,
                 ),
             )
             .add_systems(Update, cleanup_expired_visuals);
@@ -170,12 +171,6 @@ pub struct AuraEffect {
 }
 
 #[derive(Component)]
-pub struct ScreenShake {
-    pub intensity: f32,
-    pub duration: Timer,
-}
-
-#[derive(Component)]
 pub struct ChromaticAberration {
     pub intensity: f32,
     pub duration: Timer,
@@ -186,6 +181,7 @@ fn spawn_visual_effects(
     mut events: EventReader<TriggerAbilityEvent>,
     registry: Res<AbilityRegistry>,
     assets: Res<FruitVisualAssets>,
+    mut camera_q: Query<Entity, With<Camera2d>>,
 ) {
     for event in events.read() {
         let Some(definition) = registry.abilities.get(&event.ability_id) else { continue };
@@ -225,10 +221,12 @@ fn spawn_visual_effects(
         // Add screen effects for powerful abilities
         match event.ability_id.fruit_type {
             2 => { // Mango explosion
-                spawn_screen_shake(&mut commands, 0.5, 0.3);
+                println!("Spawning Mango screen shake!");
+                spawn_screen_shake(&mut commands, 0.5, 0.3, &mut camera_q);
             }
             6 => { // Coconut earthquake
-                spawn_screen_shake(&mut commands, 1.0, 0.5);
+                println!("Spawning Coconut earthquake shake!");
+                spawn_screen_shake(&mut commands, 1.0, 0.5, &mut camera_q);
                 spawn_chromatic_aberration(&mut commands, 0.3, 0.2);
             }
             _ => {}
@@ -428,11 +426,19 @@ fn spawn_aura_effect(
     commands.entity(owner).add_child(aura_entity);
 }
 
-fn spawn_screen_shake(commands: &mut Commands, intensity: f32, duration: f32) {
-    commands.spawn(ScreenShake {
-        intensity,
-        duration: Timer::from_seconds(duration, TimerMode::Once),
-    });
+fn spawn_screen_shake(
+    commands: &mut Commands, 
+    intensity: f32, 
+    duration: f32,
+    camera_q: &mut Query<Entity, With<Camera2d>>,
+) {
+    if let Ok(camera_entity) = camera_q.single() {
+        println!("Adding CameraShake component to camera entity with intensity: {}, duration: {}", intensity, duration);
+        commands.entity(camera_entity).insert(CameraShake {
+            intensity,
+            duration: Timer::from_seconds(duration, TimerMode::Once),
+        });
+    }
 }
 
 fn spawn_chromatic_aberration(commands: &mut Commands, intensity: f32, duration: f32) {
@@ -680,36 +686,11 @@ fn spawn_aura_particle(commands: &mut Commands, position: Vec3, fruit_type: u8, 
     ));
 }
 
-fn update_screen_effects(
-    mut shake_q: Query<(Entity, &mut ScreenShake)>,
+fn update_chromatic_aberration(
     mut chroma_q: Query<(Entity, &mut ChromaticAberration)>,
-    mut camera_q: Query<&mut Transform, With<Camera2d>>,
     mut commands: Commands,
     time: Res<Time>,
 ) {
-    // Handle screen shake
-    for (entity, mut shake) in shake_q.iter_mut() {
-        shake.duration.tick(time.delta());
-        
-        if shake.duration.finished() {
-            commands.entity(entity).despawn();
-            
-            // Reset camera position
-            if let Ok(mut cam_transform) = camera_q.single_mut() {
-                cam_transform.translation.x = 0.0;
-                cam_transform.translation.y = 0.0;
-            }
-        } else {
-            // Apply shake
-            if let Ok(mut cam_transform) = camera_q.single_mut() {
-                let offset_x = (rand::random::<f32>() - 0.5) * shake.intensity * 10.0;
-                let offset_y = (rand::random::<f32>() - 0.5) * shake.intensity * 10.0;
-                cam_transform.translation.x += offset_x;
-                cam_transform.translation.y += offset_y;
-            }
-        }
-    }
-    
     // Handle chromatic aberration (would need post-processing setup)
     for (entity, mut chroma) in chroma_q.iter_mut() {
         chroma.duration.tick(time.delta());
