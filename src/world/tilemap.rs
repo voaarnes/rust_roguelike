@@ -114,6 +114,11 @@ fn apply_tile_effects(
     
     // Check players on spikes
     for (player_entity, player_transform, mut player_health) in player_query.iter_mut() {
+        // Skip dead players
+        if player_health.is_dead() {
+            continue;
+        }
+        
         let player_pos = player_transform.translation.truncate();
         let mut on_spikes = false;
         
@@ -133,20 +138,23 @@ fn apply_tile_effects(
         
         // Add or remove OnSpikes component safely
         if on_spikes && !spike_query.contains(player_entity) {
-            // Check if entity still exists before trying to modify it
-            if commands.get_entity(player_entity).is_ok() {
-                commands.entity(player_entity).insert(OnSpikes);
+            if let Ok(mut entity_commands) = commands.get_entity(player_entity) {
+                entity_commands.insert(OnSpikes);
             }
         } else if !on_spikes && spike_query.contains(player_entity) {
-            // Only remove if entity still exists
-            if commands.get_entity(player_entity).is_ok() {
-                commands.entity(player_entity).remove::<OnSpikes>();
+            if let Ok(mut entity_commands) = commands.get_entity(player_entity) {
+                entity_commands.remove::<OnSpikes>();
             }
         }
     }
     
     // Check enemies on spikes
     for (enemy_entity, enemy_transform, mut enemy_health) in enemy_query.iter_mut() {
+        // Skip dead enemies
+        if enemy_health.is_dead() {
+            continue;
+        }
+        
         let enemy_pos = enemy_transform.translation.truncate();
         let mut on_spikes = false;
         
@@ -165,14 +173,12 @@ fn apply_tile_effects(
         }
         
         if on_spikes && !spike_query.contains(enemy_entity) {
-            // Check if entity still exists before trying to modify it
-            if commands.get_entity(enemy_entity).is_ok() {
-                commands.entity(enemy_entity).insert(OnSpikes);
+            if let Ok(mut entity_commands) = commands.get_entity(enemy_entity) {
+                entity_commands.insert(OnSpikes);
             }
         } else if !on_spikes && spike_query.contains(enemy_entity) {
-            // Only remove if entity still exists
-            if commands.get_entity(enemy_entity).is_ok() {
-                commands.entity(enemy_entity).remove::<OnSpikes>();
+            if let Ok(mut entity_commands) = commands.get_entity(enemy_entity) {
+                entity_commands.remove::<OnSpikes>();
             }
         }
     }
@@ -182,92 +188,116 @@ fn apply_tile_effects(
 fn apply_water_effects(
     mut commands: Commands,
     tile_query: Query<(&Transform, &Tile), With<Tile>>,
-    mut player_query: Query<(Entity, &Transform, &mut PlayerController, &mut Velocity), (With<Player>, Without<Enemy>)>,
-    mut enemy_query: Query<(Entity, &Transform, &mut Velocity), (With<Enemy>, Without<Player>)>,
+    mut player_query: Query<(Entity, &Transform, &mut PlayerController, &mut Velocity, &Health), (With<Player>, Without<Enemy>)>,
+    mut enemy_query: Query<(Entity, &Transform, &mut Velocity, &Health), (With<Enemy>, Without<Player>)>,
     water_query: Query<(Entity, &InWater)>,
 ) {
     let tile_size = 32.0;
     let half_tile = tile_size / 2.0;
+    let water_detection_radius = tile_size * 0.8; // Larger detection area to prevent gaps
     
     // Check players in water
-    for (player_entity, player_transform, mut controller, mut velocity) in player_query.iter_mut() {
+    for (player_entity, player_transform, mut controller, mut velocity, health) in player_query.iter_mut() {
+        // Skip dead players
+        if health.is_dead() {
+            continue;
+        }
+        
         let player_pos = player_transform.translation.truncate();
         let mut in_water = false;
-        let mut water_depth = 0.0;
+        let mut closest_water_distance = f32::MAX;
         
+        // Find the closest water tile
         for (tile_transform, tile) in tile_query.iter() {
             if tile.tile_type == TileType::Water {
                 let tile_pos = tile_transform.translation.truncate();
                 let distance = player_pos.distance(tile_pos);
                 
-                if distance < half_tile {
+                if distance < water_detection_radius {
                     in_water = true;
-                    water_depth = (half_tile - distance) / half_tile; // 0.0 to 1.0
-                    
-                    // Slow down movement in water (50% speed)
-                    velocity.0 *= 0.5;
-                    break;
+                    closest_water_distance = closest_water_distance.min(distance);
                 }
             }
         }
         
-        // Add or update InWater component safely
+        let mut water_depth = 0.0;
         if in_water {
-            // Check if entity still exists before trying to modify it
-            if commands.get_entity(player_entity).is_ok() {
-                if let Ok((_, existing_water)) = water_query.get(player_entity) {
-                    if (existing_water.depth - water_depth).abs() > 0.1 {
-                        commands.entity(player_entity).insert(InWater { depth: water_depth });
+            // Calculate depth based on closest water tile, with smoother transition
+            water_depth = ((water_detection_radius - closest_water_distance) / water_detection_radius).max(0.0);
+            // Slow down movement in water (50% speed)
+            velocity.0 *= 0.5;
+        }
+        
+        // Add or update InWater component safely with smoothing
+        if in_water {
+            if let Ok((_, existing_water)) = water_query.get(player_entity) {
+                // Only update if there's a significant change (reduces flickering)
+                if (existing_water.depth - water_depth).abs() > 0.05 {
+                    // Use try_insert to handle potential entity issues
+                    if let Ok(mut entity_commands) = commands.get_entity(player_entity) {
+                        entity_commands.insert(InWater { depth: water_depth });
                     }
-                } else {
-                    commands.entity(player_entity).insert(InWater { depth: water_depth });
+                }
+            } else {
+                // Use try_insert to handle potential entity issues
+                if let Ok(mut entity_commands) = commands.get_entity(player_entity) {
+                    entity_commands.insert(InWater { depth: water_depth });
                 }
             }
         } else if water_query.get(player_entity).is_ok() {
-            // Only remove if entity still exists
-            if commands.get_entity(player_entity).is_ok() {
-                commands.entity(player_entity).remove::<InWater>();
+            // Use try_remove to handle potential entity issues
+            if let Ok(mut entity_commands) = commands.get_entity(player_entity) {
+                entity_commands.remove::<InWater>();
             }
         }
     }
     
     // Check enemies in water
-    for (enemy_entity, enemy_transform, mut velocity) in enemy_query.iter_mut() {
+    for (enemy_entity, enemy_transform, mut velocity, health) in enemy_query.iter_mut() {
+        // Skip dead enemies
+        if health.is_dead() {
+            continue;
+        }
+        
         let enemy_pos = enemy_transform.translation.truncate();
         let mut in_water = false;
-        let mut water_depth = 0.0;
+        let mut closest_water_distance = f32::MAX;
         
+        // Find the closest water tile for enemies too
         for (tile_transform, tile) in tile_query.iter() {
             if tile.tile_type == TileType::Water {
                 let tile_pos = tile_transform.translation.truncate();
                 let distance = enemy_pos.distance(tile_pos);
                 
-                if distance < half_tile {
+                if distance < water_detection_radius {
                     in_water = true;
-                    water_depth = (half_tile - distance) / half_tile;
-                    
-                    // Slow down enemies in water (30% speed)
-                    velocity.0 *= 0.3;
-                    break;
+                    closest_water_distance = closest_water_distance.min(distance);
                 }
             }
         }
         
+        let mut water_depth = 0.0;
         if in_water {
-            // Check if entity still exists before trying to modify it
-            if commands.get_entity(enemy_entity).is_ok() {
-                if let Ok((_, existing_water)) = water_query.get(enemy_entity) {
-                    if (existing_water.depth - water_depth).abs() > 0.1 {
-                        commands.entity(enemy_entity).insert(InWater { depth: water_depth });
+            water_depth = ((water_detection_radius - closest_water_distance) / water_detection_radius).max(0.0);
+            // Slow down enemies in water (30% speed)
+            velocity.0 *= 0.3;
+        }
+        
+        if in_water {
+            if let Ok((_, existing_water)) = water_query.get(enemy_entity) {
+                if (existing_water.depth - water_depth).abs() > 0.05 {
+                    if let Ok(mut entity_commands) = commands.get_entity(enemy_entity) {
+                        entity_commands.insert(InWater { depth: water_depth });
                     }
-                } else {
-                    commands.entity(enemy_entity).insert(InWater { depth: water_depth });
+                }
+            } else {
+                if let Ok(mut entity_commands) = commands.get_entity(enemy_entity) {
+                    entity_commands.insert(InWater { depth: water_depth });
                 }
             }
         } else if water_query.get(enemy_entity).is_ok() {
-            // Only remove if entity still exists
-            if commands.get_entity(enemy_entity).is_ok() {
-                commands.entity(enemy_entity).remove::<InWater>();
+            if let Ok(mut entity_commands) = commands.get_entity(enemy_entity) {
+                entity_commands.remove::<InWater>();
             }
         }
     }

@@ -234,17 +234,22 @@ fn handle_water_visual_effects(
                 }
             }
             
-            // Hide or show chest based on water depth
+            // Hide or show chest based on water depth with hysteresis
             if let Some(chest_entity) = parts.chest_entity {
                 if let Ok((mut transform, part_type)) = part_query.get_mut(chest_entity) {
                     match part_type.part_type {
                         PartType::Chest => {
-                            if water.depth > 0.5 {
-                                // Hide chest when more than half submerged
+                            // Use hysteresis: hide at 0.3, show again at 0.2
+                            let is_currently_hidden = transform.translation.y < -500.0;
+                            
+                            if water.depth > 0.3 && !is_currently_hidden {
+                                // Hide chest when more than 30% submerged
                                 transform.translation.y = -1000.0; // Move off-screen
-                            } else {
+                            } else if water.depth < 0.2 && is_currently_hidden {
+                                // Show chest when less than 20% submerged
                                 transform.translation.y = 0.0; // Normal position
                             }
+                            // Otherwise keep current state to prevent flickering
                         },
                         _ => {}
                     }
@@ -255,12 +260,17 @@ fn handle_water_visual_effects(
                 if let Ok((mut transform, part_type)) = part_query.get_mut(legs_entity) {
                     match part_type.part_type {
                         PartType::Legs => {
-                            if water.depth > 0.2 {
-                                // Hide legs when more than 20% submerged
+                            // Use hysteresis: hide at 0.15, show again at 0.05
+                            let is_currently_hidden = transform.translation.y < -500.0;
+                            
+                            if water.depth > 0.15 && !is_currently_hidden {
+                                // Hide legs when more than 15% submerged
                                 transform.translation.y = -1000.0; // Move off-screen
-                            } else {
+                            } else if water.depth < 0.05 && is_currently_hidden {
+                                // Show legs when less than 5% submerged
                                 transform.translation.y = -8.0; // Normal position
                             }
+                            // Otherwise keep current state to prevent flickering
                         },
                         _ => {}
                     }
