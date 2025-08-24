@@ -4,6 +4,7 @@ use crate::entities::powerup::PowerUpSlots;
 use crate::game::movement::{Velocity, Collider};
 use crate::game::combat::{Health, CombatStats};
 use crate::game::player_visual::PlayerParts;
+use crate::game::abilities::ActiveAbilities;
 
 pub struct PlayerPlugin;
 
@@ -112,6 +113,7 @@ fn spawn_player(
         PlayerStats::default(),
         PlayerController::default(),
         PowerUpSlots::new(3),
+        ActiveAbilities::default(),
         Health::new(100),
         CombatStats {
             damage: 10,

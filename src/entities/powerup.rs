@@ -35,6 +35,30 @@ impl PowerUpSlots {
         }
     }
     
+    /// Add a fruit for abilities only (no PowerUpType needed)
+    pub fn add_fruit_for_abilities(&mut self, fruit_type: u8) -> Option<u8> {
+        // Create a dummy PowerUpType for storage (not used by ability system)
+        let dummy_powerup = match fruit_type {
+            0 | 1 => PowerUpType::SpeedBoost,
+            2 | 3 => PowerUpType::DamageBoost, 
+            4 | 5 => PowerUpType::HealthBoost,
+            6 => PowerUpType::ShieldBoost,
+            _ => PowerUpType::SpeedBoost,
+        };
+        
+        let fruit_slot = FruitSlot { fruit_type, powerup: dummy_powerup };
+        
+        let dropped = if self.slots.len() >= self.max_slots {
+            self.slots.pop_back() // Remove oldest (back of deque)
+        } else {
+            None
+        };
+        
+        self.slots.push_front(fruit_slot); // Add newest to front
+        
+        dropped.map(|slot| slot.fruit_type)
+    }
+    
     /// Add a fruit power-up to the slots, maintaining visual fruit type info
     pub fn add_fruit(&mut self, fruit_type: u8, powerup: PowerUpType) -> Option<FruitSlot> {
         let fruit_slot = FruitSlot { fruit_type, powerup };

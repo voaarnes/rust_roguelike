@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::game::player::{Player, PlayerStats};
 use crate::game::movement::Collider;
-use crate::entities::powerup::{PowerUpSlots, PowerUpType};
+use crate::entities::powerup::PowerUpSlots;
 
 pub struct CollectiblePlugin;
 
@@ -48,19 +48,11 @@ fn handle_collectible_pickup(
                 }
                 CollectibleType::Fruit(fruit_type) => {
                     if let Ok(mut powerup_slots) = powerup_q.single_mut() {
-                        let powerup = match fruit_type {
-                            0 | 1 => PowerUpType::SpeedBoost,      // Strawberry, Pear
-                            2 | 3 => PowerUpType::DamageBoost,     // Mango, Pineapple
-                            4 | 5 => PowerUpType::HealthBoost,     // Apple, Carrot
-                            6 => PowerUpType::ShieldBoost,         // Coconut
-                            _ => PowerUpType::SpeedBoost,
-                        };
-        
-                        // FIX: Only call add_fruit once!
-                        if let Some(dropped) = powerup_slots.add_fruit(fruit_type, powerup) {
-                            println!("Gained power-up: {:?}, dropped: {:?}", powerup, dropped.powerup);
+                        // Just add the fruit by its type - the ability system will handle the rest
+                        if let Some(dropped) = powerup_slots.add_fruit_for_abilities(fruit_type) {
+                            println!("Picked up fruit type {}, dropped: fruit type {}", fruit_type, dropped);
                         } else {
-                            println!("Gained power-up: {:?}", powerup);
+                            println!("Picked up fruit type {}", fruit_type);
                         }
                     }
                 }

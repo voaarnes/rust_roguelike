@@ -2,6 +2,7 @@ pub mod ability_types;
 pub mod projectile_system;
 pub mod area_effects;
 pub mod ability_visuals;
+pub mod test_setup;
 
 use bevy::prelude::*;
 use crate::entities::powerup::PowerUpSlots;
@@ -19,6 +20,7 @@ impl Plugin for AbilitiesPlugin {
                 projectile_system::ProjectilePlugin,
                 area_effects::AreaEffectPlugin,
                 ability_visuals::AbilityVisualsPlugin,
+                test_setup::AbilityTestPlugin,
             ))
             .add_systems(Startup, setup_ability_registry)
             .add_systems(Update, (
