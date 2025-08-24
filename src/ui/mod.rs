@@ -4,6 +4,7 @@ pub mod hud;
 pub mod health_bars;
 pub mod minimap;
 pub mod powerup_display;
+pub mod ability_display;
 
 use bevy::prelude::*;
 
@@ -18,6 +19,7 @@ impl Plugin for UIPlugin {
             health_bars::HealthBarPlugin,
             minimap::MinimapPlugin,
             powerup_display::PowerUpDisplayPlugin,
+            ability_display::AbilityDisplayPlugin,
         ));
     }
 }
