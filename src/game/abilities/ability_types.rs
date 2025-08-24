@@ -24,7 +24,7 @@ pub fn register_all_abilities(registry: &mut AbilityRegistry) {
 }
 
 fn register_strawberry_abilities(registry: &mut AbilityRegistry) {
-    // Strawberry Head: Rapid Fire - Shoots fast projectiles at nearest enemy
+    // Strawberry Head: Rapid Fire - High-speed projectile barrage for consistent DPS
     registry.abilities.insert(
         AbilityId { fruit_type: 0, body_part: BodyPart::Head },
         AbilityDefinition {
@@ -42,7 +42,7 @@ fn register_strawberry_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Strawberry Torso: Speed Aura - Increases movement speed in an area
+    // Strawberry Torso: Speed Field - Area buff that enhances mobility for tactical positioning
     registry.abilities.insert(
         AbilityId { fruit_type: 0, body_part: BodyPart::Torso },
         AbilityDefinition {
@@ -60,7 +60,7 @@ fn register_strawberry_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Strawberry Legs: Dash Trail - Leaves damaging trail when moving
+    // Strawberry Legs: Berry Trail - Movement-based damage for hit-and-run tactics
     registry.abilities.insert(
         AbilityId { fruit_type: 0, body_part: BodyPart::Legs },
         AbilityDefinition {
@@ -80,7 +80,7 @@ fn register_strawberry_abilities(registry: &mut AbilityRegistry) {
 }
 
 fn register_pear_abilities(registry: &mut AbilityRegistry) {
-    // Pear Head: Bouncing Shot - Projectile that bounces between enemies
+    // Pear Head: Bouncing Shot - Chain damage projectile that spreads between clustered enemies
     registry.abilities.insert(
         AbilityId { fruit_type: 1, body_part: BodyPart::Head },
         AbilityDefinition {
@@ -103,7 +103,7 @@ fn register_pear_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Pear Torso: Healing Pulse
+    // Pear Torso: Healing Pulse - Sustain ability that keeps you in the fight longer
     registry.abilities.insert(
         AbilityId { fruit_type: 1, body_part: BodyPart::Torso },
         AbilityDefinition {
@@ -121,24 +121,27 @@ fn register_pear_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Pear Legs: Placeholder
+    // Pear Legs: Slippery Escape - Creates a slippery trail that slows enemies and boosts player speed
     registry.abilities.insert(
         AbilityId { fruit_type: 1, body_part: BodyPart::Legs },
         AbilityDefinition {
-            name: "Pear Slide".to_string(),
-            description: "Placeholder ability".to_string(),
-            cooldown: 3.0,
-            ability_type: AbilityType::Buff(BuffConfig {
-                stat_modifier: StatModifier::SpeedBoost(1.5),
-                duration: 2.0,
+            name: "Slippery Escape".to_string(),
+            description: "Creates a slippery pear juice trail that slows enemies while boosting your speed".to_string(),
+            cooldown: 4.0,
+            ability_type: AbilityType::AreaEffect(AreaEffectConfig {
+                damage: 2,
+                radius: 40.0,
+                tick_rate: 0.3,
+                duration: 4.0,
+                effect_type: AreaEffectType::SlowField,
             }),
-            visual_effect: VisualEffectType::None,
+            visual_effect: VisualEffectType::Trail,
         }
     );
 }
 
 fn register_mango_abilities(registry: &mut AbilityRegistry) {
-    // Mango Head: Explosive Shot
+    // Mango Head: Explosive Shot - High-damage burst projectile for taking down tough enemies
     registry.abilities.insert(
         AbilityId { fruit_type: 2, body_part: BodyPart::Head },
         AbilityDefinition {
@@ -161,7 +164,7 @@ fn register_mango_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Mango Torso: Fire Aura - Damages enemies around player
+    // Mango Torso: Burning Aura - Continuous area damage for crowd control
     registry.abilities.insert(
         AbilityId { fruit_type: 2, body_part: BodyPart::Torso },
         AbilityDefinition {
@@ -179,27 +182,32 @@ fn register_mango_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Mango Legs: Placeholder
+    // Mango Legs: Molten Step - Each step creates a burning area that damages enemies over time
     registry.abilities.insert(
         AbilityId { fruit_type: 2, body_part: BodyPart::Legs },
         AbilityDefinition {
-            name: "Mango Stomp".to_string(),
-            description: "Placeholder ability".to_string(),
-            cooldown: 4.0,
+            name: "Molten Step".to_string(),
+            description: "Your footsteps leave burning mango pools that damage enemies over time".to_string(),
+            cooldown: 1.0,
             ability_type: AbilityType::AreaEffect(AreaEffectConfig {
-                damage: 25,
-                radius: 80.0,
-                tick_rate: 1.0,
-                duration: 0.1,
-                effect_type: AreaEffectType::Explosion,
+                damage: 12,
+                radius: 50.0,
+                tick_rate: 0.5,
+                duration: 3.0,
+                effect_type: AreaEffectType::BurnGround,
             }),
-            visual_effect: VisualEffectType::Pulse,
+            visual_effect: VisualEffectType::Particles(ParticleConfig {
+                color: Color::srgb(1.0, 0.3, 0.0),
+                count: 8,
+                spread: 25.0,
+                lifetime: 0.8,
+            }),
         }
     );
 }
 
 fn register_pineapple_abilities(registry: &mut AbilityRegistry) {
-    // Pineapple Head: Spike Volley - Shoots spikes in all directions
+    // Pineapple Head: Spike Volley - Multi-directional attack for handling swarms
     registry.abilities.insert(
         AbilityId { fruit_type: 3, body_part: BodyPart::Head },
         AbilityDefinition {
@@ -217,7 +225,7 @@ fn register_pineapple_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Pineapple Torso: Spike Shield
+    // Pineapple Torso: Spike Shield - Defensive summon that provides protection and damage
     registry.abilities.insert(
         AbilityId { fruit_type: 3, body_part: BodyPart::Torso },
         AbilityDefinition {
@@ -233,24 +241,27 @@ fn register_pineapple_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Pineapple Legs: Placeholder
+    // Pineapple Legs: Spike Dash - Dashes forward while dealing damage and leaving spikes behind
     registry.abilities.insert(
         AbilityId { fruit_type: 3, body_part: BodyPart::Legs },
         AbilityDefinition {
-            name: "Pineapple Roll".to_string(),
-            description: "Placeholder ability".to_string(),
-            cooldown: 3.0,
-            ability_type: AbilityType::Buff(BuffConfig {
-                stat_modifier: StatModifier::ArmorBoost(10),
-                duration: 3.0,
+            name: "Spike Dash".to_string(),
+            description: "Dash forward with incredible speed, dealing damage and leaving sharp spikes in your wake".to_string(),
+            cooldown: 5.0,
+            ability_type: AbilityType::AreaEffect(AreaEffectConfig {
+                damage: 20,
+                radius: 35.0,
+                tick_rate: 0.2,
+                duration: 2.5,
+                effect_type: AreaEffectType::BurnGround,
             }),
-            visual_effect: VisualEffectType::None,
+            visual_effect: VisualEffectType::Trail,
         }
     );
 }
 
 fn register_apple_abilities(registry: &mut AbilityRegistry) {
-    // Apple Head: Gravity Well - Pulls enemies and damages
+    // Apple Head: Gravity Well - Area control ability that pulls enemies for strategic positioning
     registry.abilities.insert(
         AbilityId { fruit_type: 4, body_part: BodyPart::Head },
         AbilityDefinition {
@@ -268,7 +279,7 @@ fn register_apple_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Apple Torso: Life Steal Aura
+    // Apple Torso: Life Steal Aura - Survivability buff that converts damage into health
     registry.abilities.insert(
         AbilityId { fruit_type: 4, body_part: BodyPart::Torso },
         AbilityDefinition {
@@ -283,24 +294,27 @@ fn register_apple_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Apple Legs: Placeholder
+    // Apple Legs: Gravity Jump - Launches into the air and slams down with gravitational force
     registry.abilities.insert(
         AbilityId { fruit_type: 4, body_part: BodyPart::Legs },
         AbilityDefinition {
-            name: "Apple Bounce".to_string(),
-            description: "Placeholder ability".to_string(),
-            cooldown: 2.0,
-            ability_type: AbilityType::Buff(BuffConfig {
-                stat_modifier: StatModifier::SpeedBoost(1.2),
-                duration: 1.5,
+            name: "Gravity Slam".to_string(),
+            description: "Jump high and slam down with gravitational force, creating a damaging shockwave".to_string(),
+            cooldown: 6.0,
+            ability_type: AbilityType::AreaEffect(AreaEffectConfig {
+                damage: 45,
+                radius: 120.0,
+                tick_rate: 1.0,
+                duration: 0.2,
+                effect_type: AreaEffectType::Explosion,
             }),
-            visual_effect: VisualEffectType::None,
+            visual_effect: VisualEffectType::Pulse,
         }
     );
 }
 
 fn register_carrot_abilities(registry: &mut AbilityRegistry) {
-    // Carrot Head: Piercing Lance
+    // Carrot Head: Piercing Lance - Long-range penetrating attack for clearing enemy lines
     registry.abilities.insert(
         AbilityId { fruit_type: 5, body_part: BodyPart::Head },
         AbilityDefinition {
@@ -318,7 +332,7 @@ fn register_carrot_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Carrot Torso: Underground Spikes
+    // Carrot Torso: Root Spikes - Ground-based area denial that controls enemy movement
     registry.abilities.insert(
         AbilityId { fruit_type: 5, body_part: BodyPart::Torso },
         AbilityDefinition {
@@ -336,7 +350,7 @@ fn register_carrot_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Carrot Legs: Burrow
+    // Carrot Legs: Burrow - Emergency defensive ability that provides temporary invulnerability
     registry.abilities.insert(
         AbilityId { fruit_type: 5, body_part: BodyPart::Legs },
         AbilityDefinition {
@@ -353,7 +367,7 @@ fn register_carrot_abilities(registry: &mut AbilityRegistry) {
 }
 
 fn register_coconut_abilities(registry: &mut AbilityRegistry) {
-    // Coconut Head: Bouncing Coconut
+    // Coconut Head: Coconut Cannon - Heavy-hitting slow projectile for high single-target damage
     registry.abilities.insert(
         AbilityId { fruit_type: 6, body_part: BodyPart::Head },
         AbilityDefinition {
@@ -376,7 +390,7 @@ fn register_coconut_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Coconut Torso: Hard Shell - Damage reduction
+    // Coconut Torso: Hard Shell - Tank-focused defensive buff for sustained combat
     registry.abilities.insert(
         AbilityId { fruit_type: 6, body_part: BodyPart::Torso },
         AbilityDefinition {
@@ -391,7 +405,7 @@ fn register_coconut_abilities(registry: &mut AbilityRegistry) {
         }
     );
     
-    // Coconut Legs: Earthquake
+    // Coconut Legs: Earthquake - Massive area damage ability for clearing large groups
     registry.abilities.insert(
         AbilityId { fruit_type: 6, body_part: BodyPart::Legs },
         AbilityDefinition {
