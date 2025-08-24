@@ -30,6 +30,12 @@ pub struct CooldownCircle {
 }
 
 #[derive(Component)]
+struct CooldownSegment {
+    slot_index: usize,
+    segment_index: usize,
+}
+
+#[derive(Component)]
 pub struct PowerUpContainer;
 
 #[derive(Component)]
@@ -142,24 +148,52 @@ fn setup_powerup_display_internal(
                             FruitDisplay { slot_index: i },
                         ));
                         
-                        // Cooldown circle overlay
-                        slot_parent.spawn((
+                        // Create circular cooldown segments container
+                        let _cooldown_container = slot_parent.spawn((
                             Node {
                                 position_type: PositionType::Absolute,
                                 width: Val::Px(60.0),
                                 height: Val::Px(60.0),
-                                border: UiRect::all(Val::Px(2.0)),
                                 top: Val::Px(-1.0),
                                 left: Val::Px(-1.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
                                 ..default()
                             },
-                            BorderColor(Color::srgb(0.3, 0.3, 0.3)),
-                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)), // Dark overlay
                             CooldownCircle { 
                                 slot_index: i,
                                 body_part,
                             },
-                        ));
+                        )).with_children(|segments_parent| {
+                            // Create 12 circular segments for clock-style animation
+                            for segment_idx in 0..12 {
+                                let angle = (segment_idx as f32) * (PI * 2.0 / 12.0) - PI / 2.0; // Start from top
+                                let radius = 25.0; // Distance from center
+                                let segment_size = 8.0;
+                                
+                                // Calculate position for this segment
+                                let x = angle.cos() * radius;
+                                let y = angle.sin() * radius;
+                                
+                                segments_parent.spawn((
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        width: Val::Px(segment_size),
+                                        height: Val::Px(segment_size),
+                                        left: Val::Px(30.0 + x - segment_size / 2.0), // Center point + offset
+                                        top: Val::Px(30.0 + y - segment_size / 2.0),
+                                        border: UiRect::all(Val::Px(1.0)),
+                                        ..default()
+                                    },
+                                    BorderColor(Color::srgba(1.0, 1.0, 1.0, 0.3)),
+                                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)), // Start dark
+                                    CooldownSegment { 
+                                        slot_index: i,
+                                        segment_index: segment_idx,
+                                    },
+                                ));
+                            }
+                        }).id();
                     });
                 });
             }
@@ -193,60 +227,39 @@ fn update_powerup_display(
 }
 
 fn update_cooldown_timers(
-    player_query: Query<&ActiveAbilities, With<Player>>,
-    registry: Res<AbilityRegistry>,
-    cooldown_query: Query<(Entity, &CooldownCircle)>,
-    mut bg_query: Query<&mut BackgroundColor>,
-    mut border_query: Query<&mut BorderColor>,
+    circles_query: Query<(&CooldownCircle, Entity)>,
+    mut segments_query: Query<(&CooldownSegment, &mut BackgroundColor)>,
+    abilities_query: Query<&ActiveAbilities, With<Player>>,
 ) {
-    let Ok(abilities) = player_query.single() else { return };
-    
-    for (entity, cooldown_circle) in cooldown_query.iter() {
-        let ability = match cooldown_circle.body_part {
-            BodyPart::Head => &abilities.head_ability,
-            BodyPart::Torso => &abilities.torso_ability,
-            BodyPart::Legs => &abilities.legs_ability,
-        };
-        
-        if let Some(ability_instance) = ability {
-            if let Some(ability_def) = registry.abilities.get(&ability_instance.ability_id) {
-                let cooldown_progress = ability_instance.cooldown_timer.elapsed_secs() / ability_def.cooldown;
-                let cooldown_progress = cooldown_progress.clamp(0.0, 1.0);
-                
-                // Update overlay darkness based on cooldown (clock-style)
-                if let Ok(mut bg_color) = bg_query.get_mut(entity) {
-                    if cooldown_progress >= 1.0 {
-                        // Ready - no overlay
-                        *bg_color = BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0));
+    if let Ok(abilities) = abilities_query.single() {
+        for (circle, _circle_entity) in circles_query.iter() {
+            let cooldown_percent = match circle.body_part {
+                BodyPart::Head => abilities.head_ability.as_ref()
+                    .map(|ability| ability.cooldown_timer.elapsed().as_secs_f32() / ability.cooldown_timer.duration().as_secs_f32())
+                    .unwrap_or(1.0)
+                    .min(1.0),
+                BodyPart::Torso => abilities.torso_ability.as_ref()
+                    .map(|ability| ability.cooldown_timer.elapsed().as_secs_f32() / ability.cooldown_timer.duration().as_secs_f32())
+                    .unwrap_or(1.0)
+                    .min(1.0),
+                BodyPart::Legs => abilities.legs_ability.as_ref()
+                    .map(|ability| ability.cooldown_timer.elapsed().as_secs_f32() / ability.cooldown_timer.duration().as_secs_f32())
+                    .unwrap_or(1.0)
+                    .min(1.0),
+            };
+            
+            // Calculate how many segments should be bright (clock sweep)
+            let segments_to_light = (cooldown_percent * 12.0) as usize;
+            
+            for (segment, mut bg_color) in segments_query.iter_mut() {
+                if segment.slot_index == circle.slot_index {
+                    let is_lit = segment.segment_index < segments_to_light;
+                    *bg_color = if is_lit {
+                        BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.8)) // Bright
                     } else {
-                        // On cooldown - dark overlay that gradually reveals the fruit
-                        // Create a pulsing effect to simulate the clock sweep
-                        let darkness = (1.0 - cooldown_progress) * 0.7;
-                        let pulse = (cooldown_progress * PI * 4.0).sin() * 0.1 + 0.9;
-                        *bg_color = BackgroundColor(Color::srgba(0.0, 0.0, 0.0, darkness * pulse));
-                    }
+                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)) // Dark
+                    };
                 }
-                
-                // Update border color with progress indication
-                if let Ok(mut border_color) = border_query.get_mut(entity) {
-                    if cooldown_progress >= 1.0 {
-                        *border_color = BorderColor(Color::srgb(0.0, 1.0, 0.0)); // Green when ready
-                    } else {
-                        // Orange to yellow transition based on progress
-                        let r = 1.0;
-                        let g = 0.5 + (cooldown_progress * 0.5);
-                        let b = 0.0;
-                        *border_color = BorderColor(Color::srgb(r, g, b));
-                    }
-                }
-            }
-        } else {
-            // No ability assigned
-            if let Ok(mut bg_color) = bg_query.get_mut(entity) {
-                *bg_color = BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.5));
-            }
-            if let Ok(mut border_color) = border_query.get_mut(entity) {
-                *border_color = BorderColor(Color::srgb(0.3, 0.3, 0.3));
             }
         }
     }
