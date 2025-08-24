@@ -433,7 +433,6 @@ fn spawn_screen_shake(
     camera_q: &mut Query<Entity, With<Camera2d>>,
 ) {
     if let Ok(camera_entity) = camera_q.single() {
-        println!("Adding CameraShake component to camera entity with intensity: {}, duration: {}", intensity, duration);
         commands.entity(camera_entity).insert(CameraShake {
             intensity,
             duration: Timer::from_seconds(duration, TimerMode::Once),
