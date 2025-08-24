@@ -8,12 +8,16 @@ pub struct ProjectilePlugin;
 
 impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            spawn_projectiles,
-            update_projectiles,
-            handle_projectile_collisions,
-            cleanup_expired_projectiles,
-        ).chain());
+        app.add_systems(
+            Update,
+            (
+                spawn_projectiles,
+                update_projectiles,
+                handle_projectile_collisions,
+                cleanup_expired_projectiles,
+            )
+                .chain(),
+        );
     }
 }
 
@@ -40,14 +44,14 @@ fn spawn_projectiles(
 ) {
     for event in events.read() {
         let Some(definition) = registry.abilities.get(&event.ability_id) else { continue };
-        
+
         if let AbilityType::Projectile(ref config) = definition.ability_type {
             match config.targeting {
                 TargetingType::Nearest => {
                     // Find nearest enemy
                     let mut nearest_enemy = None;
                     let mut nearest_distance = f32::MAX;
-                    
+
                     for enemy_transform in enemy_query.iter() {
                         let distance = event.position.distance(enemy_transform.translation);
                         if distance < nearest_distance {
@@ -55,14 +59,14 @@ fn spawn_projectiles(
                             nearest_enemy = Some(enemy_transform.translation);
                         }
                     }
-                    
+
                     if let Some(target_pos) = nearest_enemy {
-                        let direction = (target_pos - event.position).normalize_or_zero();
+                        let direction3 = (target_pos - event.position).normalize_or_zero();
                         spawn_single_projectile(
                             &mut commands,
                             &asset_server,
                             event.position,
-                            direction.truncate(),
+                            direction3.truncate(),
                             config,
                             event.caster,
                         );
@@ -118,8 +122,9 @@ fn spawn_projectiles(
 
 fn spawn_single_projectile(
     commands: &mut Commands,
-    asset_server: &AssetServer,
+    _asset_server: &AssetServer, // kept for future use; underscore avoids warning
     position: Vec3,
+    direction: Vec2,
     config: &ProjectileConfig,
     owner: Entity,
 ) {
@@ -133,7 +138,9 @@ fn spawn_single_projectile(
         ProjectileVisual::Coconut => Color::srgb(0.6, 0.4, 0.2),
         ProjectileVisual::Energy => Color::srgb(0.0, 0.8, 1.0),
     };
-    
+
+    let vel = direction.normalize_or_zero() * config.speed;
+
     commands.spawn((
         Projectile {
             damage: config.damage,
@@ -142,7 +149,7 @@ fn spawn_single_projectile(
             owner,
             hit_entities: Vec::new(),
         },
-        Velocity(direction * config.speed),
+        Velocity(vel),
         Collider { size: Vec2::splat(10.0) },
         Sprite {
             color,
@@ -169,22 +176,19 @@ fn handle_projectile_collisions(
     mut enemy_q: Query<(Entity, &Transform, &mut Health, &Collider), With<Enemy>>,
 ) {
     for (proj_entity, proj_tf, mut projectile, proj_collider) in projectile_q.iter_mut() {
-        let mut hit_enemy = false;
-        
         for (enemy_entity, enemy_tf, mut enemy_health, enemy_collider) in enemy_q.iter_mut() {
             // Skip if already hit this enemy
             if projectile.hit_entities.contains(&enemy_entity) {
                 continue;
             }
-            
+
             let distance = proj_tf.translation.distance(enemy_tf.translation);
             let collision_dist = (proj_collider.size.x + enemy_collider.size.x) / 2.0;
-            
+
             if distance <= collision_dist {
                 enemy_health.take_damage(projectile.damage);
                 projectile.hit_entities.push(enemy_entity);
-                hit_enemy = true;
-                
+
                 if projectile.pierce_remaining > 0 {
                     projectile.pierce_remaining -= 1;
                 } else {

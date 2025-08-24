@@ -5,12 +5,15 @@ pub struct AbilityVisualsPlugin;
 
 impl Plugin for AbilityVisualsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            spawn_visual_effects,
-            update_particles,
-            update_trails,
-            cleanup_expired_visuals,
-        ));
+        app.add_systems(
+            Update,
+            (
+                spawn_visual_effects,
+                update_particles,
+                update_trails,
+                cleanup_expired_visuals,
+            ),
+        );
     }
 }
 
@@ -57,7 +60,7 @@ fn spawn_visual_effects(
 ) {
     for event in events.read() {
         let Some(definition) = registry.abilities.get(&event.ability_id) else { continue };
-        
+
         match &definition.visual_effect {
             VisualEffectType::Particles(config) => {
                 spawn_particle_system(&mut commands, event.position, config.clone());
@@ -79,12 +82,12 @@ fn spawn_visual_effects(
 fn spawn_particle_system(commands: &mut Commands, position: Vec3, config: ParticleConfig) {
     let mut particles = Vec::new();
     let mut rng = rand::thread_rng();
-    
+
     for _ in 0..config.count {
         use rand::Rng;
         let angle = rng.gen_range(0.0..std::f32::consts::TAU);
         let speed = rng.gen_range(50.0..150.0);
-        
+
         particles.push(ParticleData {
             position: position.truncate(),
             velocity: Vec2::new(angle.cos(), angle.sin()) * speed,
@@ -92,7 +95,7 @@ fn spawn_particle_system(commands: &mut Commands, position: Vec3, config: Partic
             size: rng.gen_range(2.0..6.0),
         });
     }
-    
+
     commands.spawn((
         ParticleSystem {
             particles,
@@ -120,7 +123,7 @@ fn spawn_pulse_effect(commands: &mut Commands, position: Vec3) {
     ));
 }
 
-fn spawn_aura_effect(commands: &mut Commands, owner: Entity) {
+fn spawn_aura_effect(commands: &mut Commands, _owner: Entity) {
     // This would attach to the owner entity
     commands.spawn((
         AuraEffect {
@@ -142,36 +145,33 @@ fn update_particles(
     mut gizmos: Gizmos,
     time: Res<Time>,
 ) {
-    for (mut system, transform) in particle_q.iter_mut() {
+    for (mut system, _transform) in particle_q.iter_mut() {
         system.lifetime.tick(time.delta());
-        
+
+        // Copy out config fields BEFORE mutably iterating particles to avoid aliasing (E0502).
+        let cfg_lifetime = system.config.lifetime;
+        let cfg_color = system.config.color;
+
         for particle in system.particles.iter_mut() {
             particle.position += particle.velocity * time.delta_secs();
             particle.lifetime -= time.delta_secs();
             particle.velocity *= 0.98; // Drag
-            
+
             if particle.lifetime > 0.0 {
-                let alpha = particle.lifetime / system.config.lifetime;
-                let mut color = system.config.color;
+                let alpha = particle.lifetime / cfg_lifetime;
+                let mut color = cfg_color;
                 color.set_alpha(color.alpha() * alpha);
-                
-                gizmos.circle_2d(
-                    particle.position,
-                    particle.size,
-                    color,
-                );
+
+                gizmos.circle_2d(particle.position, particle.size, color);
             }
         }
-        
+
         // Remove dead particles
         system.particles.retain(|p| p.lifetime > 0.0);
     }
 }
 
-fn update_trails(
-    _trail_q: Query<&TrailEffect>,
-    _time: Res<Time>,
-) {
+fn update_trails(_trail_q: Query<&TrailEffect>, _time: Res<Time>) {
     // Trail update logic
 }
 

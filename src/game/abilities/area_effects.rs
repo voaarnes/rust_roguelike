@@ -78,16 +78,19 @@ fn update_area_effects(
     }
 }
 
+
 fn apply_area_damage(
     area_q: Query<(&Transform, &AreaEffect)>,
-    mut enemy_q: Query<(&Transform, &mut Health), With<Enemy>>,
-    mut player_q: Query<(&Transform, &mut Health), With<Player>>,
+    // Explicitly disjoint: enemies never include Player
+    mut enemy_q: Query<(&Transform, &mut Health), (With<Enemy>, Without<Player>)>,
+    // Explicitly disjoint: players never include Enemy
+    mut player_q: Query<(&Transform, &mut Health), (With<Player>, Without<Enemy>)>,
 ) {
     for (area_tf, area) in area_q.iter() {
         if !area.tick_timer.just_finished() {
             continue;
         }
-        
+
         // Damage enemies
         if area.damage_per_tick > 0 {
             for (enemy_tf, mut enemy_health) in enemy_q.iter_mut() {
@@ -97,7 +100,7 @@ fn apply_area_damage(
                 }
             }
         }
-        
+
         // Heal player (negative damage)
         if area.damage_per_tick < 0 {
             for (player_tf, mut player_health) in player_q.iter_mut() {
@@ -108,9 +111,7 @@ fn apply_area_damage(
             }
         }
     }
-}
-
-fn cleanup_expired_areas(
+}fn cleanup_expired_areas(
     mut commands: Commands,
     area_q: Query<(Entity, &AreaEffect)>,
 ) {
