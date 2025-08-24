@@ -8,9 +8,13 @@ pub struct PowerUpDisplayPlugin;
 
 impl Plugin for PowerUpDisplayPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<FruitAssets>()
-           .add_systems(Startup, (load_fruit_sprites, setup_powerup_display).chain())
-           .add_systems(Update, (update_powerup_display, update_cooldown_timers));
+        app
+            .init_resource::<FruitAssets>()
+            .add_systems(Startup, (load_and_setup_powerup_display,))
+            .add_systems(Update, (
+                update_powerup_display.run_if(in_state(crate::core::state::GameState::Playing)),
+                update_cooldown_timers.run_if(in_state(crate::core::state::GameState::Playing)),
+            ));
     }
 }
 
@@ -40,25 +44,32 @@ pub struct FruitAssets {
     pub loaded: bool,
 }
 
-fn load_fruit_sprites(
-    mut fruit_assets: ResMut<FruitAssets>,
+fn load_and_setup_powerup_display(
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut fruit_assets: ResMut<FruitAssets>,
 ) {
-    // Load the fruit sprite sheet
-    fruit_assets.fruit_texture = asset_server.load("sprites/fruits.png");
-    
-    // Create texture atlas layout for 7 fruits in a row (224x32, each fruit is 32x32)
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 7, 1, None, None);
-    fruit_assets.fruit_atlas = texture_atlas_layouts.add(layout);
-    
+    // Load fruit sprites
+    let texture = asset_server.load("sprites/meyveler.png");
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(32, 32),
+        8, 1,  // 8 frames in meyveler.png
+        None, None,
+    );
+    let layout_handle = layouts.add(layout);
+
+    fruit_assets.fruit_texture = texture;
+    fruit_assets.fruit_atlas = layout_handle;
     fruit_assets.loaded = true;
+
+    // Setup UI
+    setup_powerup_display_internal(&mut commands, &fruit_assets);
 }
 
-
-fn setup_powerup_display(
-    mut commands: Commands,
-    fruit_assets: Res<FruitAssets>,
+fn setup_powerup_display_internal(
+    commands: &mut Commands,
+    fruit_assets: &FruitAssets,
 ) {
     // Main container positioned at bottom right
     commands
@@ -119,8 +130,8 @@ fn setup_powerup_display(
                                 height: Val::Px(40.0),
                                 ..default()
                             },
-                            ImageNode::new(fruit_assets.fruit_texture.clone()),
-                            Sprite {
+                            ImageNode {
+                                image: fruit_assets.fruit_texture.clone(),
                                 texture_atlas: Some(TextureAtlas {
                                     layout: fruit_assets.fruit_atlas.clone(),
                                     index: 0, // Default to strawberry, will be updated
@@ -155,28 +166,19 @@ fn setup_powerup_display(
         });
 }
 
-fn get_fruit_sprite_index(powerup_type: PowerUpType) -> usize {
-    match powerup_type {
-        PowerUpType::SpeedBoost => 0,    // Strawberry
-        PowerUpType::DamageBoost => 2,   // Mango  
-        PowerUpType::HealthBoost => 4,   // Apple
-        PowerUpType::ShieldBoost => 6,   // Coconut
-    }
-}
-
 fn update_powerup_display(
     player_query: Query<&PowerUpSlots, With<Player>>,
-    mut fruit_query: Query<(&FruitDisplay, &mut Sprite, &mut Visibility)>,
+    mut fruit_query: Query<(&FruitDisplay, &mut ImageNode, &mut Visibility)>,
 ) {
     if let Ok(powerup_slots) = player_query.single() {
-        let slots_vec = powerup_slots.get_slots_as_vec();
+        let fruit_types = powerup_slots.get_fruit_types_as_vec();
         
-        for (fruit_display, mut sprite, mut visibility) in fruit_query.iter_mut() {
-            if fruit_display.slot_index < slots_vec.len() {
-                if let Some(powerup_type) = slots_vec[fruit_display.slot_index] {
-                    // Show fruit sprite
-                    if let Some(ref mut atlas) = sprite.texture_atlas {
-                        atlas.index = get_fruit_sprite_index(powerup_type);
+        for (fruit_display, mut image_node, mut visibility) in fruit_query.iter_mut() {
+            if fruit_display.slot_index < fruit_types.len() {
+                if let Some(fruit_type) = fruit_types[fruit_display.slot_index] {
+                    // Show fruit sprite using actual fruit type (0-7)
+                    if let Some(ref mut atlas) = image_node.texture_atlas {
+                        atlas.index = fruit_type as usize;
                     }
                     *visibility = Visibility::Visible;
                 } else {

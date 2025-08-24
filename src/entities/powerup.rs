@@ -88,6 +88,19 @@ impl PowerUpSlots {
         self.add_fruit(fruit_type, powerup).map(|slot| slot.powerup)
     }
     
+    /// Get fruit types as a vector for UI systems
+    pub fn get_fruit_types_as_vec(&self) -> Vec<Option<u8>> {
+        let mut vec = Vec::with_capacity(self.max_slots);
+        for i in 0..self.max_slots {
+            if i < self.slots.len() {
+                vec.push(Some(self.slots[i].fruit_type));
+            } else {
+                vec.push(None);
+            }
+        }
+        vec
+    }
+    
     /// Get power-up slots as a vector for UI systems
     pub fn get_slots_as_vec(&self) -> Vec<Option<PowerUpType>> {
         let mut vec = Vec::with_capacity(self.max_slots);
