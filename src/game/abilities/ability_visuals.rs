@@ -11,6 +11,8 @@ impl Plugin for AbilityVisualsPlugin {
                 spawn_visual_effects,
                 update_particles,
                 update_trails,
+                update_pulse_effects,
+                update_aura_effects,
                 cleanup_expired_visuals,
             ),
         );
@@ -44,6 +46,7 @@ pub struct PulseEffect {
     pub base_scale: f32,
     pub pulse_scale: f32,
     pub pulse_speed: f32,
+    pub lifetime: Timer,
 }
 
 #[derive(Component)]
@@ -51,6 +54,7 @@ pub struct AuraEffect {
     pub inner_radius: f32,
     pub outer_radius: f32,
     pub rotation_speed: f32,
+    pub lifetime: Timer,
 }
 
 fn spawn_visual_effects(
@@ -113,6 +117,7 @@ fn spawn_pulse_effect(commands: &mut Commands, position: Vec3) {
             base_scale: 1.0,
             pulse_scale: 2.0,
             pulse_speed: 2.0,
+            lifetime: Timer::from_seconds(2.0, TimerMode::Once), // 2 second lifetime
         },
         Sprite {
             color: Color::srgba(1.0, 1.0, 1.0, 0.5),
@@ -130,6 +135,7 @@ fn spawn_aura_effect(commands: &mut Commands, _owner: Entity) {
             inner_radius: 50.0,
             outer_radius: 100.0,
             rotation_speed: 1.0,
+            lifetime: Timer::from_seconds(5.0, TimerMode::Once), // 5 second lifetime
         },
         Sprite {
             color: Color::srgba(0.5, 0.5, 1.0, 0.3),
@@ -175,12 +181,67 @@ fn update_trails(_trail_q: Query<&TrailEffect>, _time: Res<Time>) {
     // Trail update logic
 }
 
+fn update_pulse_effects(
+    mut pulse_q: Query<(&mut PulseEffect, &mut Transform, &mut Sprite)>,
+    time: Res<Time>,
+) {
+    for (mut pulse, mut transform, mut sprite) in pulse_q.iter_mut() {
+        pulse.lifetime.tick(time.delta());
+        
+        if !pulse.lifetime.finished() {
+            // Animate the pulse effect
+            let pulse_time = time.elapsed_secs() * pulse.pulse_speed;
+            let scale_factor = pulse.base_scale + (pulse_time.sin() * 0.5 + 0.5) * pulse.pulse_scale;
+            transform.scale = Vec3::splat(scale_factor);
+            
+            // Fade out over time
+            let alpha = 1.0 - pulse.lifetime.fraction();
+            sprite.color.set_alpha(alpha * 0.5);
+        }
+    }
+}
+
+fn update_aura_effects(
+    mut aura_q: Query<(&mut AuraEffect, &mut Transform, &mut Sprite)>,
+    time: Res<Time>,
+) {
+    for (mut aura, mut transform, mut sprite) in aura_q.iter_mut() {
+        aura.lifetime.tick(time.delta());
+        
+        if !aura.lifetime.finished() {
+            // Rotate the aura
+            transform.rotate_z(aura.rotation_speed * time.delta_secs());
+            
+            // Fade out over time
+            let alpha = 1.0 - aura.lifetime.fraction();
+            sprite.color.set_alpha(alpha * 0.3);
+        }
+    }
+}
+
 fn cleanup_expired_visuals(
     mut commands: Commands,
     particle_q: Query<(Entity, &ParticleSystem)>,
+    pulse_q: Query<(Entity, &PulseEffect), Without<ParticleSystem>>,
+    aura_q: Query<(Entity, &AuraEffect), (Without<ParticleSystem>, Without<PulseEffect>)>,
 ) {
+    // Cleanup particles
     for (entity, system) in particle_q.iter() {
         if system.lifetime.finished() && system.particles.is_empty() {
+            commands.entity(entity).despawn();
+        }
+    }
+    
+    // Cleanup pulse effects
+    for (entity, pulse) in pulse_q.iter() {
+        if pulse.lifetime.finished() {
+            commands.entity(entity).despawn();
+        }
+    }
+    
+    // Cleanup aura effects
+    for (entity, aura) in aura_q.iter() {
+        if aura.lifetime.finished() {
             commands.entity(entity).despawn();
         }
     }

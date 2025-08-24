@@ -69,12 +69,24 @@ fn spawn_area_effects(
 }
 
 fn update_area_effects(
-    mut area_q: Query<&mut AreaEffect>,
+    mut area_q: Query<(&mut AreaEffect, &mut Sprite)>,
     time: Res<Time>,
 ) {
-    for mut area in area_q.iter_mut() {
+    for (mut area, mut sprite) in area_q.iter_mut() {
         area.tick_timer.tick(time.delta());
         area.lifetime.tick(time.delta());
+        
+        // Fade out the visual as the effect approaches expiry
+        if !area.lifetime.finished() {
+            let time_remaining = area.lifetime.fraction_remaining();
+            if time_remaining < 0.3 {
+                // Fade out in the last 30% of lifetime
+                let fade_factor = time_remaining / 0.3;
+                let mut color = sprite.color;
+                color.set_alpha(color.alpha() * fade_factor);
+                sprite.color = color;
+            }
+        }
     }
 }
 
