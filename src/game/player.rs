@@ -16,6 +16,7 @@ impl Plugin for PlayerPlugin {
             .add_systems(Update, (
                 player_input_system,
                 update_player_stats,
+                apply_speed_buffs,
             ));
     }
 }
@@ -190,6 +191,36 @@ fn update_player_stats(
             player.level += 1;
             player.experience = 0;
             player.exp_to_next_level = player.level * 100;
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct SpeedBuff {
+    pub multiplier: f32,
+    pub duration: Timer,
+}
+
+fn apply_speed_buffs(
+    mut commands: Commands,
+    mut player_q: Query<(Entity, &mut PlayerController, Option<&mut SpeedBuff>), With<Player>>,
+    time: Res<Time>,
+) {
+    for (entity, mut controller, speed_buff) in player_q.iter_mut() {
+        if let Some(mut buff) = speed_buff {
+            buff.duration.tick(time.delta());
+            
+            if buff.duration.finished() {
+                // Remove expired buff and reset speed
+                commands.entity(entity).remove::<SpeedBuff>();
+                controller.move_speed = 200.0; // Reset to base speed
+            } else {
+                // Apply speed multiplier
+                controller.move_speed = 200.0 * buff.multiplier;
+            }
+        } else {
+            // No buff active, ensure base speed
+            controller.move_speed = 200.0;
         }
     }
 }

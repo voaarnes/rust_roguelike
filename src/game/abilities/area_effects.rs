@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use crate::game::enemy::Enemy;
 use crate::game::combat::Health;
-use crate::game::player::Player;
+use crate::game::player::{Player, PlayerController, SpeedBuff};
+use crate::game::movement::Velocity;
 use super::*;
 
 pub struct AreaEffectPlugin;
@@ -12,6 +13,7 @@ impl Plugin for AreaEffectPlugin {
             spawn_area_effects,
             update_area_effects,
             apply_area_damage,
+            apply_area_buffs,
             cleanup_expired_areas,
         ).chain());
     }
@@ -29,6 +31,37 @@ pub struct AreaEffect {
 
 #[derive(Component)]
 pub struct AreaVisual;
+
+fn apply_area_buffs(
+    area_q: Query<(&Transform, &AreaEffect)>,
+    mut player_q: Query<(Entity, &Transform, &mut PlayerController), With<Player>>,
+    mut commands: Commands,
+) {
+    for (player_entity, player_tf, mut controller) in player_q.iter_mut() {
+        let mut speed_multiplier = 1.0;
+        
+        for (area_tf, area) in area_q.iter() {
+            let distance = area_tf.translation.distance(player_tf.translation);
+            if distance <= area.radius {
+                match area.effect_type {
+                    AreaEffectType::SlowField => {
+                        // This is the strawberry speed field - boost player speed
+                        speed_multiplier *= 1.5; // 50% speed increase
+                    }
+                    _ => {}
+                }
+            }
+        }
+        
+        // Apply the speed buff temporarily
+        if speed_multiplier > 1.0 {
+            commands.entity(player_entity).insert(SpeedBuff {
+                multiplier: speed_multiplier,
+                duration: Timer::from_seconds(0.2, TimerMode::Once), // Short duration
+            });
+        }
+    }
+}
 
 fn spawn_area_effects(
     mut commands: Commands,

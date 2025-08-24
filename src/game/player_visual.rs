@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use crate::game::player::Player;
 use crate::entities::powerup::PowerUpSlots;
+use crate::world::tilemap::InWater;
 
 /// Plugin that manages player visual appearance based on equipped fruits
 pub struct PlayerVisualPlugin;
@@ -13,6 +14,7 @@ impl Plugin for PlayerVisualPlugin {
             .add_systems(Update, (
                 setup_player_parts.run_if(player_needs_parts),
                 update_player_appearance,
+                handle_water_visual_effects,
             ).chain());
     }
 }
@@ -208,5 +210,87 @@ fn get_legs_sprite_index(fruit_type: Option<u8>) -> usize {
         Some(5) => 19, // Carrot (column 5, row 2)
         Some(6) => 20, // Coconut (column 6, row 2)
         _ => 14,       // Default (column 0, row 2)
+    }
+}
+
+/// Handle visual effects when player is in water
+fn handle_water_visual_effects(
+    player_query: Query<(&PlayerParts, Option<&InWater>), With<Player>>,
+    mut part_query: Query<(&mut Transform, &PlayerPartType), Without<Player>>,
+) {
+    if let Ok((parts, water_info)) = player_query.single() {
+        if let Some(water) = water_info {
+            // When in water, hide body parts based on water depth
+            // Only show head when in deep water
+            if let Some(head_entity) = parts.head_entity {
+                if let Ok((mut transform, part_type)) = part_query.get_mut(head_entity) {
+                    match part_type.part_type {
+                        PartType::Head => {
+                            // Keep head visible always
+                            transform.translation.y = 8.0;
+                        },
+                        _ => {}
+                    }
+                }
+            }
+            
+            // Hide or show chest based on water depth
+            if let Some(chest_entity) = parts.chest_entity {
+                if let Ok((mut transform, part_type)) = part_query.get_mut(chest_entity) {
+                    match part_type.part_type {
+                        PartType::Chest => {
+                            if water.depth > 0.5 {
+                                // Hide chest when more than half submerged
+                                transform.translation.y = -1000.0; // Move off-screen
+                            } else {
+                                transform.translation.y = 0.0; // Normal position
+                            }
+                        },
+                        _ => {}
+                    }
+                }
+            }
+            
+            if let Some(legs_entity) = parts.legs_entity {
+                if let Ok((mut transform, part_type)) = part_query.get_mut(legs_entity) {
+                    match part_type.part_type {
+                        PartType::Legs => {
+                            if water.depth > 0.2 {
+                                // Hide legs when more than 20% submerged
+                                transform.translation.y = -1000.0; // Move off-screen
+                            } else {
+                                transform.translation.y = -8.0; // Normal position
+                            }
+                        },
+                        _ => {}
+                    }
+                }
+            }
+        } else {
+            // Not in water - reset all positions to normal
+            if let Some(head_entity) = parts.head_entity {
+                if let Ok((mut transform, part_type)) = part_query.get_mut(head_entity) {
+                    if matches!(part_type.part_type, PartType::Head) {
+                        transform.translation.y = 8.0;
+                    }
+                }
+            }
+            
+            if let Some(chest_entity) = parts.chest_entity {
+                if let Ok((mut transform, part_type)) = part_query.get_mut(chest_entity) {
+                    if matches!(part_type.part_type, PartType::Chest) {
+                        transform.translation.y = 0.0;
+                    }
+                }
+            }
+            
+            if let Some(legs_entity) = parts.legs_entity {
+                if let Ok((mut transform, part_type)) = part_query.get_mut(legs_entity) {
+                    if matches!(part_type.part_type, PartType::Legs) {
+                        transform.translation.y = -8.0;
+                    }
+                }
+            }
+        }
     }
 }
