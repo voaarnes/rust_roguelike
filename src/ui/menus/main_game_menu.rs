@@ -229,6 +229,43 @@ fn setup_main_menu(
                     },
                     TextColor(Color::srgb(1.0, 0.843, 0.0)),
                 ));
+                
+                // Shop categories
+                content.spawn(Node {
+                    width: Val::Percent(100.0),
+                    margin: UiRect::vertical(Val::Px(20.0)),
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(30.0),
+                    ..default()
+                }).with_children(|categories| {
+                    // Shop placeholder content
+                    categories.spawn((
+                        Text::new("⚔️ Weapons - Coming Soon!"),
+                        TextFont { 
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.3, 0.3)),
+                    ));
+                    
+                    categories.spawn((
+                        Text::new("⬆️ Upgrades - In Development"),
+                        TextFont { 
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.3, 0.8, 1.0)),
+                    ));
+                    
+                    categories.spawn((
+                        Text::new("📦 Items - Features Planned"),
+                        TextFont { 
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.8, 0.5, 1.0)),
+                    ));
+                });
             });
         });
     });
@@ -351,30 +388,244 @@ fn update_tab_content(
                         row_gap: Val::Px(30.0),
                         ..default()
                     }).with_children(|categories| {
-                        // Add shop content inline
-                        categories.spawn((
-                            Text::new("Shop coming soon!"),
-                            TextFont { 
-                                font_size: 18.0,
-                                ..default()
-                            },
-                            TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                        ));
+                        // Weapons section
+                        categories.spawn(Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(10.0),
+                            ..default()
+                        }).with_children(|section| {
+                            section.spawn((
+                                Text::new("⚔️ Weapons"),
+                                TextFont { 
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.3, 0.3)),
+                            ));
+                            
+                            for (name, price, desc) in [
+                                ("Plasma Rifle", "250", "High damage energy weapon"),
+                                ("Rocket Launcher", "500", "Explosive area damage"),
+                                ("Lightning Gun", "750", "Chain lightning attacks")
+                            ] {
+                                section.spawn((
+                                    Button,
+                                    Node {
+                                        width: Val::Px(200.0),
+                                        padding: UiRect::all(Val::Px(10.0)),
+                                        flex_direction: FlexDirection::Column,
+                                        row_gap: Val::Px(5.0),
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
+                                )).with_children(|item| {
+                                    item.spawn((
+                                        Text::new(name),
+                                        TextFont { 
+                                            font_size: 16.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    item.spawn((
+                                        Text::new(format!("💰 {}", price)),
+                                        TextFont { 
+                                            font_size: 14.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                                    ));
+                                    
+                                    item.spawn((
+                                        Text::new(desc),
+                                        TextFont { 
+                                            font_size: 12.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                                    ));
+                                });
+                            }
+                        });
+                        
+                        // Upgrades section
+                        categories.spawn(Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(10.0),
+                            ..default()
+                        }).with_children(|section| {
+                            section.spawn((
+                                Text::new("⬆️ Upgrades"),
+                                TextFont { 
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.3, 0.8, 1.0)),
+                            ));
+                            
+                            for (name, price, desc) in [
+                                ("Health Boost", "100", "+25% Max Health"),
+                                ("Speed Boost", "150", "+15% Movement Speed"),
+                                ("Damage Amplifier", "200", "+20% All Damage")
+                            ] {
+                                section.spawn((
+                                    Button,
+                                    Node {
+                                        width: Val::Px(200.0),
+                                        padding: UiRect::all(Val::Px(10.0)),
+                                        flex_direction: FlexDirection::Column,
+                                        row_gap: Val::Px(5.0),
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
+                                )).with_children(|item| {
+                                    item.spawn((
+                                        Text::new(name),
+                                        TextFont { 
+                                            font_size: 16.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    item.spawn((
+                                        Text::new(format!("💰 {}", price)),
+                                        TextFont { 
+                                            font_size: 14.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                                    ));
+                                    
+                                    item.spawn((
+                                        Text::new(desc),
+                                        TextFont { 
+                                            font_size: 12.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                                    ));
+                                });
+                            }
+                        });
+                        
+                        // Items section
+                        categories.spawn(Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(10.0),
+                            ..default()
+                        }).with_children(|section| {
+                            section.spawn((
+                                Text::new("📦 Items"),
+                                TextFont { 
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.8, 0.5, 1.0)),
+                            ));
+                            
+                            for (name, price, desc) in [
+                                ("Shield Generator", "300", "Temporary invulnerability"),
+                                ("Time Warp", "400", "Slow down time"),
+                                ("Nuke", "1000", "Clear entire screen")
+                            ] {
+                                section.spawn((
+                                    Button,
+                                    Node {
+                                        width: Val::Px(200.0),
+                                        padding: UiRect::all(Val::Px(10.0)),
+                                        flex_direction: FlexDirection::Column,
+                                        row_gap: Val::Px(5.0),
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
+                                )).with_children(|item| {
+                                    item.spawn((
+                                        Text::new(name),
+                                        TextFont { 
+                                            font_size: 16.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    item.spawn((
+                                        Text::new(format!("💰 {}", price)),
+                                        TextFont { 
+                                            font_size: 14.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                                    ));
+                                    
+                                    item.spawn((
+                                        Text::new(desc),
+                                        TextFont { 
+                                            font_size: 12.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                                    ));
+                                });
+                            }
+                        });
                     });
                 },
                 MenuTab::Talents => {
-                    // Inline talent content
+                    // Title
                     parent.spawn((
-                        Text::new("🌟 TALENTS"),
+                        Text::new("⭐ TALENT TREE"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
                         },
                         TextColor(Color::srgb(0.5, 1.0, 0.5)),
                     ));
+                    
+                    parent.spawn(Node {
+                        width: Val::Percent(100.0),
+                        margin: UiRect::vertical(Val::Px(20.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(20.0),
+                        ..default()
+                    }).with_children(|trees| {
+                        // Offense tree - simplified for now
+                        trees.spawn((
+                            Text::new("⚔️ Offense Tree"),
+                            TextFont { 
+                                font_size: 20.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.3, 0.3)),
+                        ));
+                        
+                        // Defense tree - simplified for now
+                        trees.spawn((
+                            Text::new("🛡️ Defense Tree"),
+                            TextFont { 
+                                font_size: 20.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.3, 0.5, 1.0)),
+                        ));
+                        
+                        // Utility tree - simplified for now
+                        trees.spawn((
+                            Text::new("✨ Utility Tree"),
+                            TextFont { 
+                                font_size: 20.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.8, 0.3)),
+                        ));
+                    });
                 },
                 MenuTab::Achievements => {
-                    // Inline achievements content
+                    // Title
                     parent.spawn((
                         Text::new("🏆 ACHIEVEMENTS"),
                         TextFont { 
@@ -383,39 +634,207 @@ fn update_tab_content(
                         },
                         TextColor(Color::srgb(1.0, 0.5, 0.0)),
                     ));
+                    
+                    parent.spawn(Node {
+                        width: Val::Percent(100.0),
+                        margin: UiRect::vertical(Val::Px(20.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(15.0),
+                        ..default()
+                    }).with_children(|list| {
+                        // Achievement placeholders
+                        list.spawn((
+                            Text::new("🏆 Achievements System - Coming Soon!"),
+                            TextFont { 
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.5, 0.0)),
+                        ));
+                    });
                 },
                 MenuTab::Quests => {
-                    // Inline quests content
+                    // Title
                     parent.spawn((
-                        Text::new("📋 QUESTS"),
+                        Text::new("📋 QUESTS & CHALLENGES"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
                         },
                         TextColor(Color::srgb(0.7, 0.7, 1.0)),
                     ));
+                    
+                    parent.spawn(Node {
+                        width: Val::Percent(100.0),
+                        margin: UiRect::vertical(Val::Px(20.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(25.0),
+                        ..default()
+                    }).with_children(|quests| {
+                        // Quest placeholders
+                        quests.spawn((
+                            Text::new("📋 Quest System Coming Soon!"),
+                            TextFont { 
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                        ));
+                    });
                 },
                 MenuTab::Inventory => {
-                    // Inline inventory content
+                    // Title
                     parent.spawn((
-                        Text::new("🎒 INVENTORY"),
+                        Text::new("🎒 INVENTORY & EQUIPMENT"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
                         },
                         TextColor(Color::srgb(0.8, 0.4, 0.8)),
                     ));
+                    
+                    parent.spawn(Node {
+                        width: Val::Percent(100.0),
+                        margin: UiRect::vertical(Val::Px(20.0)),
+                        flex_direction: FlexDirection::Row,
+                        column_gap: Val::Px(30.0),
+                        ..default()
+                    }).with_children(|main_container| {
+                        // Equipment section (left side)
+                        main_container.spawn(Node {
+                            width: Val::Percent(40.0),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(15.0),
+                            ..default()
+                        }).with_children(|equipment| {
+                            equipment.spawn((
+                                Text::new("⚔️ Equipment"),
+                                TextFont { 
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                            ));
+                            
+                            // Equipment slot placeholder
+                            // Equipment slot placeholder
+                            // Equipment slot placeholder
+                        });
+                        
+                        // Inventory grid (right side)
+                        main_container.spawn(Node {
+                            width: Val::Percent(60.0),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(15.0),
+                            ..default()
+                        }).with_children(|inventory| {
+                            inventory.spawn((
+                                Text::new("📦 Inventory"),
+                                TextFont { 
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                            ));
+                            
+                            // Inventory grid
+                            inventory.spawn(Node {
+                                width: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Row,
+                                flex_wrap: FlexWrap::Wrap,
+                                column_gap: Val::Px(10.0),
+                                row_gap: Val::Px(10.0),
+                                ..default()
+                            }).with_children(|grid| {
+                                // Inventory item placeholder
+                                // Inventory item placeholder
+                                // Inventory item placeholder
+                                // Inventory item placeholder
+                                
+                                // Empty slots
+                                for _ in 0..8 {
+                                    // Empty slot placeholder
+                                }
+                            });
+                        });
+                    });
                 },
                 MenuTab::Prestige => {
-                    // Inline prestige content
+                    // Title
                     parent.spawn((
-                        Text::new("💎 PRESTIGE"),
+                        Text::new("💎 PRESTIGE SYSTEM"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
                         },
                         TextColor(Color::srgb(1.0, 0.0, 0.5)),
                     ));
+                    
+                    parent.spawn(Node {
+                        width: Val::Percent(100.0),
+                        margin: UiRect::vertical(Val::Px(20.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(25.0),
+                        ..default()
+                    }).with_children(|prestige_content| {
+                        // Prestige info
+                        prestige_content.spawn((
+                            Text::new("Reset your progress to gain permanent bonuses and unlock new content."),
+                            TextFont { 
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                        ));
+                        
+                        // Current prestige level
+                        prestige_content.spawn(Node {
+                            width: Val::Percent(100.0),
+                            padding: UiRect::all(Val::Px(20.0)),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(10.0),
+                            ..default()
+                        }).insert(BackgroundColor(Color::srgb(0.1, 0.05, 0.15))).with_children(|info| {
+                            info.spawn((
+                                Text::new("Current Prestige Level: 0"),
+                                TextFont { 
+                                    font_size: 24.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                            ));
+                            info.spawn((
+                                Text::new("Prestige Points Available: 0"),
+                                TextFont { 
+                                    font_size: 18.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.5, 1.0, 0.5)),
+                            ));
+                        });
+                        
+                        // Prestige bonuses
+                        prestige_content.spawn((
+                            Text::new("🌟 Permanent Bonuses"),
+                            TextFont { 
+                                font_size: 24.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.5, 0.0)),
+                        ));
+                        
+                        prestige_content.spawn(Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(10.0),
+                            ..default()
+                        }).with_children(|bonuses| {
+                            // Prestige bonus placeholder
+                            // Prestige bonus placeholder
+                            // Prestige bonus placeholder
+                            // Prestige bonus placeholder
+                        });
+                    });
                 },
                 MenuTab::Settings => {
                     parent.spawn((
@@ -425,6 +844,15 @@ fn update_tab_content(
                             ..default()
                         },
                         TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                    ));
+                    
+                    parent.spawn((
+                        Text::new("\nSettings menu coming soon!\n\n• Audio controls\n• Graphics options\n• Key bindings\n• Gameplay preferences"),
+                        TextFont { 
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
                     ));
                 },
             }
@@ -444,11 +872,12 @@ fn get_tab_color(tab: MenuTab) -> Color {
     }
 }
 
+// Simple placeholder content - no helper functions needed
 fn cleanup_main_menu(
     mut commands: Commands,
     menu_query: Query<Entity, With<MainMenuUI>>,
 ) {
     for entity in &menu_query {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
