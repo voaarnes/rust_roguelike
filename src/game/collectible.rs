@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use crate::game::player::{Player, PlayerStats};
 use crate::game::movement::Collider;
 use crate::entities::powerup::PowerUpSlots;
+use crate::systems::shop::PlayerCurrency;
+use crate::core::state::GameStats;
 
 pub struct CollectiblePlugin;
 
@@ -34,6 +36,8 @@ fn handle_collectible_pickup(
     mut player_q: Query<(&Transform, &mut PlayerStats), With<Player>>,
     collectible_q: Query<(Entity, &Transform, &Collectible, &Collider)>,
     mut powerup_q: Query<&mut PowerUpSlots, With<Player>>,
+    mut currency_q: Query<&mut PlayerCurrency>,
+    mut game_stats: ResMut<GameStats>,
 ) {
     let Ok((player_tf, mut player_stats)) = player_q.single_mut() else { return };
     
@@ -45,6 +49,11 @@ fn handle_collectible_pickup(
             match collectible.collectible_type {
                 CollectibleType::Coin => {
                     player_stats.coins_collected += collectible.value as u32;
+                    game_stats.coins_collected += collectible.value as u32;
+                    // Update shop currency as well
+                    if let Ok(mut currency) = currency_q.single_mut() {
+                        currency.coins += collectible.value as u32;
+                    }
                 }
                 CollectibleType::Fruit(fruit_type) => {
                     if let Ok(mut powerup_slots) = powerup_q.single_mut() {
@@ -54,6 +63,12 @@ fn handle_collectible_pickup(
                         } else {
                             println!("Picked up fruit type {}", fruit_type);
                         }
+                    }
+                }
+                CollectibleType::Gem => {
+                    // Update shop currency
+                    if let Ok(mut currency) = currency_q.single_mut() {
+                        currency.gems += collectible.value as u32;
                     }
                 }
                 CollectibleType::HealthPotion => {

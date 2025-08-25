@@ -14,6 +14,7 @@ mod utils;
 mod stages;
 mod setup;
 mod states;
+mod systems;
 
 use bevy::prelude::*;
 use bevy::window::PresentMode;
@@ -38,6 +39,7 @@ fn main() {
             utils::UtilsPlugin,
             stages::StagesPlugin,
             states::StatesPlugin,
+            systems::GameSystemsPlugin,
         ))
         .run();
 }

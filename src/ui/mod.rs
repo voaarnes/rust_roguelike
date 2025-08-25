@@ -5,6 +5,10 @@ pub mod health_bars;
 pub mod minimap;
 pub mod powerup_display;
 pub mod ability_display;
+// Temporarily disabled for Bevy 0.16 compatibility
+// pub mod shop_menu;
+// pub mod achievement_display;
+// pub mod talent_menu;
 
 use bevy::prelude::*;
 
@@ -20,6 +24,9 @@ impl Plugin for UIPlugin {
             minimap::MinimapPlugin,
             powerup_display::PowerUpDisplayPlugin,
             ability_display::AbilityDisplayPlugin,
+            // shop_menu::ShopMenuPlugin,
+            // achievement_display::AchievementDisplayPlugin,
+            // talent_menu::TalentMenuPlugin,
         ));
     }
 }

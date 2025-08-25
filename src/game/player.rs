@@ -3,6 +3,7 @@ use crate::game::animation::{AnimationController, AnimationClip};
 use crate::entities::powerup::PowerUpSlots;
 use crate::game::movement::{Velocity, Collider};
 use crate::game::combat::{Health, CombatStats};
+use crate::systems::talents::PlayerTalents;
 use crate::game::player_visual::PlayerParts;
 use crate::game::abilities::ActiveAbilities;
 
@@ -183,14 +184,22 @@ fn player_input_system(
 
 fn update_player_stats(
     mut player_q: Query<&mut Player>,
+    mut talents: ResMut<PlayerTalents>,
     _time: Res<Time>,
 ) {
     for mut player in player_q.iter_mut() {
         // Simple level progression
         if player.experience >= player.exp_to_next_level {
+            let old_level = player.level;
             player.level += 1;
             player.experience = 0;
             player.exp_to_next_level = player.level * 100;
+            
+            // Award talent point for leveling up
+            let levels_gained = player.level - old_level;
+            talents.available_points += levels_gained;
+            
+            println!("Level up! Now level {}. Gained {} talent points.", player.level, levels_gained);
         }
     }
 }

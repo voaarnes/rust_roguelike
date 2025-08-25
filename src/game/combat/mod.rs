@@ -6,6 +6,8 @@ use bevy::prelude::*;
 use crate::game::player::Player;
 use crate::game::enemy::Enemy;
 use crate::game::movement::Collider;
+use crate::systems::loot::{DropLootEvent, LootSource};
+use crate::systems::combo::ComboEvent;
 
 pub struct CombatPlugin;
 
@@ -89,6 +91,7 @@ pub fn handle_combat(
     mut player_q: Query<(Entity, &Transform, &mut Health, &CombatStats, &Collider, Option<&mut LastDamageTime>), (With<Player>, Without<Enemy>)>,
     mut enemy_q: Query<(&Transform, &mut Health, &CombatStats, &Collider), (With<Enemy>, Without<Player>)>,
     mut commands: Commands,
+    mut combo_events: EventWriter<ComboEvent>,
     time: Res<Time>,
 ) {
     let Ok((player_entity, player_tf, mut player_health, player_stats, player_collider, player_damage_time)) = player_q.single_mut() else { return };
@@ -111,12 +114,18 @@ pub fn handle_combat(
                 let damage = (enemy_stats.damage - player_stats.armor).max(1);
                 player_health.take_damage(damage);
                 
+                // Reset combo when player takes damage
+                combo_events.write(ComboEvent::Reset);
+                
                 // Add damage immunity period
                 commands.entity(player_entity).insert(LastDamageTime::default());
             }
             
             // Player damages enemy (continuous damage when touching)
             enemy_health.take_damage(1);
+            
+            // Send combo event for hit
+            combo_events.write(ComboEvent::Hit);
         }
     }
 }
@@ -136,13 +145,28 @@ fn health_regeneration(
 
 fn cleanup_dead_entities(
     mut commands: Commands,
-    query: Query<(Entity, &Health)>,
+    query: Query<(Entity, &Health, &Transform, Option<&Enemy>)>,
     mut state: ResMut<crate::core::state::GameStats>,
+    mut loot_events: EventWriter<DropLootEvent>,
+    mut combo_events: EventWriter<ComboEvent>,
 ) {
-    for (entity, health) in query.iter() {
+    for (entity, health, transform, enemy) in query.iter() {
         if health.is_dead() {
             state.enemies_killed += 1;
             state.score += 10;
+            
+            // Send combo event for kill
+            combo_events.write(ComboEvent::Kill);
+            
+            // Drop loot if this was an enemy
+            if let Some(_enemy) = enemy {
+                loot_events.write(DropLootEvent {
+                    position: transform.translation,
+                    source: LootSource::Enemy("BasicEnemy".to_string()),
+                    luck_bonus: 0.0, // TODO: Get from player stats
+                });
+            }
+            
             commands.entity(entity).despawn();
         }
     }
