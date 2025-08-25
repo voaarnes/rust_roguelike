@@ -58,7 +58,7 @@ pub struct Equipment {
     pub set_bonus: Option<String>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum EquipmentSlot {
     Weapon,
     Armor,

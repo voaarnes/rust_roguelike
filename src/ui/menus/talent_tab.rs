@@ -8,7 +8,7 @@ pub struct TalentNode {
 }
 
 pub fn render_talent_tab(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     talent_tree: &TalentTree,
     player_talents: &PlayerTalents,
 ) {
@@ -49,13 +49,13 @@ pub fn render_talent_tab(
 }
 
 fn spawn_talent_tree(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     tree_type: &TalentTreeType,
     tree_data: &crate::systems::talents::TreeData,
     player_talents: &PlayerTalents,
 ) {
     parent.spawn(Node {
-        flex: 1.0,
+        flex_grow: 1.0,
         flex_direction: FlexDirection::Column,
         padding: UiRect::all(Val::Px(15.0)),
         ..default()
@@ -96,7 +96,7 @@ fn spawn_talent_tree(
 }
 
 fn spawn_talent_node(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     talent: &crate::systems::talents::Talent,
     tree_type: &TalentTreeType,
     player_talents: &PlayerTalents,

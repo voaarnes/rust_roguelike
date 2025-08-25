@@ -27,7 +27,7 @@ impl Plugin for CorePlugin {
             // Systems
             .add_systems(Startup, (
                 camera::setup_camera,
-                start_game,
+                // Removed auto-start to allow main menu to show
             ))
             .add_systems(Update, (
                 input::buffer_input_system,
@@ -37,9 +37,4 @@ impl Plugin for CorePlugin {
                 input::pause_game_system,
             ));
     }
-}
-
-fn start_game(mut next_state: ResMut<NextState<state::GameState>>) {
-    // Auto-start the game
-    next_state.set(state::GameState::Playing);
 }

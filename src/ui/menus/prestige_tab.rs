@@ -5,7 +5,7 @@ use crate::systems::prestige::{PrestigeSystem, MetaProgression, PrestigeEvent, P
 pub struct PrestigeButton(PrestigeType);
 
 pub fn render_prestige_tab(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     prestige: &PrestigeSystem,
     meta: &MetaProgression,
 ) {
@@ -119,7 +119,7 @@ pub fn render_prestige_tab(
 }
 
 fn spawn_prestige_option(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     prestige_type: PrestigeType,
     name: &str,
     description: &str,
@@ -128,12 +128,12 @@ fn spawn_prestige_option(
     parent.spawn((
         Button,
         Node {
-            flex: 1.0,
+            flex_grow: 1.0,
             padding: UiRect::all(Val::Px(15.0)),
             flex_direction: FlexDirection::Column,
             ..default()
         },
-        BackgroundColor(Color::srgba(color.red(), color.green(), color.blue(), 0.2)),
+        BackgroundColor(Color::srgba(0.2, 0.2, 0.4, 0.2)),
         PrestigeButton(prestige_type),
     )).with_children(|option| {
         option.spawn((
@@ -151,7 +151,7 @@ fn spawn_prestige_option(
 }
 
 fn spawn_meta_upgrade_card(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     upgrade: &crate::systems::prestige::MetaUpgrade,
 ) {
     parent.spawn(Node {

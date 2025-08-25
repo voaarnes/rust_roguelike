@@ -7,7 +7,7 @@ pub struct ShopItemCard {
 }
 
 pub fn render_shop_tab(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     shop: &ShopInventory,
     currency: &PlayerCurrency,
 ) {
@@ -64,7 +64,7 @@ pub fn render_shop_tab(
     });
 }
 
-fn spawn_shop_item_card(parent: &mut ChildBuilder, item: &ShopItem) {
+fn spawn_shop_item_card(parent: &mut impl bevy::hierarchy::BuildChildren, item: &ShopItem) {
     parent.spawn((
         Button,
         Node {

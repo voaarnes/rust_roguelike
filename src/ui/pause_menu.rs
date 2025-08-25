@@ -50,68 +50,79 @@ fn setup_pause_menu(mut commands: Commands) {
                     BackgroundColor(Color::srgb(0.2, 0.2, 0.25)),
                 ))
                 .with_children(|parent| {
-                    // Title
-                    parent.spawn((
-                        Text::new("PAUSED"),
-                        TextFont {
-                            font_size: 60.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(20.0)),
-                            ..default()
-                        },
-                    ));
-
-                    // Resume Button
+                    // Menu container
                     parent
                         .spawn((
-                            Button,
                             Node {
-                                width: Val::Px(200.0),
-                                height: Val::Px(65.0),
+                                flex_direction: FlexDirection::Column,
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                padding: UiRect::all(Val::Px(40.0)),
+                                row_gap: Val::Px(20.0),
                                 ..default()
                             },
-                            BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
-                            ResumeButton,
+                            BackgroundColor(Color::srgb(0.2, 0.2, 0.25)),
                         ))
                         .with_children(|parent| {
+                            // Title
                             parent.spawn((
-                                Text::new("RESUME"),
+                                Text::new("GAME PAUSED"),
                                 TextFont {
-                                    font_size: 35.0,
+                                    font_size: 40.0,
                                     ..default()
                                 },
                                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
                             ));
-                        });
 
-                    // Main Menu Button
-                    parent
-                        .spawn((
-                            Button,
-                            Node {
-                                width: Val::Px(200.0),
-                                height: Val::Px(65.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                            BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
-                            MainMenuButton,
-                        ))
-                        .with_children(|parent| {
-                            parent.spawn((
-                                Text::new("MAIN MENU"),
-                                TextFont {
-                                    font_size: 35.0,
-                                    ..default()
-                                },
-                                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-                            ));
+                            // Resume Button
+                            parent
+                                .spawn((
+                                    Button,
+                                    Node {
+                                        width: Val::Px(200.0),
+                                        height: Val::Px(65.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
+                                    ResumeButton,
+                                ))
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("RESUME"),
+                                        TextFont {
+                                            font_size: 35.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                                    ));
+                                });
+
+                            // Main Menu Button
+                            parent
+                                .spawn((
+                                    Button,
+                                    Node {
+                                        width: Val::Px(200.0),
+                                        height: Val::Px(65.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
+                                    MainMenuButton,
+                                ))
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("MAIN MENU"),
+                                        TextFont {
+                                            font_size: 35.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                                    ));
+                                });
                         });
                 });
         });
@@ -131,7 +142,7 @@ fn handle_pause_menu_input(
                 } else if main_menu.is_some() {
                     // Clean up all game entities when returning to main menu
                     for entity in &game_entities {
-                        commands.entity(entity).despawn();
+                        commands.entity(entity).despawn_recursive();
                     }
                     next_state.set(GameState::MainMenu);
                 }

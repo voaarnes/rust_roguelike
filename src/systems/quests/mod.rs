@@ -47,7 +47,7 @@ pub enum QuestType {
     Challenge,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum QuestObjective {
     KillEnemies(String, u32), // enemy type, count
     CollectItems(String, u32), // item type, count

@@ -133,20 +133,29 @@ fn setup_main_menu(mut commands: Commands, mut menu_state: ResMut<MenuState>) {
 
 fn handle_tab_switching(
     mut menu_state: ResMut<MenuState>,
-    mut button_query: Query<(&TabButton, &mut BackgroundColor, &Interaction), Changed<Interaction>>,
+    interaction_query: Query<(&TabButton, &Interaction), Changed<Interaction>>,
+    mut button_query: Query<(&TabButton, &mut BackgroundColor)>,
 ) {
-    for (tab_button, mut bg_color, interaction) in button_query.iter_mut() {
+    // Check for pressed buttons first
+    let mut new_tab = None;
+    for (tab_button, interaction) in interaction_query.iter() {
         if *interaction == Interaction::Pressed {
-            menu_state.current_tab = tab_button.0;
-            
-            // Update all button colors
-            for (button, mut color, _) in button_query.iter_mut() {
-                *color = if button.0 == menu_state.current_tab {
-                    BackgroundColor(Color::srgb(0.2, 0.3, 0.5))
-                } else {
-                    BackgroundColor(Color::srgb(0.1, 0.1, 0.2))
-                };
-            }
+            new_tab = Some(tab_button.0);
+            break;
+        }
+    }
+    
+    // If a tab was pressed, update the state and colors
+    if let Some(tab) = new_tab {
+        menu_state.current_tab = tab;
+        
+        // Update all button colors
+        for (button, mut color) in button_query.iter_mut() {
+            *color = if button.0 == menu_state.current_tab {
+                BackgroundColor(Color::srgb(0.2, 0.3, 0.5))
+            } else {
+                BackgroundColor(Color::srgb(0.1, 0.1, 0.2))
+            };
         }
     }
 }
@@ -160,7 +169,7 @@ fn update_tab_content(
     
     if let Ok(content_entity) = content_query.single() {
         // Clear current content
-        commands.entity(content_entity).despawn_descendants();
+        commands.entity(content_entity).despawn();
         
         // Spawn new content based on current tab
         commands.entity(content_entity).with_children(|parent| {
@@ -177,7 +186,7 @@ fn update_tab_content(
     }
 }
 
-fn spawn_shop_content(parent: &mut ChildBuilder) {
+fn spawn_shop_content(parent: &mut bevy::ecs::system::EntityCommands) {
     parent.spawn((
         Text::new("Shop"),
         TextFont { font_size: 32.0, ..default() },
@@ -187,7 +196,7 @@ fn spawn_shop_content(parent: &mut ChildBuilder) {
     // Shop grid will be populated here
 }
 
-fn spawn_talents_content(parent: &mut ChildBuilder) {
+fn spawn_talents_content(parent: &mut impl bevy::hierarchy::BuildChildren) {
     parent.spawn((
         Text::new("Talent Trees"),
         TextFont { font_size: 32.0, ..default() },
@@ -197,7 +206,7 @@ fn spawn_talents_content(parent: &mut ChildBuilder) {
     // Talent tree visualization will be here
 }
 
-fn spawn_achievements_content(parent: &mut ChildBuilder) {
+fn spawn_achievements_content(parent: &mut impl bevy::hierarchy::BuildChildren) {
     parent.spawn((
         Text::new("Achievements"),
         TextFont { font_size: 32.0, ..default() },
@@ -207,7 +216,7 @@ fn spawn_achievements_content(parent: &mut ChildBuilder) {
     // Achievement grid will be here
 }
 
-fn spawn_quests_content(parent: &mut ChildBuilder) {
+fn spawn_quests_content(parent: &mut impl bevy::hierarchy::BuildChildren) {
     parent.spawn((
         Text::new("Quests & Challenges"),
         TextFont { font_size: 32.0, ..default() },
@@ -217,7 +226,7 @@ fn spawn_quests_content(parent: &mut ChildBuilder) {
     // Quest list will be here
 }
 
-fn spawn_inventory_content(parent: &mut ChildBuilder) {
+fn spawn_inventory_content(parent: &mut impl bevy::hierarchy::BuildChildren) {
     parent.spawn((
         Text::new("Inventory & Loot"),
         TextFont { font_size: 32.0, ..default() },
@@ -227,7 +236,7 @@ fn spawn_inventory_content(parent: &mut ChildBuilder) {
     // Inventory grid will be here
 }
 
-fn spawn_prestige_content(parent: &mut ChildBuilder) {
+fn spawn_prestige_content(parent: &mut impl bevy::hierarchy::BuildChildren) {
     parent.spawn((
         Text::new("Prestige & Meta-Progression"),
         TextFont { font_size: 32.0, ..default() },
@@ -237,7 +246,7 @@ fn spawn_prestige_content(parent: &mut ChildBuilder) {
     // Prestige options will be here
 }
 
-fn spawn_settings_content(parent: &mut ChildBuilder) {
+fn spawn_settings_content(parent: &mut impl bevy::hierarchy::BuildChildren) {
     parent.spawn((
         Text::new("Settings"),
         TextFont { font_size: 32.0, ..default() },
@@ -250,6 +259,6 @@ fn cleanup_main_menu(
     menu_query: Query<Entity, With<MainMenuUI>>,
 ) {
     for entity in menu_query.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }

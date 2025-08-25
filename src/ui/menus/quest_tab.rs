@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use crate::systems::quests::{ActiveQuests, QuestManager, QuestStatus};
+use crate::systems::quests::{ActiveQuests, QuestManager};
 
 pub fn render_quest_tab(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     active_quests: &ActiveQuests,
     quest_manager: &QuestManager,
 ) {
@@ -30,7 +30,7 @@ pub fn render_quest_tab(
     }).with_children(|content| {
         // Daily Quests
         content.spawn(Node {
-            flex: 1.0,
+            flex_grow: 1.0,
             flex_direction: FlexDirection::Column,
             padding: UiRect::all(Val::Px(15.0)),
             ..default()
@@ -50,7 +50,7 @@ pub fn render_quest_tab(
         
         // Wave Challenges
         content.spawn(Node {
-            flex: 1.0,
+            flex_grow: 1.0,
             flex_direction: FlexDirection::Column,
             padding: UiRect::all(Val::Px(15.0)),
             ..default()
@@ -70,7 +70,7 @@ pub fn render_quest_tab(
     });
 }
 
-fn spawn_quest_item(parent: &mut ChildBuilder, quest: &crate::systems::quests::ActiveQuest) {
+fn spawn_quest_item(parent: &mut impl bevy::hierarchy::BuildChildren, quest: &crate::systems::quests::ActiveQuest) {
     parent.spawn(Node {
         width: Val::Percent(100.0),
         flex_direction: FlexDirection::Column,

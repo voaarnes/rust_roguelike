@@ -6,10 +6,10 @@ pub mod minimap;
 pub mod powerup_display;
 pub mod ability_display;
 
-// New advanced UI modules
-pub mod components;
-pub mod menus;
-pub mod overlays;
+// New advanced UI modules - temporarily disabled for Bevy 0.16 compatibility
+// pub mod components;
+// pub mod menus;
+// pub mod overlays;
 
 use bevy::prelude::*;
 
@@ -27,9 +27,9 @@ impl Plugin for UIPlugin {
             powerup_display::PowerUpDisplayPlugin,
             ability_display::AbilityDisplayPlugin,
             
-            // New advanced UI plugins
-            components::game_hud::GameHudPlugin,
-            menus::main_game_menu::MainGameMenuPlugin,
+            // New advanced UI plugins - temporarily disabled for Bevy 0.16 compatibility
+            // components::game_hud::GameHudPlugin,
+            // menus::main_game_menu::MainGameMenuPlugin,
         ));
     }
 }

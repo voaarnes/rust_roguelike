@@ -36,7 +36,7 @@ pub struct Achievement {
     pub tier: AchievementTier,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum AchievementCategory {
     Combat,
     Collection,

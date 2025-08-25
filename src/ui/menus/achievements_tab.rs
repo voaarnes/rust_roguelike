@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use crate::systems::achievements::{AchievementRegistry, PlayerAchievements, AchievementCategory};
+use crate::systems::achievements::{PlayerAchievements, AchievementRegistry, AchievementCategory};
 
 pub fn render_achievements_tab(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     registry: &AchievementRegistry,
     player_achievements: &PlayerAchievements,
 ) {
@@ -49,7 +49,7 @@ pub fn render_achievements_tab(
     
     // Achievement categories
     let categories = [
-        AchievementCategory::Progress,
+        AchievementCategory::Progression,
         AchievementCategory::Combat,
         AchievementCategory::Collection,
         AchievementCategory::Challenge,
@@ -70,7 +70,7 @@ pub fn render_achievements_tab(
 }
 
 fn spawn_achievement_category(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     category: AchievementCategory,
     registry: &AchievementRegistry,
     player_achievements: &PlayerAchievements,
@@ -110,7 +110,7 @@ fn spawn_achievement_category(
 }
 
 fn spawn_achievement_card(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     achievement: &crate::systems::achievements::Achievement,
     is_unlocked: bool,
     progress: u32,

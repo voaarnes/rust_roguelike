@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use crate::systems::loot::{CollectedLoot, Equipment, Rarity};
 
 pub fn render_inventory_tab(
-    parent: &mut ChildBuilder,
+    parent: &mut impl bevy::hierarchy::BuildChildren,
     collected_loot: &CollectedLoot,
 ) {
     // Header
@@ -55,7 +55,7 @@ pub fn render_inventory_tab(
     });
 }
 
-fn spawn_equipment_card(parent: &mut ChildBuilder, equipment: &Equipment) {
+fn spawn_equipment_card(parent: &mut impl bevy::hierarchy::BuildChildren, equipment: &Equipment) {
     parent.spawn(Node {
         width: Val::Px(120.0),
         height: Val::Px(120.0),
@@ -88,7 +88,7 @@ fn spawn_equipment_card(parent: &mut ChildBuilder, equipment: &Equipment) {
     });
 }
 
-fn spawn_empty_slot(parent: &mut ChildBuilder) {
+fn spawn_empty_slot(parent: &mut impl bevy::hierarchy::BuildChildren) {
     parent.spawn(Node {
         width: Val::Px(120.0),
         height: Val::Px(120.0),

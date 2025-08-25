@@ -154,7 +154,7 @@ fn update_currency_display(
     
     if let Ok(children) = query.single() {
         let texts: Vec<Entity> = children.iter()
-            .filter_map(|&child| text_query.get(child).ok())
+            .filter_map(|child| text_query.get(child).ok())
             .collect();
         
         if texts.len() >= 3 {
@@ -173,7 +173,7 @@ fn update_combo_display(
 ) {
     if let Ok(children) = query.single() {
         let texts: Vec<Entity> = children.iter()
-            .filter_map(|&child| text_query.get(child).ok())
+            .filter_map(|child| text_query.get(child).ok())
             .collect();
         
         if texts.len() >= 2 {
@@ -215,14 +215,15 @@ fn update_wave_info(
     text_query: Query<Entity, With<Text>>,
 ) {
     if let Ok(children) = query.single() {
-        let texts: Vec<Entity> = children.iter()
+        let texts: Vec<Entity> = children
+            .iter()
             .filter_map(|&child| text_query.get(child).ok())
             .collect();
         
         if texts.len() >= 2 {
             *writer.text(texts[0], 0) = format!("Wave {}", wave.current_wave);
             *writer.text(texts[1], 0) = format!("Enemies: {}/{}", 
-                wave.enemies_remaining, wave.enemies_per_wave);
+                wave.enemies_alive, wave.enemies_spawned);
         }
     }
 }
