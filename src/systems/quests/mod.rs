@@ -38,7 +38,7 @@ pub struct Quest {
     pub repeatable: bool,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum QuestType {
     Daily,
     Wave,

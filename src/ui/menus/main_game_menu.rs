@@ -17,12 +17,14 @@ impl Plugin for MainGameMenuPlugin {
             .add_systems(Update, toggle_menu.run_if(not(in_state(GameState::MainMenu))))
             .add_systems(OnEnter(GameState::Paused), setup_main_menu)
             .add_systems(OnExit(GameState::Paused), cleanup_main_menu)
-            .add_systems(Update, (
-                handle_tab_buttons,
-                handle_close_button,
-                update_tab_content,
-                handle_shop_purchases,
-            ).run_if(in_state(GameState::Paused)));
+            .add_systems(Update, 
+                handle_tab_buttons.run_if(in_state(GameState::Paused)))
+            .add_systems(Update, 
+                handle_close_button.run_if(in_state(GameState::Paused)))
+            .add_systems(Update, 
+                update_tab_content.run_if(in_state(GameState::Paused)))
+            .add_systems(Update, 
+                handle_shop_purchases.run_if(in_state(GameState::Paused)));
     }
 }
 
@@ -342,19 +344,9 @@ fn update_tab_content(
     mut button_bg_query: Query<&mut BackgroundColor>,
     mut text_color_query: Query<&mut TextColor>,
     children_query: Query<&Children>,
-    // Game system resources
+    // Game system resources - simplified for now
     currency: Res<PlayerCurrency>,
     shop_inventory: Res<ShopInventory>,
-    achievement_registry: Res<AchievementRegistry>,
-    player_achievements: Res<PlayerAchievements>,
-    talent_tree: Res<TalentTree>,
-    player_talents: Res<PlayerTalents>,
-    quest_manager: Res<QuestManager>,
-    active_quests: Res<ActiveQuests>,
-    prestige_system: Res<PrestigeSystem>,
-    meta_progression: Res<MetaProgression>,
-    collected_loot: Res<CollectedLoot>,
-    combo_tracker: Res<ComboTracker>,
 ) {
     if !menu_state.is_changed() {
         return;
@@ -586,7 +578,7 @@ fn update_tab_content(
                         // Offense Tree
                         if let Some(offense_tree) = talent_tree.trees.get(&crate::systems::talents::TalentTreeType::Offense) {
                             trees_container.spawn(Node {
-                                flex: 1.0,
+                                flex_grow: 1.0,
                                 flex_direction: FlexDirection::Column,
                                 padding: UiRect::all(Val::Px(15.0)),
                                 row_gap: Val::Px(10.0),
@@ -640,7 +632,7 @@ fn update_tab_content(
                         // Defense Tree
                         if let Some(defense_tree) = talent_tree.trees.get(&crate::systems::talents::TalentTreeType::Defense) {
                             trees_container.spawn(Node {
-                                flex: 1.0,
+                                flex_grow: 1.0,
                                 flex_direction: FlexDirection::Column,
                                 padding: UiRect::all(Val::Px(15.0)),
                                 row_gap: Val::Px(10.0),
@@ -694,7 +686,7 @@ fn update_tab_content(
                         // Utility Tree  
                         if let Some(utility_tree) = talent_tree.trees.get(&crate::systems::talents::TalentTreeType::Utility) {
                             trees_container.spawn(Node {
-                                flex: 1.0,
+                                flex_grow: 1.0,
                                 flex_direction: FlexDirection::Column,
                                 padding: UiRect::all(Val::Px(15.0)),
                                 row_gap: Val::Px(10.0),
@@ -907,7 +899,9 @@ fn update_tab_content(
                     // Active quests section
                     parent.spawn((
                         Text::new(format!("Active Quests ({}/{})", 
-                            active_quests.quests.len(),
+                            active_quests.daily_quests.len() + 
+                            active_quests.wave_challenges.len() + 
+                            active_quests.story_quests.len(),
                             quest_manager.available_quests.len()
                         )),
                         TextFont { 
@@ -917,17 +911,25 @@ fn update_tab_content(
                         TextColor(Color::srgb(1.0, 0.843, 0.0)),
                     ));
                     
-                    parent.spawn(Node {
-                        width: Val::Percent(100.0),
-                        margin: UiRect::vertical(Val::Px(20.0)),
-                        flex_direction: FlexDirection::Column,
-                        row_gap: Val::Px(15.0),
-                        ..default()
-                    }).with_children(|quest_list| {
+                    parent.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            margin: UiRect::vertical(Val::Px(20.0)),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(15.0),
+                            ..default()
+                        },
+                    )).with_children(|quest_list| {
                         // Show active quests
-                        for active_quest in &active_quests.quests {
-                            if let Some(quest) = quest_manager.available_quests.get(&active_quest.quest_id) {
-                                quest_list.spawn(Node {
+                        let all_active_quests = [
+                            &active_quests.daily_quests[..],
+                            &active_quests.wave_challenges[..],
+                            &active_quests.story_quests[..],
+                        ].concat();
+                        
+                        for active_quest in &all_active_quests {
+                            let quest = &active_quest.quest;
+                            quest_list.spawn(Node {
                                     width: Val::Percent(100.0),
                                     padding: UiRect::all(Val::Px(15.0)),
                                     flex_direction: FlexDirection::Column,
@@ -989,8 +991,11 @@ fn update_tab_content(
                                         padding: UiRect::all(Val::Px(2.0)),
                                         ..default()
                                     }).insert(BackgroundColor(Color::srgb(0.2, 0.2, 0.2))).with_children(|progress_container| {
-                                        let progress_percent = if active_quest.target_value > 0 {
-                                            (active_quest.current_progress as f32 / active_quest.target_value as f32).min(1.0)
+                                        // Calculate progress from objectives
+                                        let total_objectives = quest.objectives.len() as f32;
+                                        let completed_objectives = active_quest.progress.len() as f32;
+                                        let progress_percent = if total_objectives > 0.0 {
+                                            (completed_objectives / total_objectives).min(1.0)
                                         } else {
                                             0.0
                                         };
@@ -1015,8 +1020,8 @@ fn update_tab_content(
                                     }).with_children(|footer| {
                                         footer.spawn((
                                             Text::new(format!("Progress: {}/{}", 
-                                                active_quest.current_progress, 
-                                                active_quest.target_value
+                                                active_quest.progress.len(), 
+                                                quest.objectives.len()
                                             )),
                                             TextFont { 
                                                 font_size: 12.0,
@@ -1039,7 +1044,7 @@ fn update_tab_content(
                         }
                         
                         // If no active quests
-                        if active_quests.quests.is_empty() {
+                        if all_active_quests.is_empty() {
                             quest_list.spawn((
                                 Text::new("📭 No active quests - new quests appear as you progress!"),
                                 TextFont { 
@@ -1062,7 +1067,7 @@ fn update_tab_content(
                             ));
                             
                             for (id, quest) in quest_manager.available_quests.iter().take(3) {
-                                if !active_quests.quests.iter().any(|aq| &aq.quest_id == id) {
+                                if !all_active_quests.iter().any(|aq| &aq.quest.id == id) {
                                     quest_list.spawn(Node {
                                         width: Val::Percent(100.0),
                                         padding: UiRect::all(Val::Px(10.0)),
@@ -1244,8 +1249,8 @@ fn update_tab_content(
                                 row_gap: Val::Px(10.0),
                                 ..default()
                             }).with_children(|grid| {
-                                // Show consumables
-                                for (consumable, count) in &collected_loot.consumables {
+                                // Show materials (using materials instead of consumables)
+                                for (material, count) in &collected_loot.materials {
                                     grid.spawn(Node {
                                         width: Val::Px(80.0),
                                         height: Val::Px(80.0),
@@ -1254,7 +1259,7 @@ fn update_tab_content(
                                         ..default()
                                     }).insert(BackgroundColor(Color::srgb(0.1, 0.1, 0.15))).with_children(|item| {
                                         item.spawn((
-                                            Text::new(format!("{:?}", consumable)),
+                                            Text::new(format!("{:?}", material)),
                                             TextFont { 
                                                 font_size: 10.0,
                                                 ..default()
@@ -1302,8 +1307,8 @@ fn update_tab_content(
                                     });
                                 }
                                 
-                                // Empty slots to fill grid
-                                for _ in 0..(20 - collected_loot.consumables.len() - collected_loot.materials.len()).min(20) {
+                                // Empty slots to fill grid  
+                                for _ in 0..(20 - collected_loot.materials.len() - collected_loot.equipment.len()).min(20) {
                                     grid.spawn(Node {
                                         width: Val::Px(80.0),
                                         height: Val::Px(80.0),
@@ -1562,7 +1567,7 @@ fn handle_shop_purchases(
     for (interaction, shop_button) in &interaction_query {
         if *interaction == Interaction::Pressed {
             if let Ok(player_entity) = player_query.single() {
-                purchase_events.send(crate::systems::shop::PurchaseEvent {
+                purchase_events.write(crate::systems::shop::PurchaseEvent {
                     item_id: shop_button.item_id.clone(),
                     player: player_entity,
                 });
