@@ -1,5 +1,12 @@
 use bevy::prelude::*;
 use crate::core::state::GameState;
+use crate::systems::shop::{PlayerCurrency, ShopInventory};
+use crate::systems::achievements::{AchievementRegistry, PlayerAchievements};
+use crate::systems::talents::{TalentTree, PlayerTalents};
+use crate::systems::quests::{QuestManager, ActiveQuests};
+use crate::systems::prestige::{PrestigeSystem, MetaProgression};
+use crate::systems::loot::CollectedLoot;
+use crate::systems::combo::ComboTracker;
 
 pub struct MainGameMenuPlugin;
 
@@ -14,6 +21,7 @@ impl Plugin for MainGameMenuPlugin {
                 handle_tab_buttons,
                 handle_close_button,
                 update_tab_content,
+                handle_shop_purchases,
             ).run_if(in_state(GameState::Paused)));
     }
 }
@@ -55,6 +63,14 @@ struct TabContentContainer;
 
 #[derive(Component)]
 struct CloseButton;
+
+#[derive(Component)]
+struct ShopItemButton {
+    item_id: String,
+}
+
+#[derive(Component)]
+struct CurrencyDisplay;
 
 fn toggle_menu(
     input: Res<ButtonInput<KeyCode>>,
@@ -326,6 +342,19 @@ fn update_tab_content(
     mut button_bg_query: Query<&mut BackgroundColor>,
     mut text_color_query: Query<&mut TextColor>,
     children_query: Query<&Children>,
+    // Game system resources
+    currency: Res<PlayerCurrency>,
+    shop_inventory: Res<ShopInventory>,
+    achievement_registry: Res<AchievementRegistry>,
+    player_achievements: Res<PlayerAchievements>,
+    talent_tree: Res<TalentTree>,
+    player_talents: Res<PlayerTalents>,
+    quest_manager: Res<QuestManager>,
+    active_quests: Res<ActiveQuests>,
+    prestige_system: Res<PrestigeSystem>,
+    meta_progression: Res<MetaProgression>,
+    collected_loot: Res<CollectedLoot>,
+    combo_tracker: Res<ComboTracker>,
 ) {
     if !menu_state.is_changed() {
         return;
@@ -370,7 +399,7 @@ fn update_tab_content(
         commands.entity(container).with_children(|parent| {
             match menu_state.current_tab {
                 MenuTab::Shop => {
-                    // Title
+                    // Title with currency display
                     parent.spawn((
                         Text::new("🛒 SHOP"),
                         TextFont { 
@@ -380,205 +409,156 @@ fn update_tab_content(
                         TextColor(Color::srgb(1.0, 0.843, 0.0)),
                     ));
                     
-                    // Shop categories
+                    // Currency display
+                    parent.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Row,
+                            column_gap: Val::Px(30.0),
+                            margin: UiRect::vertical(Val::Px(15.0)),
+                            padding: UiRect::all(Val::Px(15.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.05, 0.05, 0.08)),
+                        CurrencyDisplay,
+                    )).with_children(|currencies| {
+                        currencies.spawn((
+                            Text::new(format!("💰 Coins: {}", currency.coins)),
+                            TextFont { 
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                        ));
+                        currencies.spawn((
+                            Text::new(format!("� Gems: {}", currency.gems)),
+                            TextFont { 
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.5, 0.5, 1.0)),
+                        ));
+                        currencies.spawn((
+                            Text::new(format!("👻 Soul Shards: {}", currency.soul_shards)),
+                            TextFont { 
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.8, 0.0, 0.8)),
+                        ));
+                    });
+                    
+                    // Shop items grid
                     parent.spawn(Node {
                         width: Val::Percent(100.0),
                         margin: UiRect::vertical(Val::Px(20.0)),
-                        flex_direction: FlexDirection::Column,
-                        row_gap: Val::Px(30.0),
+                        flex_direction: FlexDirection::Row,
+                        flex_wrap: FlexWrap::Wrap,
+                        column_gap: Val::Px(15.0),
+                        row_gap: Val::Px(15.0),
                         ..default()
-                    }).with_children(|categories| {
-                        // Weapons section
-                        categories.spawn(Node {
-                            width: Val::Percent(100.0),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(10.0),
-                            ..default()
-                        }).with_children(|section| {
-                            section.spawn((
-                                Text::new("⚔️ Weapons"),
-                                TextFont { 
-                                    font_size: 24.0,
+                    }).with_children(|grid| {
+                        // Display actual shop items
+                        for item in &shop_inventory.items {
+                            let can_afford = match item.currency_type {
+                                crate::systems::shop::CurrencyType::Coins => currency.coins >= item.cost,
+                                crate::systems::shop::CurrencyType::Gems => currency.gems >= item.cost,
+                                crate::systems::shop::CurrencyType::SoulShards => currency.soul_shards >= item.cost,
+                            };
+                            
+                            grid.spawn((
+                                Button,
+                                Node {
+                                    width: Val::Px(200.0),
+                                    height: Val::Px(160.0),
+                                    flex_direction: FlexDirection::Column,
+                                    padding: UiRect::all(Val::Px(12.0)),
+                                    row_gap: Val::Px(8.0),
                                     ..default()
                                 },
-                                TextColor(Color::srgb(1.0, 0.3, 0.3)),
-                            ));
-                            
-                            for (name, price, desc) in [
-                                ("Plasma Rifle", "250", "High damage energy weapon"),
-                                ("Rocket Launcher", "500", "Explosive area damage"),
-                                ("Lightning Gun", "750", "Chain lightning attacks")
-                            ] {
-                                section.spawn((
-                                    Button,
-                                    Node {
-                                        width: Val::Px(200.0),
-                                        padding: UiRect::all(Val::Px(10.0)),
-                                        flex_direction: FlexDirection::Column,
-                                        row_gap: Val::Px(5.0),
+                                BackgroundColor(if can_afford {
+                                    match item.tier {
+                                        crate::systems::shop::ItemTier::Common => Color::srgb(0.15, 0.15, 0.2),
+                                        crate::systems::shop::ItemTier::Uncommon => Color::srgb(0.1, 0.2, 0.1),
+                                        crate::systems::shop::ItemTier::Rare => Color::srgb(0.1, 0.15, 0.25),
+                                        crate::systems::shop::ItemTier::Epic => Color::srgb(0.2, 0.1, 0.25),
+                                        crate::systems::shop::ItemTier::Legendary => Color::srgb(0.25, 0.2, 0.05),
+                                    }
+                                } else {
+                                    Color::srgb(0.1, 0.1, 0.1)
+                                }),
+                                ShopItemButton { item_id: item.id.clone() },
+                            )).with_children(|item_card| {
+                                // Item name
+                                item_card.spawn((
+                                    Text::new(&item.name),
+                                    TextFont { 
+                                        font_size: 16.0,
                                         ..default()
                                     },
-                                    BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
-                                )).with_children(|item| {
-                                    item.spawn((
-                                        Text::new(name),
+                                    TextColor(if can_afford { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) }),
+                                ));
+                                
+                                // Item cost
+                                let currency_icon = match item.currency_type {
+                                    crate::systems::shop::CurrencyType::Coins => "💰",
+                                    crate::systems::shop::CurrencyType::Gems => "💎",
+                                    crate::systems::shop::CurrencyType::SoulShards => "👻",
+                                };
+                                item_card.spawn((
+                                    Text::new(format!("{} {}", currency_icon, item.cost)),
+                                    TextFont { 
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(if can_afford { 
+                                        Color::srgb(1.0, 0.843, 0.0) 
+                                    } else { 
+                                        Color::srgb(0.8, 0.2, 0.2) 
+                                    }),
+                                ));
+                                
+                                // Item description
+                                item_card.spawn((
+                                    Text::new(&item.description),
+                                    TextFont { 
+                                        font_size: 12.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                                ));
+                                
+                                // Stock info
+                                if item.stock > 0 {
+                                    item_card.spawn((
+                                        Text::new(format!("Stock: {}", item.stock)),
                                         TextFont { 
-                                            font_size: 16.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::WHITE),
-                                    ));
-                                    
-                                    item.spawn((
-                                        Text::new(format!("💰 {}", price)),
-                                        TextFont { 
-                                            font_size: 14.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
-                                    ));
-                                    
-                                    item.spawn((
-                                        Text::new(desc),
-                                        TextFont { 
-                                            font_size: 12.0,
+                                            font_size: 11.0,
                                             ..default()
                                         },
                                         TextColor(Color::srgb(0.6, 0.6, 0.6)),
                                     ));
-                                });
-                            }
-                        });
+                                }
+                            });
+                        }
                         
-                        // Upgrades section
-                        categories.spawn(Node {
-                            width: Val::Percent(100.0),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(10.0),
-                            ..default()
-                        }).with_children(|section| {
-                            section.spawn((
-                                Text::new("⬆️ Upgrades"),
+                        // If no items available
+                        if shop_inventory.items.is_empty() {
+                            grid.spawn((
+                                Text::new("🔄 No items available - shop refreshes on wave completion!"),
                                 TextFont { 
-                                    font_size: 24.0,
+                                    font_size: 18.0,
                                     ..default()
                                 },
-                                TextColor(Color::srgb(0.3, 0.8, 1.0)),
+                                TextColor(Color::srgb(0.7, 0.7, 0.7)),
                             ));
-                            
-                            for (name, price, desc) in [
-                                ("Health Boost", "100", "+25% Max Health"),
-                                ("Speed Boost", "150", "+15% Movement Speed"),
-                                ("Damage Amplifier", "200", "+20% All Damage")
-                            ] {
-                                section.spawn((
-                                    Button,
-                                    Node {
-                                        width: Val::Px(200.0),
-                                        padding: UiRect::all(Val::Px(10.0)),
-                                        flex_direction: FlexDirection::Column,
-                                        row_gap: Val::Px(5.0),
-                                        ..default()
-                                    },
-                                    BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
-                                )).with_children(|item| {
-                                    item.spawn((
-                                        Text::new(name),
-                                        TextFont { 
-                                            font_size: 16.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::WHITE),
-                                    ));
-                                    
-                                    item.spawn((
-                                        Text::new(format!("💰 {}", price)),
-                                        TextFont { 
-                                            font_size: 14.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
-                                    ));
-                                    
-                                    item.spawn((
-                                        Text::new(desc),
-                                        TextFont { 
-                                            font_size: 12.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
-                                    ));
-                                });
-                            }
-                        });
-                        
-                        // Items section
-                        categories.spawn(Node {
-                            width: Val::Percent(100.0),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(10.0),
-                            ..default()
-                        }).with_children(|section| {
-                            section.spawn((
-                                Text::new("📦 Items"),
-                                TextFont { 
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(Color::srgb(0.8, 0.5, 1.0)),
-                            ));
-                            
-                            for (name, price, desc) in [
-                                ("Shield Generator", "300", "Temporary invulnerability"),
-                                ("Time Warp", "400", "Slow down time"),
-                                ("Nuke", "1000", "Clear entire screen")
-                            ] {
-                                section.spawn((
-                                    Button,
-                                    Node {
-                                        width: Val::Px(200.0),
-                                        padding: UiRect::all(Val::Px(10.0)),
-                                        flex_direction: FlexDirection::Column,
-                                        row_gap: Val::Px(5.0),
-                                        ..default()
-                                    },
-                                    BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
-                                )).with_children(|item| {
-                                    item.spawn((
-                                        Text::new(name),
-                                        TextFont { 
-                                            font_size: 16.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::WHITE),
-                                    ));
-                                    
-                                    item.spawn((
-                                        Text::new(format!("💰 {}", price)),
-                                        TextFont { 
-                                            font_size: 14.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
-                                    ));
-                                    
-                                    item.spawn((
-                                        Text::new(desc),
-                                        TextFont { 
-                                            font_size: 12.0,
-                                            ..default()
-                                        },
-                                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
-                                    ));
-                                });
-                            }
-                        });
+                        }
                     });
                 },
                 MenuTab::Talents => {
-                    // Title
+                    // Title and points available
                     parent.spawn((
-                        Text::new("⭐ TALENT TREE"),
+                        Text::new("⭐ TALENT TREES"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
@@ -586,42 +566,184 @@ fn update_tab_content(
                         TextColor(Color::srgb(0.5, 1.0, 0.5)),
                     ));
                     
+                    parent.spawn((
+                        Text::new(format!("Available Talent Points: {}", player_talents.available_points)),
+                        TextFont { 
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                    ));
+                    
+                    // Talent trees
                     parent.spawn(Node {
                         width: Val::Percent(100.0),
                         margin: UiRect::vertical(Val::Px(20.0)),
-                        flex_direction: FlexDirection::Column,
-                        row_gap: Val::Px(20.0),
+                        flex_direction: FlexDirection::Row,
+                        column_gap: Val::Px(20.0),
                         ..default()
-                    }).with_children(|trees| {
-                        // Offense tree - simplified for now
-                        trees.spawn((
-                            Text::new("⚔️ Offense Tree"),
-                            TextFont { 
-                                font_size: 20.0,
+                    }).with_children(|trees_container| {
+                        // Offense Tree
+                        if let Some(offense_tree) = talent_tree.trees.get(&crate::systems::talents::TalentTreeType::Offense) {
+                            trees_container.spawn(Node {
+                                flex: 1.0,
+                                flex_direction: FlexDirection::Column,
+                                padding: UiRect::all(Val::Px(15.0)),
+                                row_gap: Val::Px(10.0),
                                 ..default()
-                            },
-                            TextColor(Color::srgb(1.0, 0.3, 0.3)),
-                        ));
+                            }).insert(BackgroundColor(Color::srgb(0.15, 0.05, 0.05))).with_children(|tree| {
+                                tree.spawn((
+                                    Text::new("⚔️ Offense Tree"),
+                                    TextFont { 
+                                        font_size: 20.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(1.0, 0.3, 0.3)),
+                                ));
+                                
+                                let points_spent = player_talents.spent_points.get(&crate::systems::talents::TalentTreeType::Offense).copied().unwrap_or(0);
+                                tree.spawn((
+                                    Text::new(format!("Points Spent: {}", points_spent)),
+                                    TextFont { 
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                                ));
+                                
+                                // Show some talents
+                                for (_id, talent) in offense_tree.talents.iter().take(3) {
+                                    let current_rank = player_talents.unlocked_talents.get(&talent.id).copied().unwrap_or(0);
+                                    tree.spawn(Node {
+                                        width: Val::Percent(100.0),
+                                        padding: UiRect::all(Val::Px(8.0)),
+                                        flex_direction: FlexDirection::Column,
+                                        ..default()
+                                    }).insert(BackgroundColor(if current_rank > 0 {
+                                        Color::srgb(0.1, 0.3, 0.1)
+                                    } else {
+                                        Color::srgb(0.1, 0.1, 0.15)
+                                    })).with_children(|talent_node| {
+                                        talent_node.spawn((
+                                            Text::new(format!("{} ({}/{})", talent.name, current_rank, talent.max_ranks)),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                    });
+                                }
+                            });
+                        }
                         
-                        // Defense tree - simplified for now
-                        trees.spawn((
-                            Text::new("🛡️ Defense Tree"),
-                            TextFont { 
-                                font_size: 20.0,
+                        // Defense Tree
+                        if let Some(defense_tree) = talent_tree.trees.get(&crate::systems::talents::TalentTreeType::Defense) {
+                            trees_container.spawn(Node {
+                                flex: 1.0,
+                                flex_direction: FlexDirection::Column,
+                                padding: UiRect::all(Val::Px(15.0)),
+                                row_gap: Val::Px(10.0),
                                 ..default()
-                            },
-                            TextColor(Color::srgb(0.3, 0.5, 1.0)),
-                        ));
+                            }).insert(BackgroundColor(Color::srgb(0.05, 0.05, 0.15))).with_children(|tree| {
+                                tree.spawn((
+                                    Text::new("🛡️ Defense Tree"),
+                                    TextFont { 
+                                        font_size: 20.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.3, 0.5, 1.0)),
+                                ));
+                                
+                                let points_spent = player_talents.spent_points.get(&crate::systems::talents::TalentTreeType::Defense).copied().unwrap_or(0);
+                                tree.spawn((
+                                    Text::new(format!("Points Spent: {}", points_spent)),
+                                    TextFont { 
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                                ));
+                                
+                                // Show some talents
+                                for (_id, talent) in defense_tree.talents.iter().take(3) {
+                                    let current_rank = player_talents.unlocked_talents.get(&talent.id).copied().unwrap_or(0);
+                                    tree.spawn(Node {
+                                        width: Val::Percent(100.0),
+                                        padding: UiRect::all(Val::Px(8.0)),
+                                        flex_direction: FlexDirection::Column,
+                                        ..default()
+                                    }).insert(BackgroundColor(if current_rank > 0 {
+                                        Color::srgb(0.1, 0.3, 0.1)
+                                    } else {
+                                        Color::srgb(0.1, 0.1, 0.15)
+                                    })).with_children(|talent_node| {
+                                        talent_node.spawn((
+                                            Text::new(format!("{} ({}/{})", talent.name, current_rank, talent.max_ranks)),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                    });
+                                }
+                            });
+                        }
                         
-                        // Utility tree - simplified for now
-                        trees.spawn((
-                            Text::new("✨ Utility Tree"),
-                            TextFont { 
-                                font_size: 20.0,
+                        // Utility Tree  
+                        if let Some(utility_tree) = talent_tree.trees.get(&crate::systems::talents::TalentTreeType::Utility) {
+                            trees_container.spawn(Node {
+                                flex: 1.0,
+                                flex_direction: FlexDirection::Column,
+                                padding: UiRect::all(Val::Px(15.0)),
+                                row_gap: Val::Px(10.0),
                                 ..default()
-                            },
-                            TextColor(Color::srgb(1.0, 0.8, 0.3)),
-                        ));
+                            }).insert(BackgroundColor(Color::srgb(0.1, 0.1, 0.05))).with_children(|tree| {
+                                tree.spawn((
+                                    Text::new("✨ Utility Tree"),
+                                    TextFont { 
+                                        font_size: 20.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(1.0, 0.8, 0.3)),
+                                ));
+                                
+                                let points_spent = player_talents.spent_points.get(&crate::systems::talents::TalentTreeType::Utility).copied().unwrap_or(0);
+                                tree.spawn((
+                                    Text::new(format!("Points Spent: {}", points_spent)),
+                                    TextFont { 
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                                ));
+                                
+                                // Show some talents
+                                for (_id, talent) in utility_tree.talents.iter().take(3) {
+                                    let current_rank = player_talents.unlocked_talents.get(&talent.id).copied().unwrap_or(0);
+                                    tree.spawn(Node {
+                                        width: Val::Percent(100.0),
+                                        padding: UiRect::all(Val::Px(8.0)),
+                                        flex_direction: FlexDirection::Column,
+                                        ..default()
+                                    }).insert(BackgroundColor(if current_rank > 0 {
+                                        Color::srgb(0.1, 0.3, 0.1)
+                                    } else {
+                                        Color::srgb(0.1, 0.1, 0.15)
+                                    })).with_children(|talent_node| {
+                                        talent_node.spawn((
+                                            Text::new(format!("{} ({}/{})", talent.name, current_rank, talent.max_ranks)),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                    });
+                                }
+                            });
+                        }
                     });
                 },
                 MenuTab::Achievements => {
@@ -635,22 +757,140 @@ fn update_tab_content(
                         TextColor(Color::srgb(1.0, 0.5, 0.0)),
                     ));
                     
+                    // Achievement stats
+                    let total_achievements = achievement_registry.achievements.len();
+                    let unlocked_count = player_achievements.unlocked.values().filter(|&&v| v).count();
+                    
+                    parent.spawn((
+                        Text::new(format!("Progress: {}/{} Unlocked ({:.1}%)", 
+                            unlocked_count, 
+                            total_achievements,
+                            if total_achievements > 0 { (unlocked_count as f32 / total_achievements as f32) * 100.0 } else { 0.0 }
+                        )),
+                        TextFont { 
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                    ));
+                    
+                    // Achievement grid
                     parent.spawn(Node {
                         width: Val::Percent(100.0),
                         margin: UiRect::vertical(Val::Px(20.0)),
-                        flex_direction: FlexDirection::Column,
+                        flex_direction: FlexDirection::Row,
+                        flex_wrap: FlexWrap::Wrap,
                         row_gap: Val::Px(15.0),
+                        column_gap: Val::Px(15.0),
                         ..default()
-                    }).with_children(|list| {
-                        // Achievement placeholders
-                        list.spawn((
-                            Text::new("🏆 Achievements System - Coming Soon!"),
-                            TextFont { 
-                                font_size: 18.0,
+                    }).with_children(|grid| {
+                        // Group achievements by category
+                        use std::collections::HashMap;
+                        let mut categorized: HashMap<crate::systems::achievements::AchievementCategory, Vec<_>> = HashMap::new();
+                        
+                        for (id, achievement) in &achievement_registry.achievements {
+                            categorized.entry(achievement.category).or_default().push((id, achievement));
+                        }
+                        
+                        for (category, achievements) in categorized {
+                            // Category header
+                            grid.spawn(Node {
+                                width: Val::Percent(100.0),
+                                margin: UiRect::vertical(Val::Px(10.0)),
                                 ..default()
-                            },
-                            TextColor(Color::srgb(1.0, 0.5, 0.0)),
-                        ));
+                            }).with_children(|cat_header| {
+                                cat_header.spawn((
+                                    Text::new(format!("{:?} Achievements", category)),
+                                    TextFont { 
+                                        font_size: 22.0,
+                                        ..default()
+                                    },
+                                    TextColor(match category {
+                                        crate::systems::achievements::AchievementCategory::Combat => Color::srgb(1.0, 0.3, 0.3),
+                                        crate::systems::achievements::AchievementCategory::Collection => Color::srgb(0.3, 1.0, 0.3),
+                                        crate::systems::achievements::AchievementCategory::Progression => Color::srgb(0.3, 0.3, 1.0),
+                                        crate::systems::achievements::AchievementCategory::Exploration => Color::srgb(1.0, 0.8, 0.3),
+                                        crate::systems::achievements::AchievementCategory::Challenge => Color::srgb(1.0, 0.3, 1.0),
+                                        crate::systems::achievements::AchievementCategory::Secret => Color::srgb(0.8, 0.8, 0.8),
+                                    }),
+                                ));
+                            });
+                            
+                            // Achievement cards
+                            for (id, achievement) in achievements {
+                                let is_unlocked = player_achievements.unlocked.get(id).copied().unwrap_or(false);
+                                let progress = player_achievements.progress.get(id).copied().unwrap_or(0);
+                                
+                                grid.spawn(Node {
+                                    width: Val::Px(180.0),
+                                    height: Val::Px(120.0),
+                                    flex_direction: FlexDirection::Column,
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    row_gap: Val::Px(5.0),
+                                    ..default()
+                                }).insert(BackgroundColor(if is_unlocked {
+                                    match achievement.tier {
+                                        crate::systems::achievements::AchievementTier::Bronze => Color::srgb(0.4, 0.25, 0.1),
+                                        crate::systems::achievements::AchievementTier::Silver => Color::srgb(0.3, 0.3, 0.3),
+                                        crate::systems::achievements::AchievementTier::Gold => Color::srgb(0.5, 0.4, 0.1),
+                                        crate::systems::achievements::AchievementTier::Platinum => Color::srgb(0.2, 0.4, 0.5),
+                                        crate::systems::achievements::AchievementTier::Diamond => Color::srgb(0.3, 0.1, 0.5),
+                                    }
+                                } else {
+                                    Color::srgb(0.1, 0.1, 0.1)
+                                })).with_children(|card| {
+                                    // Achievement name
+                                    card.spawn((
+                                        Text::new(&achievement.name),
+                                        TextFont { 
+                                            font_size: 14.0,
+                                            ..default()
+                                        },
+                                        TextColor(if is_unlocked { Color::WHITE } else { Color::srgb(0.5, 0.5, 0.5) }),
+                                    ));
+                                    
+                                    // Description
+                                    card.spawn((
+                                        Text::new(&achievement.description),
+                                        TextFont { 
+                                            font_size: 11.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                                    ));
+                                    
+                                    // Tier and progress
+                                    card.spawn((
+                                        Text::new(if is_unlocked {
+                                            format!("✅ {:?}", achievement.tier)
+                                        } else {
+                                            format!("Progress: {}", progress)
+                                        }),
+                                        TextFont { 
+                                            font_size: 10.0,
+                                            ..default()
+                                        },
+                                        TextColor(if is_unlocked { 
+                                            Color::srgb(0.5, 1.0, 0.5) 
+                                        } else { 
+                                            Color::srgb(0.8, 0.8, 0.3) 
+                                        }),
+                                    ));
+                                });
+                            }
+                        }
+                        
+                        // If no achievements
+                        if achievement_registry.achievements.is_empty() {
+                            grid.spawn((
+                                Text::new("🔄 Achievement system initializing..."),
+                                TextFont { 
+                                    font_size: 18.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                            ));
+                        }
                     });
                 },
                 MenuTab::Quests => {
@@ -664,28 +904,199 @@ fn update_tab_content(
                         TextColor(Color::srgb(0.7, 0.7, 1.0)),
                     ));
                     
+                    // Active quests section
+                    parent.spawn((
+                        Text::new(format!("Active Quests ({}/{})", 
+                            active_quests.quests.len(),
+                            quest_manager.available_quests.len()
+                        )),
+                        TextFont { 
+                            font_size: 22.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                    ));
+                    
                     parent.spawn(Node {
                         width: Val::Percent(100.0),
                         margin: UiRect::vertical(Val::Px(20.0)),
                         flex_direction: FlexDirection::Column,
-                        row_gap: Val::Px(25.0),
+                        row_gap: Val::Px(15.0),
                         ..default()
-                    }).with_children(|quests| {
-                        // Quest placeholders
-                        quests.spawn((
-                            Text::new("📋 Quest System Coming Soon!"),
-                            TextFont { 
-                                font_size: 18.0,
-                                ..default()
-                            },
-                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
-                        ));
+                    }).with_children(|quest_list| {
+                        // Show active quests
+                        for active_quest in &active_quests.quests {
+                            if let Some(quest) = quest_manager.available_quests.get(&active_quest.quest_id) {
+                                quest_list.spawn(Node {
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(15.0)),
+                                    flex_direction: FlexDirection::Column,
+                                    row_gap: Val::Px(8.0),
+                                    ..default()
+                                }).insert(BackgroundColor(match quest.quest_type {
+                                    crate::systems::quests::QuestType::Daily => Color::srgb(0.1, 0.15, 0.1),
+                                    crate::systems::quests::QuestType::Wave => Color::srgb(0.15, 0.1, 0.1),
+                                    crate::systems::quests::QuestType::Story => Color::srgb(0.1, 0.1, 0.15),
+                                    crate::systems::quests::QuestType::Hidden => Color::srgb(0.1, 0.1, 0.1),
+                                    crate::systems::quests::QuestType::Challenge => Color::srgb(0.15, 0.1, 0.15),
+                                })).with_children(|quest_card| {
+                                    // Quest name and type
+                                    quest_card.spawn(Node {
+                                        width: Val::Percent(100.0),
+                                        flex_direction: FlexDirection::Row,
+                                        justify_content: JustifyContent::SpaceBetween,
+                                        ..default()
+                                    }).with_children(|header| {
+                                        header.spawn((
+                                            Text::new(&quest.name),
+                                            TextFont { 
+                                                font_size: 16.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                        
+                                        header.spawn((
+                                            Text::new(format!("{:?}", quest.quest_type)),
+                                            TextFont { 
+                                                font_size: 14.0,
+                                                ..default()
+                                            },
+                                            TextColor(match quest.quest_type {
+                                                crate::systems::quests::QuestType::Daily => Color::srgb(0.5, 1.0, 0.5),
+                                                crate::systems::quests::QuestType::Wave => Color::srgb(1.0, 0.5, 0.5),
+                                                crate::systems::quests::QuestType::Story => Color::srgb(0.5, 0.5, 1.0),
+                                                crate::systems::quests::QuestType::Hidden => Color::srgb(0.8, 0.8, 0.8),
+                                                crate::systems::quests::QuestType::Challenge => Color::srgb(1.0, 0.5, 1.0),
+                                            }),
+                                        ));
+                                    });
+                                    
+                                    // Quest description
+                                    quest_card.spawn((
+                                        Text::new(&quest.description),
+                                        TextFont { 
+                                            font_size: 13.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                                    ));
+                                    
+                                    // Progress bar
+                                    quest_card.spawn(Node {
+                                        width: Val::Percent(100.0),
+                                        height: Val::Px(20.0),
+                                        padding: UiRect::all(Val::Px(2.0)),
+                                        ..default()
+                                    }).insert(BackgroundColor(Color::srgb(0.2, 0.2, 0.2))).with_children(|progress_container| {
+                                        let progress_percent = if active_quest.target_value > 0 {
+                                            (active_quest.current_progress as f32 / active_quest.target_value as f32).min(1.0)
+                                        } else {
+                                            0.0
+                                        };
+                                        
+                                        progress_container.spawn(Node {
+                                            width: Val::Percent(progress_percent * 100.0),
+                                            height: Val::Percent(100.0),
+                                            ..default()
+                                        }).insert(BackgroundColor(if progress_percent >= 1.0 {
+                                            Color::srgb(0.2, 0.8, 0.2)
+                                        } else {
+                                            Color::srgb(0.8, 0.6, 0.2)
+                                        }));
+                                    });
+                                    
+                                    // Progress text and rewards
+                                    quest_card.spawn(Node {
+                                        width: Val::Percent(100.0),
+                                        flex_direction: FlexDirection::Row,
+                                        justify_content: JustifyContent::SpaceBetween,
+                                        ..default()
+                                    }).with_children(|footer| {
+                                        footer.spawn((
+                                            Text::new(format!("Progress: {}/{}", 
+                                                active_quest.current_progress, 
+                                                active_quest.target_value
+                                            )),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                                        ));
+                                        
+                                        footer.spawn((
+                                            Text::new(format!("Reward: {} XP", quest.rewards.experience)),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                                        ));
+                                    });
+                                });
+                            }
+                        }
+                        
+                        // If no active quests
+                        if active_quests.quests.is_empty() {
+                            quest_list.spawn((
+                                Text::new("📭 No active quests - new quests appear as you progress!"),
+                                TextFont { 
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                            ));
+                        }
+                        
+                        // Available quests section
+                        if !quest_manager.available_quests.is_empty() {
+                            quest_list.spawn((
+                                Text::new("Available Quests"),
+                                TextFont { 
+                                    font_size: 20.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.8, 0.8, 1.0)),
+                            ));
+                            
+                            for (id, quest) in quest_manager.available_quests.iter().take(3) {
+                                if !active_quests.quests.iter().any(|aq| &aq.quest_id == id) {
+                                    quest_list.spawn(Node {
+                                        width: Val::Percent(100.0),
+                                        padding: UiRect::all(Val::Px(10.0)),
+                                        flex_direction: FlexDirection::Row,
+                                        justify_content: JustifyContent::SpaceBetween,
+                                        ..default()
+                                    }).insert(BackgroundColor(Color::srgb(0.05, 0.05, 0.1))).with_children(|available_quest| {
+                                        available_quest.spawn((
+                                            Text::new(&quest.name),
+                                            TextFont { 
+                                                font_size: 14.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                                        ));
+                                        
+                                        available_quest.spawn((
+                                            Text::new(format!("{:?}", quest.quest_type)),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                                        ));
+                                    });
+                                }
+                            }
+                        }
                     });
                 },
                 MenuTab::Inventory => {
                     // Title
                     parent.spawn((
-                        Text::new("🎒 INVENTORY & EQUIPMENT"),
+                        Text::new("🎒 INVENTORY & LOOT"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
@@ -693,9 +1104,48 @@ fn update_tab_content(
                         TextColor(Color::srgb(0.8, 0.4, 0.8)),
                     ));
                     
+                    // Loot statistics
                     parent.spawn(Node {
                         width: Val::Percent(100.0),
-                        margin: UiRect::vertical(Val::Px(20.0)),
+                        margin: UiRect::vertical(Val::Px(15.0)),
+                        padding: UiRect::all(Val::Px(15.0)),
+                        flex_direction: FlexDirection::Row,
+                        flex_wrap: FlexWrap::Wrap,
+                        column_gap: Val::Px(20.0),
+                        row_gap: Val::Px(10.0),
+                        ..default()
+                    }).insert(BackgroundColor(Color::srgb(0.05, 0.05, 0.08))).with_children(|stats| {
+                        stats.spawn((
+                            Text::new("Loot Statistics:"),
+                            TextFont { 
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                        ));
+                        
+                        for (rarity, count) in &collected_loot.total_items {
+                            let color = match rarity {
+                                crate::systems::loot::Rarity::Common => Color::srgb(0.8, 0.8, 0.8),
+                                crate::systems::loot::Rarity::Uncommon => Color::srgb(0.3, 1.0, 0.3),
+                                crate::systems::loot::Rarity::Rare => Color::srgb(0.3, 0.5, 1.0),
+                                crate::systems::loot::Rarity::Epic => Color::srgb(0.8, 0.3, 1.0),
+                                crate::systems::loot::Rarity::Legendary => Color::srgb(1.0, 0.5, 0.0),
+                            };
+                            
+                            stats.spawn((
+                                Text::new(format!("{:?}: {}", rarity, count)),
+                                TextFont { 
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(color),
+                            ));
+                        }
+                    });
+                    
+                    parent.spawn(Node {
+                        width: Val::Percent(100.0),
                         flex_direction: FlexDirection::Row,
                         column_gap: Val::Px(30.0),
                         ..default()
@@ -716,20 +1166,68 @@ fn update_tab_content(
                                 TextColor(Color::srgb(1.0, 0.843, 0.0)),
                             ));
                             
-                            // Equipment slot placeholder
-                            // Equipment slot placeholder
-                            // Equipment slot placeholder
+                            // Show equipment slots
+                            for equipment_item in &collected_loot.equipment {
+                                equipment.spawn(Node {
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    flex_direction: FlexDirection::Column,
+                                    row_gap: Val::Px(5.0),
+                                    ..default()
+                                }).insert(BackgroundColor(Color::srgb(0.1, 0.15, 0.2))).with_children(|item| {
+                                    item.spawn((
+                                        Text::new(&equipment_item.name),
+                                        TextFont { 
+                                            font_size: 14.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    item.spawn((
+                                        Text::new(format!("{:?}", equipment_item.slot)),
+                                        TextFont { 
+                                            font_size: 12.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                                    ));
+                                    
+                                    // Show some stats
+                                    for (stat, value) in equipment_item.stats.iter().take(2) {
+                                        item.spawn((
+                                            Text::new(format!("+{} {:?}", value, stat)),
+                                            TextFont { 
+                                                font_size: 11.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::srgb(0.5, 1.0, 0.5)),
+                                        ));
+                                    }
+                                });
+                            }
+                            
+                            if collected_loot.equipment.is_empty() {
+                                equipment.spawn((
+                                    Text::new("No equipment found yet"),
+                                    TextFont { 
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                                ));
+                            }
                         });
                         
-                        // Inventory grid (right side)
+                        // Consumables section (right side)
                         main_container.spawn(Node {
                             width: Val::Percent(60.0),
                             flex_direction: FlexDirection::Column,
                             row_gap: Val::Px(15.0),
                             ..default()
-                        }).with_children(|inventory| {
-                            inventory.spawn((
-                                Text::new("📦 Inventory"),
+                        }).with_children(|consumables| {
+                            consumables.spawn((
+                                Text::new("📦 Consumables & Materials"),
                                 TextFont { 
                                     font_size: 24.0,
                                     ..default()
@@ -737,8 +1235,8 @@ fn update_tab_content(
                                 TextColor(Color::srgb(1.0, 0.843, 0.0)),
                             ));
                             
-                            // Inventory grid
-                            inventory.spawn(Node {
+                            // Consumables grid
+                            consumables.spawn(Node {
                                 width: Val::Percent(100.0),
                                 flex_direction: FlexDirection::Row,
                                 flex_wrap: FlexWrap::Wrap,
@@ -746,14 +1244,71 @@ fn update_tab_content(
                                 row_gap: Val::Px(10.0),
                                 ..default()
                             }).with_children(|grid| {
-                                // Inventory item placeholder
-                                // Inventory item placeholder
-                                // Inventory item placeholder
-                                // Inventory item placeholder
+                                // Show consumables
+                                for (consumable, count) in &collected_loot.consumables {
+                                    grid.spawn(Node {
+                                        width: Val::Px(80.0),
+                                        height: Val::Px(80.0),
+                                        flex_direction: FlexDirection::Column,
+                                        padding: UiRect::all(Val::Px(8.0)),
+                                        ..default()
+                                    }).insert(BackgroundColor(Color::srgb(0.1, 0.1, 0.15))).with_children(|item| {
+                                        item.spawn((
+                                            Text::new(format!("{:?}", consumable)),
+                                            TextFont { 
+                                                font_size: 10.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                        
+                                        item.spawn((
+                                            Text::new(format!("x{}", count)),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                                        ));
+                                    });
+                                }
                                 
-                                // Empty slots
-                                for _ in 0..8 {
-                                    // Empty slot placeholder
+                                // Show materials
+                                for (material, count) in &collected_loot.materials {
+                                    grid.spawn(Node {
+                                        width: Val::Px(80.0),
+                                        height: Val::Px(80.0),
+                                        flex_direction: FlexDirection::Column,
+                                        padding: UiRect::all(Val::Px(8.0)),
+                                        ..default()
+                                    }).insert(BackgroundColor(Color::srgb(0.15, 0.1, 0.1))).with_children(|item| {
+                                        item.spawn((
+                                            Text::new(format!("{:?}", material)),
+                                            TextFont { 
+                                                font_size: 10.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                        
+                                        item.spawn((
+                                            Text::new(format!("x{}", count)),
+                                            TextFont { 
+                                                font_size: 12.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                                        ));
+                                    });
+                                }
+                                
+                                // Empty slots to fill grid
+                                for _ in 0..(20 - collected_loot.consumables.len() - collected_loot.materials.len()).min(20) {
+                                    grid.spawn(Node {
+                                        width: Val::Px(80.0),
+                                        height: Val::Px(80.0),
+                                        ..default()
+                                    }).insert(BackgroundColor(Color::srgb(0.05, 0.05, 0.05)));
                                 }
                             });
                         });
@@ -770,16 +1325,26 @@ fn update_tab_content(
                         TextColor(Color::srgb(1.0, 0.0, 0.5)),
                     ));
                     
+                    // Current prestige info
                     parent.spawn(Node {
                         width: Val::Percent(100.0),
                         margin: UiRect::vertical(Val::Px(20.0)),
+                        padding: UiRect::all(Val::Px(20.0)),
                         flex_direction: FlexDirection::Column,
-                        row_gap: Val::Px(25.0),
+                        row_gap: Val::Px(10.0),
                         ..default()
-                    }).with_children(|prestige_content| {
-                        // Prestige info
-                        prestige_content.spawn((
-                            Text::new("Reset your progress to gain permanent bonuses and unlock new content."),
+                    }).insert(BackgroundColor(Color::srgb(0.1, 0.05, 0.15))).with_children(|info| {
+                        info.spawn((
+                            Text::new(format!("Current Prestige Level: {}", prestige_system.current_prestige)),
+                            TextFont { 
+                                font_size: 24.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                        ));
+                        
+                        info.spawn((
+                            Text::new(format!("Total Prestiges: {}", prestige_system.total_prestiges)),
                             TextFont { 
                                 font_size: 18.0,
                                 ..default()
@@ -787,54 +1352,162 @@ fn update_tab_content(
                             TextColor(Color::srgb(0.8, 0.8, 0.8)),
                         ));
                         
-                        // Current prestige level
-                        prestige_content.spawn(Node {
+                        info.spawn(Node {
                             width: Val::Percent(100.0),
-                            padding: UiRect::all(Val::Px(20.0)),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(10.0),
+                            flex_direction: FlexDirection::Row,
+                            column_gap: Val::Px(30.0),
+                            margin: UiRect::top(Val::Px(10.0)),
                             ..default()
-                        }).insert(BackgroundColor(Color::srgb(0.1, 0.05, 0.15))).with_children(|info| {
-                            info.spawn((
-                                Text::new("Current Prestige Level: 0"),
+                        }).with_children(|currencies| {
+                            currencies.spawn((
+                                Text::new(format!("💎 Prestige Points: {}", prestige_system.prestige_points)),
                                 TextFont { 
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(Color::srgb(1.0, 0.843, 0.0)),
-                            ));
-                            info.spawn((
-                                Text::new("Prestige Points Available: 0"),
-                                TextFont { 
-                                    font_size: 18.0,
+                                    font_size: 16.0,
                                     ..default()
                                 },
                                 TextColor(Color::srgb(0.5, 1.0, 0.5)),
                             ));
-                        });
-                        
-                        // Prestige bonuses
-                        prestige_content.spawn((
-                            Text::new("🌟 Permanent Bonuses"),
-                            TextFont { 
-                                font_size: 24.0,
-                                ..default()
-                            },
-                            TextColor(Color::srgb(1.0, 0.5, 0.0)),
-                        ));
-                        
-                        prestige_content.spawn(Node {
-                            width: Val::Percent(100.0),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(10.0),
-                            ..default()
-                        }).with_children(|bonuses| {
-                            // Prestige bonus placeholder
-                            // Prestige bonus placeholder
-                            // Prestige bonus placeholder
-                            // Prestige bonus placeholder
+                            
+                            currencies.spawn((
+                                Text::new(format!("⭐ Legacy Points: {}", prestige_system.legacy_points)),
+                                TextFont { 
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.5, 0.0)),
+                            ));
+                            
+                            currencies.spawn((
+                                Text::new(format!("✨ Ascension Shards: {}", prestige_system.ascension_shards)),
+                                TextFont { 
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.5, 0.5, 1.0)),
+                            ));
                         });
                     });
+                    
+                    // Meta upgrades section
+                    parent.spawn((
+                        Text::new("🌟 Permanent Upgrades"),
+                        TextFont { 
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.5, 0.0)),
+                    ));
+                    
+                    parent.spawn(Node {
+                        width: Val::Percent(100.0),
+                        flex_direction: FlexDirection::Row,
+                        flex_wrap: FlexWrap::Wrap,
+                        row_gap: Val::Px(15.0),
+                        column_gap: Val::Px(15.0),
+                        margin: UiRect::vertical(Val::Px(15.0)),
+                        ..default()
+                    }).with_children(|upgrades_grid| {
+                        // Show meta upgrades
+                        for (id, upgrade) in &meta_progression.permanent_upgrades {
+                            upgrades_grid.spawn(Node {
+                                width: Val::Px(200.0),
+                                height: Val::Px(120.0),
+                                flex_direction: FlexDirection::Column,
+                                padding: UiRect::all(Val::Px(12.0)),
+                                row_gap: Val::Px(6.0),
+                                ..default()
+                            }).insert(BackgroundColor(Color::srgb(0.15, 0.15, 0.2))).with_children(|upgrade_card| {
+                                upgrade_card.spawn((
+                                    Text::new(&upgrade.name),
+                                    TextFont { 
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::WHITE),
+                                ));
+                                
+                                upgrade_card.spawn((
+                                    Text::new(&upgrade.description),
+                                    TextFont { 
+                                        font_size: 11.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                                ));
+                                
+                                upgrade_card.spawn((
+                                    Text::new(format!("Level: {}/{}", upgrade.current_level, upgrade.max_level)),
+                                    TextFont { 
+                                        font_size: 12.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(1.0, 0.843, 0.0)),
+                                ));
+                                
+                                // Show if maxed
+                                if upgrade.current_level >= upgrade.max_level {
+                                    upgrade_card.spawn((
+                                        Text::new("✅ MAXED"),
+                                        TextFont { 
+                                            font_size: 10.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.5, 1.0, 0.5)),
+                                    ));
+                                }
+                            });
+                        }
+                        
+                        // If no upgrades
+                        if meta_progression.permanent_upgrades.is_empty() {
+                            upgrades_grid.spawn((
+                                Text::new("Complete your first prestige to unlock permanent upgrades!"),
+                                TextFont { 
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                            ));
+                        }
+                    });
+                    
+                    // Unlocked features
+                    if !meta_progression.unlocked_features.is_empty() {
+                        parent.spawn((
+                            Text::new("🔓 Unlocked Features"),
+                            TextFont { 
+                                font_size: 20.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.5, 1.0, 0.5)),
+                        ));
+                        
+                        parent.spawn(Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Row,
+                            flex_wrap: FlexWrap::Wrap,
+                            column_gap: Val::Px(15.0),
+                            row_gap: Val::Px(10.0),
+                            margin: UiRect::vertical(Val::Px(10.0)),
+                            ..default()
+                        }).with_children(|features| {
+                            for feature in &meta_progression.unlocked_features {
+                                features.spawn(Node {
+                                    padding: UiRect::all(Val::Px(8.0)),
+                                    ..default()
+                                }).insert(BackgroundColor(Color::srgb(0.1, 0.2, 0.1))).with_children(|feature_badge| {
+                                    feature_badge.spawn((
+                                        Text::new(feature),
+                                        TextFont { 
+                                            font_size: 12.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.8, 1.0, 0.8)),
+                                    ));
+                                });
+                            }
+                        });
+                    }
                 },
                 MenuTab::Settings => {
                     parent.spawn((
@@ -872,12 +1545,28 @@ fn get_tab_color(tab: MenuTab) -> Color {
     }
 }
 
-// Simple placeholder content - no helper functions needed
 fn cleanup_main_menu(
     mut commands: Commands,
     menu_query: Query<Entity, With<MainMenuUI>>,
 ) {
     for entity in &menu_query {
         commands.entity(entity).despawn();
+    }
+}
+
+fn handle_shop_purchases(
+    mut interaction_query: Query<(&Interaction, &ShopItemButton), Changed<Interaction>>,
+    mut purchase_events: EventWriter<crate::systems::shop::PurchaseEvent>,
+    player_query: Query<Entity, With<crate::game::player::Player>>,
+) {
+    for (interaction, shop_button) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Ok(player_entity) = player_query.single() {
+                purchase_events.send(crate::systems::shop::PurchaseEvent {
+                    item_id: shop_button.item_id.clone(),
+                    player: player_entity,
+                });
+            }
+        }
     }
 }

@@ -5,5 +5,21 @@
   "completed_levels": [],
   "total_play_time": 0.0,
   "high_score": 0,
-  "achievements": []
+  "achievements": [],
+  "currency": {
+    "coins": 0,
+    "gems": 0,
+    "soul_shards": 0
+  },
+  "talents": {
+    "available_points": 0,
+    "unlocked_talents": {}
+  },
+  "achievement_progress": {},
+  "unlocked_achievements": [],
+  "shop_purchases": [],
+  "prestige_level": 0,
+  "prestige_points": 0,
+  "total_combo": 0,
+  "max_combo": 0
 }
