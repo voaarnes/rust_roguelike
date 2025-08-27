@@ -102,7 +102,6 @@ fn setup_main_menu(mut commands: Commands) {
             },
             BackgroundColor(Color::srgb(0.08, 0.08, 0.12)),
         )).with_children(|tab_bar| {
-            // Define tab configuration with labels and colors
             let tabs = [
                 (MenuTab::Shop, "🛒 Shop", Color::srgb(1.0, 0.843, 0.0)),
                 (MenuTab::Talents, "⭐ Talents", Color::srgb(0.5, 1.0, 0.5)),
@@ -113,7 +112,6 @@ fn setup_main_menu(mut commands: Commands) {
                 (MenuTab::Settings, "⚙️ Settings", Color::srgb(0.6, 0.6, 0.6)),
             ];
             
-            // Create tab buttons with active state styling
             for (tab, label, accent_color) in tabs {
                 let is_active = tab == MenuTab::Shop;
                 tab_bar.spawn((
@@ -245,12 +243,12 @@ fn update_tab_content(
         }
     }
 
-    // Update content based on current tab selection
+    // Update content
     if let Ok(container) = content_query.single() {
-        // Clear existing content before spawning new
+        // Clear existing content
         if let Ok(children) = children_query.get(container) {
             for child in children.iter() {
-                commands.entity(child).despawn();
+                commands.entity(*child).despawn_recursive();
             }
         }
 
@@ -258,14 +256,13 @@ fn update_tab_content(
         commands.entity(container).with_children(|parent| {
             match menu_state.current_tab {
                 MenuTab::Shop => {
-                    // Shop tab - currency display and placeholder content
                     parent.spawn((
                         Text::new("🛒 Shop"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(1.0, 0.843, 0.0)),
                     ));
                     
-                    // Display current currency amounts
+                    // Show currency
                     parent.spawn((
                         Text::new(format!("💰 Coins: {} | 💎 Gems: {} | 🔮 Soul Shards: {}", 
                             currency.coins, currency.gems, currency.soul_shards)),
@@ -273,7 +270,6 @@ fn update_tab_content(
                         TextColor(Color::srgb(0.8, 0.8, 0.8)),
                     ));
                     
-                    // Placeholder content for upcoming shop features
                     parent.spawn((
                         Text::new("\nShop items coming soon!\n\n• Power upgrades\n• Equipment\n• Consumables\n• Special abilities"),
                         TextFont { font_size: 18.0, ..default() },
@@ -281,14 +277,12 @@ fn update_tab_content(
                     ));
                 },
                 MenuTab::Talents => {
-                    // Talents tab - skill tree placeholder
                     parent.spawn((
                         Text::new("⭐ Talents"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.5, 1.0, 0.5)),
                     ));
                     
-                    // Placeholder content for talent system
                     parent.spawn((
                         Text::new("\nTalent trees coming soon!\n\n• Offensive specializations\n• Defensive abilities\n• Utility skills\n• Progression paths"),
                         TextFont { font_size: 18.0, ..default() },
@@ -296,7 +290,6 @@ fn update_tab_content(
                     ));
                 },
                 MenuTab::Achievements => {
-                    // Achievements tab - milestone tracking placeholder
                     parent.spawn((
                         Text::new("🏆 Achievements"),
                         TextFont { font_size: 32.0, ..default() },
@@ -371,7 +364,7 @@ fn cleanup_main_menu(
     menu_query: Query<Entity, With<MainMenuUI>>,
 ) {
     for entity in &menu_query {
-        commands.entity(entity).despawn();
+        commands.entity(entity).despawn_recursive();
     }
 }
 
