@@ -1,3 +1,18 @@
+/*!
+ * Main Game Menu System
+ * 
+ * This module provides the in-game pause menu with tabbed interface for accessing
+ * various game systems including shop, talents, achievements, quests, inventory,
+ * prestige, and settings.
+ * 
+ * Features:
+ * - Tabbed navigation with visual feedback
+ * - Currency display integration
+ * - Placeholder content for future feature implementation
+ * - ESC key toggle functionality
+ * - Responsive UI design compatible with Bevy 0.16
+ */
+
 use bevy::prelude::*;
 use crate::core::state::GameState;
 use crate::systems::shop::PlayerCurrency;
@@ -58,6 +73,7 @@ pub struct TabContentContainer;
 #[derive(Component)]
 pub struct CloseButton;
 
+/// Handles ESC key input to toggle between Playing and Paused game states
 fn toggle_menu(
     input: Res<ButtonInput<KeyCode>>,
     game_state: Res<State<GameState>>,
@@ -72,6 +88,7 @@ fn toggle_menu(
     }
 }
 
+/// Creates the main menu UI with tabbed interface when entering Paused state
 fn setup_main_menu(mut commands: Commands) {
     commands.spawn((
         Node {
@@ -182,6 +199,7 @@ fn setup_main_menu(mut commands: Commands) {
     });
 }
 
+/// Handles tab button interactions and updates the current menu state
 fn handle_tab_buttons(
     mut interaction_query: Query<(&Interaction, &TabButton), Changed<Interaction>>,
     mut menu_state: ResMut<MenuState>,
@@ -194,6 +212,7 @@ fn handle_tab_buttons(
     }
 }
 
+/// Handles close button interaction to return to Playing state
 fn handle_close_button(
     mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<CloseButton>)>,
     mut next_state: ResMut<NextState<GameState>>,
@@ -205,6 +224,8 @@ fn handle_close_button(
     }
 }
 
+/// Updates tab content and button styling based on current menu state
+/// This system handles both visual feedback for active tabs and content switching
 fn update_tab_content(
     menu_state: Res<MenuState>,
     mut commands: Commands,
@@ -303,6 +324,7 @@ fn update_tab_content(
                         TextColor(Color::srgb(1.0, 0.5, 0.0)),
                     ));
                     
+                    // Placeholder content for achievement system
                     parent.spawn((
                         Text::new("\nAchievement system coming soon!\n\n• Combat milestones\n• Collection goals\n• Exploration rewards\n• Challenge completions"),
                         TextFont { font_size: 18.0, ..default() },
@@ -310,12 +332,14 @@ fn update_tab_content(
                     ));
                 },
                 MenuTab::Quests => {
+                    // Quests tab - mission system placeholder
                     parent.spawn((
                         Text::new("📋 Quests"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.7, 0.7, 1.0)),
                     ));
                     
+                    // Placeholder content for quest system
                     parent.spawn((
                         Text::new("\nQuest system coming soon!\n\n• Daily challenges\n• Wave objectives\n• Story progression\n• Special missions"),
                         TextFont { font_size: 18.0, ..default() },
@@ -323,12 +347,14 @@ fn update_tab_content(
                     ));
                 },
                 MenuTab::Inventory => {
+                    // Inventory tab - item management placeholder
                     parent.spawn((
                         Text::new("🎒 Inventory"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.8, 0.4, 0.8)),
                     ));
                     
+                    // Placeholder content for inventory system
                     parent.spawn((
                         Text::new("\nInventory system coming soon!\n\n• Equipment management\n• Item storage\n• Loot organization\n• Gear optimization"),
                         TextFont { font_size: 18.0, ..default() },
@@ -336,12 +362,14 @@ fn update_tab_content(
                     ));
                 },
                 MenuTab::Prestige => {
+                    // Prestige tab - meta progression placeholder
                     parent.spawn((
                         Text::new("♾️ Prestige"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(1.0, 0.0, 0.5)),
                     ));
                     
+                    // Placeholder content for prestige system
                     parent.spawn((
                         Text::new("\nPrestige system coming soon!\n\n• Meta progression\n• Permanent upgrades\n• Rebirth bonuses\n• Ascension rewards"),
                         TextFont { font_size: 18.0, ..default() },
@@ -349,12 +377,14 @@ fn update_tab_content(
                     ));
                 },
                 MenuTab::Settings => {
+                    // Settings tab - configuration options placeholder
                     parent.spawn((
                         Text::new("⚙️ Settings"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.6, 0.6, 0.6)),
                     ));
                     
+                    // Placeholder content for settings menu
                     parent.spawn((
                         Text::new("\nSettings menu coming soon!\n\n• Audio controls\n• Graphics options\n• Key bindings\n• Gameplay preferences"),
                         TextFont { font_size: 18.0, ..default() },
@@ -366,6 +396,7 @@ fn update_tab_content(
     }
 }
 
+/// Cleanup function to remove main menu UI when exiting Paused state
 fn cleanup_main_menu(
     mut commands: Commands,
     menu_query: Query<Entity, With<MainMenuUI>>,
@@ -375,6 +406,8 @@ fn cleanup_main_menu(
     }
 }
 
+/// Helper function to get the accent color for each menu tab
+/// Used for consistent theming across the interface
 fn get_tab_color(tab: MenuTab) -> Color {
     match tab {
         MenuTab::Shop => Color::srgb(1.0, 0.843, 0.0),
