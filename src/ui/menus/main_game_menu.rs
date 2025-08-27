@@ -121,13 +121,13 @@ fn setup_main_menu(mut commands: Commands) {
         )).with_children(|tab_bar| {
             // Define tab configuration with labels and colors
             let tabs = [
-                (MenuTab::Shop, "🛒 Shop", Color::srgb(1.0, 0.843, 0.0)),
-                (MenuTab::Talents, "⭐ Talents", Color::srgb(0.5, 1.0, 0.5)),
-                (MenuTab::Achievements, "🏆 Achievements", Color::srgb(1.0, 0.5, 0.0)),
-                (MenuTab::Quests, "📋 Quests", Color::srgb(0.7, 0.7, 1.0)),
-                (MenuTab::Inventory, "🎒 Inventory", Color::srgb(0.8, 0.4, 0.8)),
-                (MenuTab::Prestige, "♾️ Prestige", Color::srgb(1.0, 0.0, 0.5)),
-                (MenuTab::Settings, "⚙️ Settings", Color::srgb(0.6, 0.6, 0.6)),
+                (MenuTab::Shop, "Shop", Color::srgb(1.0, 0.843, 0.0)),
+                (MenuTab::Talents, "Talents", Color::srgb(0.5, 1.0, 0.5)),
+                (MenuTab::Achievements, "Achievements", Color::srgb(1.0, 0.5, 0.0)),
+                (MenuTab::Quests, "Quests", Color::srgb(0.7, 0.7, 1.0)),
+                (MenuTab::Inventory, "Inventory", Color::srgb(0.8, 0.4, 0.8)),
+                (MenuTab::Prestige, "Prestige", Color::srgb(1.0, 0.0, 0.5)),
+                (MenuTab::Settings, "Settings", Color::srgb(0.6, 0.6, 0.6)),
             ];
             
             // Create tab buttons with active state styling
@@ -176,7 +176,7 @@ fn setup_main_menu(mut commands: Commands) {
             CloseButton,
         )).with_children(|button| {
             button.spawn((
-                Text::new("✕"),
+                Text::new("X"),
                 TextFont {
                     font_size: 20.0,
                     ..default()
@@ -281,14 +281,14 @@ fn update_tab_content(
                 MenuTab::Shop => {
                     // Shop tab - currency display and placeholder content
                     parent.spawn((
-                        Text::new("🛒 Shop"),
+                        Text::new("SHOP"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(1.0, 0.843, 0.0)),
                     ));
                     
                     // Display current currency amounts
                     parent.spawn((
-                        Text::new(format!("💰 Coins: {} | 💎 Gems: {} | 🔮 Soul Shards: {}", 
+                        Text::new(format!("Coins: {} | Gems: {} | Soul Shards: {}", 
                             currency.coins, currency.gems, currency.soul_shards)),
                         TextFont { font_size: 16.0, ..default() },
                         TextColor(Color::srgb(0.8, 0.8, 0.8)),
@@ -304,7 +304,7 @@ fn update_tab_content(
                 MenuTab::Talents => {
                     // Talents tab - skill tree placeholder
                     parent.spawn((
-                        Text::new("⭐ Talents"),
+                        Text::new("TALENTS"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.5, 1.0, 0.5)),
                     ));
@@ -319,7 +319,7 @@ fn update_tab_content(
                 MenuTab::Achievements => {
                     // Achievements tab - milestone tracking placeholder
                     parent.spawn((
-                        Text::new("🏆 Achievements"),
+                        Text::new("ACHIEVEMENTS"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(1.0, 0.5, 0.0)),
                     ));
@@ -334,7 +334,7 @@ fn update_tab_content(
                 MenuTab::Quests => {
                     // Quests tab - mission system placeholder
                     parent.spawn((
-                        Text::new("📋 Quests"),
+                        Text::new("QUESTS"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.7, 0.7, 1.0)),
                     ));
@@ -349,7 +349,7 @@ fn update_tab_content(
                 MenuTab::Inventory => {
                     // Inventory tab - item management placeholder
                     parent.spawn((
-                        Text::new("🎒 Inventory"),
+                        Text::new("INVENTORY"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.8, 0.4, 0.8)),
                     ));
@@ -371,6 +371,12 @@ fn update_tab_content(
                     
                     // Placeholder content for prestige system
                     parent.spawn((
+                        Text::new("PRESTIGE"),
+                        TextFont { font_size: 32.0, ..default() },
+                        TextColor(Color::srgb(1.0, 0.0, 0.5)),
+                    ));
+                    
+                    parent.spawn((
                         Text::new("\nPrestige system coming soon!\n\n• Meta progression\n• Permanent upgrades\n• Rebirth bonuses\n• Ascension rewards"),
                         TextFont { font_size: 18.0, ..default() },
                         TextColor(Color::srgb(0.7, 0.7, 0.7)),
@@ -379,7 +385,7 @@ fn update_tab_content(
                 MenuTab::Settings => {
                     // Settings tab - configuration options placeholder
                     parent.spawn((
-                        Text::new("⚙️ Settings"),
+                        Text::new("SETTINGS"),
                         TextFont { font_size: 32.0, ..default() },
                         TextColor(Color::srgb(0.6, 0.6, 0.6)),
                     ));
