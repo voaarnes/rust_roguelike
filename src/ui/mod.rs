@@ -2,11 +2,11 @@ pub mod main_menu;
 pub mod hud;
 pub mod health_bars;
 pub mod minimap;
-// pub mod powerup_display;  // Temporarily disabled
-// pub mod ability_display;  // Temporarily disabled
-// pub mod shop_menu;        // Temporarily disabled
-// pub mod talent_menu;      // Temporarily disabled
-// pub mod achievement_display; // Temporarily disabled
+pub mod powerup_display;  // Re-enabled after fixing Bevy 0.16 compatibility
+pub mod ability_display;  // Re-enabled after fixing Bevy 0.16 compatibility
+pub mod shop_menu;        // Re-enabled after fixing Bevy 0.16 compatibility
+pub mod talent_menu;      // Re-enabled after fixing Bevy 0.16 compatibility
+pub mod achievement_display; // Re-enabled after fixing Bevy 0.16 compatibility
 
 // New advanced UI modules
 pub mod components;
@@ -30,12 +30,12 @@ impl Plugin for UIPlugin {
             main_menu::MainMenuPlugin,
             health_bars::HealthBarPlugin,
             minimap::MinimapPlugin,
-            // powerup_display::PowerUpDisplayPlugin,  // Temporarily disabled
-            // ability_display::AbilityDisplayPlugin,  // Temporarily disabled
-            // Temporarily disabled for integration testing
-            // shop_menu::ShopMenuPlugin,
-            // talent_menu::TalentMenuPlugin,
-            // achievement_display::AchievementDisplayPlugin,
+            powerup_display::PowerUpDisplayPlugin,  // Re-enabled
+            ability_display::AbilityDisplayPlugin,  // Re-enabled
+            // Integrated systems UI
+            shop_menu::ShopMenuPlugin,
+            talent_menu::TalentMenuPlugin,
+            achievement_display::AchievementDisplayPlugin,
             
             // Advanced menu system (replaces pause_menu)
             menus::main_game_menu::MainGameMenuPlugin,

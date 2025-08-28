@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use crate::game::abilities::{ActiveAbilities, AbilityRegistry};
+use bevy::ui::*;
+use crate::game::abilities::{ActiveAbilities, AbilityRegistry, BodyPart};
 use crate::game::player::Player;
 
 pub struct AbilityDisplayPlugin;

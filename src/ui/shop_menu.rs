@@ -50,92 +50,84 @@ fn setup_shop_menu(
     // Shop UI container
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(80.0),
-                    height: Val::Percent(80.0),
-                    position_type: PositionType::Absolute,
-                    left: Val::Percent(10.0),
-                    top: Val::Percent(10.0),
-                    flex_direction: FlexDirection::Column,
-                    padding: UiRect::all(Val::Px(20.0)),
-                    ..default()
-                },
-                background_color: Color::srgba(0.0, 0.0, 0.0, 0.8).into(),
+            Node {
+                width: Val::Percent(80.0),
+                height: Val::Percent(80.0),
+                position_type: PositionType::Absolute,
+                left: Val::Percent(10.0),
+                top: Val::Percent(10.0),
+                flex_direction: FlexDirection::Column,
+                padding: UiRect::all(Val::Px(20.0)),
                 ..default()
             },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
             ShopMenu,
         ))
         .with_children(|parent| {
             // Title
-            parent.spawn(TextBundle::from_section(
-                "Shop",
-                TextStyle {
+            parent.spawn((
+                Text::new("Shop"),
+                TextColor(Color::WHITE),
+                TextFont {
                     font_size: 40.0,
-                    color: Color::WHITE,
                     ..default()
                 },
             ));
             
             // Currency display
             parent.spawn((
-                TextBundle::from_section(
-                    format!("Coins: {} | Gems: {} | Soul Shards: {}", 
-                           currency.coins, currency.gems, currency.soul_shards),
-                    TextStyle {
-                        font_size: 20.0,
-                        color: Color::srgb(1.0, 1.0, 0.0),
-                        ..default()
-                    },
-                ),
+                Text::new(format!("Coins: {} | Gems: {} | Soul Shards: {}", 
+                           currency.coins, currency.gems, currency.soul_shards)),
+                TextColor(Color::srgb(1.0, 1.0, 0.0)),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
                 CurrencyDisplay,
             ));
             
             // Shop items
             parent
-                .spawn(NodeBundle {
-                    style: Style {
+                .spawn((
+                    Node {
                         flex_direction: FlexDirection::Row,
                         flex_wrap: FlexWrap::Wrap,
                         width: Val::Percent(100.0),
                         ..default()
                     },
-                    ..default()
-                })
+                ))
                 .with_children(|items_parent| {
-                    for (item_id, item) in shop_registry.items.iter() {
+                    for item in shop_inventory.items.iter() {
                         items_parent
                             .spawn((
-                                ButtonBundle {
-                                    style: Style {
-                                        width: Val::Px(200.0),
-                                        height: Val::Px(100.0),
-                                        margin: UiRect::all(Val::Px(10.0)),
-                                        padding: UiRect::all(Val::Px(10.0)),
-                                        flex_direction: FlexDirection::Column,
-                                        ..default()
-                                    },
-                                    background_color: Color::srgb(0.2, 0.2, 0.2).into(),
+                                Button,
+                                Node {
+                                    width: Val::Px(200.0),
+                                    height: Val::Px(100.0),
+                                    margin: UiRect::all(Val::Px(10.0)),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    flex_direction: FlexDirection::Column,
                                     ..default()
                                 },
+                                BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
                                 ShopItemButton {
-                                    item_id: item_id.clone(),
+                                    item_id: item.id.clone(),
                                 },
                             ))
                             .with_children(|button| {
-                                button.spawn(TextBundle::from_section(
-                                    &item.name,
-                                    TextStyle {
+                                button.spawn((
+                                    Text::new(&item.name),
+                                    TextColor(Color::WHITE),
+                                    TextFont {
                                         font_size: 16.0,
-                                        color: Color::WHITE,
                                         ..default()
                                     },
                                 ));
-                                button.spawn(TextBundle::from_section(
-                                    format!("Price: {}", item.price),
-                                    TextStyle {
+                                button.spawn((
+                                    Text::new(format!("Cost: {}", item.cost)),
+                                    TextColor(Color::srgb(0.5, 0.5, 0.5)),
+                                    TextFont {
                                         font_size: 14.0,
-                                        color: Color::srgb(0.5, 0.5, 0.5),
                                         ..default()
                                     },
                                 ));
@@ -144,11 +136,11 @@ fn setup_shop_menu(
                 });
             
             // Instructions
-            parent.spawn(TextBundle::from_section(
-                "Press S to close shop",
-                TextStyle {
+            parent.spawn((
+                Text::new("Press S to close shop"),
+                TextColor(Color::srgb(0.5, 0.5, 0.5)),
+                TextFont {
                     font_size: 16.0,
-                    color: Color::srgb(0.5, 0.5, 0.5),
                     ..default()
                 },
             ));
@@ -161,7 +153,7 @@ fn update_shop_display(
 ) {
     if currency.is_changed() {
         for mut text in currency_text_q.iter_mut() {
-            text.0 = format!(
+            **text = format!(
                 "Coins: {} | Gems: {} | Soul Shards: {}", 
                 currency.coins, currency.gems, currency.soul_shards
             );
@@ -174,7 +166,7 @@ fn cleanup_shop_menu(
     shop_menu_q: Query<Entity, With<ShopMenu>>,
 ) {
     for entity in shop_menu_q.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
 

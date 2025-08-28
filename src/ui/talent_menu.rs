@@ -46,81 +46,74 @@ fn setup_talent_menu(
     // Talent UI container
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(90.0),
-                    height: Val::Percent(90.0),
-                    position_type: PositionType::Absolute,
-                    left: Val::Percent(5.0),
-                    top: Val::Percent(5.0),
-                    flex_direction: FlexDirection::Column,
-                    padding: UiRect::all(Val::Px(20.0)),
-                    ..default()
-                },
-                background_color: Color::srgba(0.0, 0.0, 0.0, 0.8).into(),
+            Node {
+                width: Val::Percent(90.0),
+                height: Val::Percent(90.0),
+                position_type: PositionType::Absolute,
+                left: Val::Percent(5.0),
+                top: Val::Percent(5.0),
+                flex_direction: FlexDirection::Column,
+                padding: UiRect::all(Val::Px(20.0)),
                 ..default()
             },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
             TalentMenu,
         ))
         .with_children(|parent| {
             // Title
-            parent.spawn(TextBundle::from_section(
-                "Talent Tree",
-                TextStyle {
+            parent.spawn((
+                Text::new("Talent Tree"),
+                TextColor(Color::WHITE),
+                TextFont {
                     font_size: 40.0,
-                    color: Color::WHITE,
                     ..default()
                 },
             ));
             
             // Available points display
             parent.spawn((
-                TextBundle::from_section(
-                    format!("Available Points: {}", talents.available_points),
-                    TextStyle {
-                        font_size: 20.0,
-                        color: Color::srgb(1.0, 1.0, 0.0),
-                        ..default()
-                    },
-                ),
+                Text::new(format!("Available Points: {}", talents.available_points)),
+                TextColor(Color::srgb(1.0, 1.0, 0.0)),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
                 TalentPointsDisplay,
             ));
             
             // Talent trees
             for (tree_id, tree) in talent_registry.trees.iter() {
                 parent
-                    .spawn(NodeBundle {
-                        style: Style {
+                    .spawn((
+                        Node {
                             flex_direction: FlexDirection::Column,
                             margin: UiRect::all(Val::Px(10.0)),
                             ..default()
                         },
-                        ..default()
-                    })
+                    ))
                     .with_children(|tree_parent| {
-                        tree_parent.spawn(TextBundle::from_section(
-                            &tree.name,
-                            TextStyle {
+                        tree_parent.spawn((
+                            Text::new(&tree.name),
+                            TextColor(Color::srgb(0.0, 1.0, 1.0)),
+                            TextFont {
                                 font_size: 24.0,
-                                color: Color::srgb(0.0, 1.0, 1.0),
                                 ..default()
                             },
                         ));
                         
                         // Talents in this tree
                         tree_parent
-                            .spawn(NodeBundle {
-                                style: Style {
+                            .spawn((
+                                Node {
                                     flex_direction: FlexDirection::Row,
                                     flex_wrap: FlexWrap::Wrap,
                                     ..default()
                                 },
-                                ..default()
-                            })
+                            ))
                             .with_children(|talents_parent| {
-                                for talent in tree.talents.iter() {
+                                for (talent_id, talent) in tree.talents.iter() {
                                     let current_level = talents.unlocked_talents
-                                        .get(&talent.id)
+                                        .get(talent_id)
                                         .copied()
                                         .unwrap_or(0);
                                     
@@ -134,36 +127,34 @@ fn setup_talent_menu(
                                     
                                     talents_parent
                                         .spawn((
-                                            ButtonBundle {
-                                                style: Style {
-                                                    width: Val::Px(150.0),
-                                                    height: Val::Px(100.0),
-                                                    margin: UiRect::all(Val::Px(5.0)),
-                                                    padding: UiRect::all(Val::Px(10.0)),
-                                                    flex_direction: FlexDirection::Column,
-                                                    ..default()
-                                                },
-                                                background_color: button_color.into(),
+                                            Button,
+                                            Node {
+                                                width: Val::Px(150.0),
+                                                height: Val::Px(100.0),
+                                                margin: UiRect::all(Val::Px(5.0)),
+                                                padding: UiRect::all(Val::Px(10.0)),
+                                                flex_direction: FlexDirection::Column,
                                                 ..default()
                                             },
+                                            BackgroundColor(button_color),
                                             TalentButton {
-                                                talent_id: talent.id.clone(),
+                                                talent_id: talent_id.clone(),
                                             },
                                         ))
                                         .with_children(|button| {
-                                            button.spawn(TextBundle::from_section(
-                                                &talent.name,
-                                                TextStyle {
+                                            button.spawn((
+                                                Text::new(&talent.name),
+                                                TextColor(Color::WHITE),
+                                                TextFont {
                                                     font_size: 14.0,
-                                                    color: Color::WHITE,
                                                     ..default()
                                                 },
                                             ));
-                                            button.spawn(TextBundle::from_section(
-                                                format!("Level: {}/{}", current_level, talent.max_level),
-                                                TextStyle {
+                                            button.spawn((
+                                                Text::new(format!("Level: {}/{}", current_level, talent.max_ranks)),
+                                                TextColor(Color::srgb(0.5, 0.5, 0.5)),
+                                                TextFont {
                                                     font_size: 12.0,
-                                                    color: Color::srgb(0.5, 0.5, 0.5),
                                                     ..default()
                                                 },
                                             ));
@@ -174,11 +165,11 @@ fn setup_talent_menu(
             }
             
             // Instructions
-            parent.spawn(TextBundle::from_section(
-                "Press T to close talent menu",
-                TextStyle {
+            parent.spawn((
+                Text::new("Press T to close talent menu"),
+                TextColor(Color::srgb(0.5, 0.5, 0.5)),
+                TextFont {
                     font_size: 16.0,
-                    color: Color::srgb(0.5, 0.5, 0.5),
                     ..default()
                 },
             ));
@@ -190,6 +181,6 @@ fn cleanup_talent_menu(
     talent_menu_q: Query<Entity, With<TalentMenu>>,
 ) {
     for entity in talent_menu_q.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
