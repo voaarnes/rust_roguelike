@@ -7,6 +7,8 @@ pub mod test_setup;
 use bevy::prelude::*;
 use crate::entities::powerup::PowerUpSlots;
 use crate::game::player::Player;
+use crate::systems::talents::PlayerTalents;
+use crate::systems::shop::PlayerCurrency;
 use std::collections::HashMap;
 
 pub struct AbilitiesPlugin;
@@ -257,18 +259,31 @@ fn update_player_abilities(
 fn trigger_abilities(
     mut player_q: Query<(Entity, &Transform, &mut ActiveAbilities), With<Player>>,
     mut trigger_events: EventWriter<TriggerAbilityEvent>,
+    talents: Res<PlayerTalents>,
     time: Res<Time>,
 ) {
+    // Calculate talent bonuses
+    let cooldown_reduction = talents.get_talent_bonus("cooldown_reduction").unwrap_or(0.0);
+    let damage_bonus = talents.get_talent_bonus("damage_increase").unwrap_or(0.0);
+    
     for (entity, transform, mut abilities) in player_q.iter_mut() {
         // Check and trigger head ability
         if let Some(ref mut ability) = abilities.head_ability {
-            ability.cooldown_timer.tick(time.delta());
-            if ability.cooldown_timer.just_finished() && ability.auto_cast {
+            // Apply cooldown reduction from talents
+            let mut modified_timer = ability.cooldown_timer.clone();
+            if cooldown_reduction > 0.0 {
+                let reduced_duration = modified_timer.duration().as_secs_f32() * (1.0 - cooldown_reduction);
+                modified_timer.set_duration(std::time::Duration::from_secs_f32(reduced_duration));
+            }
+            modified_timer.tick(time.delta());
+            
+            if modified_timer.just_finished() && ability.auto_cast {
                 trigger_events.write(TriggerAbilityEvent {
                     ability_id: ability.ability_id,
                     caster: entity,
                     position: transform.translation,
                 });
+                ability.cooldown_timer.reset();
             }
         }
         

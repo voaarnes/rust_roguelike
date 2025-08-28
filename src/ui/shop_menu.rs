@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use bevy::ui::{NodeBundle, Style, Val, PositionType, FlexDirection, UiRect, ButtonBundle, TextBundle, TextStyle};
-use crate::systems::shop::PlayerCurrency;
+use crate::systems::shop::{PlayerCurrency, ShopInventory, PurchaseEvent};
 use crate::core::state::GameState;
 
 pub struct ShopMenuPlugin;
@@ -11,6 +10,7 @@ impl Plugin for ShopMenuPlugin {
             .add_systems(Update, (
                 shop_menu_input,
                 update_shop_display,
+                handle_shop_button_clicks,
             ))
             .add_systems(OnEnter(GameState::Paused), setup_shop_menu)
             .add_systems(OnExit(GameState::Paused), cleanup_shop_menu);
@@ -44,7 +44,7 @@ fn shop_menu_input(
 
 fn setup_shop_menu(
     mut commands: Commands,
-    shop_registry: Res<ShopRegistry>,
+    shop_inventory: Res<ShopInventory>,
     currency: Res<PlayerCurrency>,
 ) {
     // Shop UI container
@@ -175,5 +175,25 @@ fn cleanup_shop_menu(
 ) {
     for entity in shop_menu_q.iter() {
         commands.entity(entity).despawn_recursive();
+    }
+}
+
+fn handle_shop_button_clicks(
+    mut interaction_query: Query<
+        (&Interaction, &ShopItemButton),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut purchase_events: EventWriter<PurchaseEvent>,
+    player_q: Query<Entity, With<crate::game::player::Player>>,
+) {
+    let Ok(player_entity) = player_q.get_single() else { return };
+    
+    for (interaction, shop_button) in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            purchase_events.write(PurchaseEvent {
+                item_id: shop_button.item_id.clone(),
+                player: player_entity,
+            });
+        }
     }
 }

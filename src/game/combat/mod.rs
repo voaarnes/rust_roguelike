@@ -8,6 +8,8 @@ use crate::game::enemy::Enemy;
 use crate::game::movement::Collider;
 use crate::systems::loot::{DropLootEvent, LootSource};
 use crate::systems::combo::ComboEvent;
+use crate::systems::achievements::AchievementUnlockedEvent;
+use crate::systems::quests::QuestCompleteEvent;
 
 pub struct CombatPlugin;
 
@@ -149,7 +151,12 @@ fn cleanup_dead_entities(
     mut state: ResMut<crate::core::state::GameStats>,
     mut loot_events: EventWriter<DropLootEvent>,
     mut combo_events: EventWriter<ComboEvent>,
+    mut achievement_events: EventWriter<AchievementUnlockedEvent>,
+    mut quest_events: EventWriter<QuestCompleteEvent>,
+    player_q: Query<Entity, With<Player>>,
 ) {
+    let Ok(player_entity) = player_q.get_single() else { return };
+    
     for (entity, health, transform, enemy) in query.iter() {
         if health.is_dead() {
             state.enemies_killed += 1;
@@ -165,6 +172,36 @@ fn cleanup_dead_entities(
                     source: LootSource::Enemy("BasicEnemy".to_string()),
                     luck_bonus: 0.0, // TODO: Get from player stats
                 });
+                
+                // Trigger achievement progress for enemy kills
+                achievement_events.write(AchievementUnlockedEvent {
+                    achievement_id: "first_kill".to_string(),
+                    player: player_entity,
+                });
+                
+                // Trigger quest progress for enemy kills
+                quest_events.write(QuestCompleteEvent {
+                    quest_id: "daily_slayer".to_string(),
+                    player: player_entity,
+                });
+                
+                // Check for milestone achievements
+                if state.enemies_killed == 10 {
+                    achievement_events.write(AchievementUnlockedEvent {
+                        achievement_id: "slayer_bronze".to_string(),
+                        player: player_entity,
+                    });
+                } else if state.enemies_killed == 100 {
+                    achievement_events.write(AchievementUnlockedEvent {
+                        achievement_id: "slayer_silver".to_string(),
+                        player: player_entity,
+                    });
+                } else if state.enemies_killed == 1000 {
+                    achievement_events.write(AchievementUnlockedEvent {
+                        achievement_id: "slayer_gold".to_string(),
+                        player: player_entity,
+                    });
+                }
             }
             
             commands.entity(entity).despawn();

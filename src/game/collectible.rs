@@ -3,6 +3,8 @@ use crate::game::player::{Player, PlayerStats};
 use crate::game::movement::Collider;
 use crate::entities::powerup::PowerUpSlots;
 use crate::systems::shop::PlayerCurrency;
+use crate::systems::achievements::AchievementUnlockedEvent;
+use crate::systems::quests::QuestCompleteEvent;
 use crate::core::state::GameStats;
 
 pub struct CollectiblePlugin;
@@ -38,8 +40,12 @@ fn handle_collectible_pickup(
     mut powerup_q: Query<&mut PowerUpSlots, With<Player>>,
     mut currency_q: Query<&mut PlayerCurrency>,
     mut game_stats: ResMut<GameStats>,
+    mut achievement_events: EventWriter<AchievementUnlockedEvent>,
+    mut quest_events: EventWriter<QuestCompleteEvent>,
+    player_entity_q: Query<Entity, With<Player>>,
 ) {
     let Ok((player_tf, mut player_stats)) = player_q.single_mut() else { return };
+    let Ok(player_entity) = player_entity_q.get_single() else { return };
     
     for (collectible_entity, collectible_tf, collectible, _collider) in collectible_q.iter() {
         let distance = player_tf.translation.distance(collectible_tf.translation);
@@ -54,6 +60,26 @@ fn handle_collectible_pickup(
                     if let Ok(mut currency) = currency_q.single_mut() {
                         currency.coins += collectible.value as u32;
                     }
+                    
+                    // Trigger collection achievements
+                    if game_stats.coins_collected >= 100 {
+                        achievement_events.write(AchievementUnlockedEvent {
+                            achievement_id: "coin_collector_bronze".to_string(),
+                            player: player_entity,
+                        });
+                    }
+                    if game_stats.coins_collected >= 1000 {
+                        achievement_events.write(AchievementUnlockedEvent {
+                            achievement_id: "coin_collector_silver".to_string(),
+                            player: player_entity,
+                        });
+                    }
+                    
+                    // Trigger quest progress
+                    quest_events.write(QuestCompleteEvent {
+                        quest_id: "daily_collector".to_string(),
+                        player: player_entity,
+                    });
                 }
                 CollectibleType::Fruit(fruit_type) => {
                     if let Ok(mut powerup_slots) = powerup_q.single_mut() {
@@ -64,12 +90,24 @@ fn handle_collectible_pickup(
                             println!("Picked up fruit type {}", fruit_type);
                         }
                     }
+                    
+                    // Trigger fruit collection achievements
+                    achievement_events.write(AchievementUnlockedEvent {
+                        achievement_id: "fruit_collector".to_string(),
+                        player: player_entity,
+                    });
                 }
                 CollectibleType::Gem => {
                     // Update shop currency
                     if let Ok(mut currency) = currency_q.single_mut() {
                         currency.gems += collectible.value as u32;
                     }
+                    
+                    // Trigger gem collection achievements
+                    achievement_events.write(AchievementUnlockedEvent {
+                        achievement_id: "gem_collector".to_string(),
+                        player: player_entity,
+                    });
                 }
                 CollectibleType::HealthPotion => {
                     println!("Picked up health potion!");

@@ -23,6 +23,9 @@ pub struct TalentTree {
     pub trees: HashMap<TalentTreeType, TreeData>,
 }
 
+// Alias for compatibility with UI code
+pub type TalentRegistry = TalentTree;
+
 #[derive(Clone)]
 pub struct TreeData {
     pub name: String,
@@ -104,6 +107,35 @@ impl Default for PlayerTalents {
             unlocked_talents: HashMap::new(),
             available_points: 0,
             spent_points: HashMap::new(),
+        }
+    }
+}
+
+impl PlayerTalents {
+    pub fn get_talent_bonus(&self, bonus_type: &str) -> Option<f32> {
+        let mut total_bonus = 0.0;
+        
+        for (talent_id, rank) in &self.unlocked_talents {
+            // This is a simplified approach - in a real game you'd look up 
+            // the talent definition and calculate bonuses properly
+            match bonus_type {
+                "cooldown_reduction" if talent_id.contains("cooldown") => {
+                    total_bonus += 0.05 * (*rank as f32); // 5% per rank
+                }
+                "damage_increase" if talent_id.contains("damage") || talent_id == "sharp_blade" => {
+                    total_bonus += 0.1 * (*rank as f32); // 10% per rank
+                }
+                "health_increase" if talent_id == "thick_skin" => {
+                    total_bonus += 10.0 * (*rank as f32); // 10 HP per rank
+                }
+                _ => {}
+            }
+        }
+        
+        if total_bonus > 0.0 {
+            Some(total_bonus)
+        } else {
+            None
         }
     }
 }
