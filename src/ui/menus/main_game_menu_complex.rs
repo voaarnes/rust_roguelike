@@ -186,13 +186,13 @@ fn setup_main_menu(
             .insert(BackgroundColor(Color::srgb(0.08, 0.08, 0.12)))
             .with_children(|tab_bar| {
                 let tabs = [
-                    (MenuTab::Shop, "🛒 Shop", Color::srgb(1.0, 0.843, 0.0)),
-                    (MenuTab::Talents, "⭐ Talents", Color::srgb(0.5, 1.0, 0.5)),
-                    (MenuTab::Achievements, "🏆 Achievements", Color::srgb(1.0, 0.5, 0.0)),
-                    (MenuTab::Quests, "📋 Quests", Color::srgb(0.7, 0.7, 1.0)),
-                    (MenuTab::Inventory, "🎒 Inventory", Color::srgb(0.8, 0.4, 0.8)),
-                    (MenuTab::Prestige, "♾️ Prestige", Color::srgb(1.0, 0.0, 0.5)),
-                    (MenuTab::Settings, "⚙️ Settings", Color::srgb(0.6, 0.6, 0.6)),
+                    (MenuTab::Shop, "Shop", Color::srgb(1.0, 0.843, 0.0)),
+                    (MenuTab::Talents, "Talents", Color::srgb(0.5, 1.0, 0.5)),
+                    (MenuTab::Achievements, "Achievements", Color::srgb(1.0, 0.5, 0.0)),
+                    (MenuTab::Quests, "Quests", Color::srgb(0.7, 0.7, 1.0)),
+                    (MenuTab::Inventory, "Inventory", Color::srgb(0.8, 0.4, 0.8)),
+                    (MenuTab::Prestige, "Prestige", Color::srgb(1.0, 0.0, 0.5)),
+                    (MenuTab::Settings, "Settings", Color::srgb(0.6, 0.6, 0.6)),
                 ];
                 
                 for (tab, label, accent_color) in tabs {
@@ -240,7 +240,7 @@ fn setup_main_menu(
             )).with_children(|content| {
                 // Initial content - Shop tab
                 content.spawn((
-                    Text::new("🛒 SHOP"),
+                    Text::new("SHOP"),
                     TextFont { 
                         font_size: 36.0,
                         ..default()
@@ -258,7 +258,7 @@ fn setup_main_menu(
                 }).with_children(|categories| {
                     // Shop placeholder content
                     categories.spawn((
-                        Text::new("⚔️ Weapons - Coming Soon!"),
+                        Text::new("Weapons - Coming Soon!"),
                         TextFont { 
                             font_size: 20.0,
                             ..default()
@@ -267,7 +267,7 @@ fn setup_main_menu(
                     ));
                     
                     categories.spawn((
-                        Text::new("⬆️ Upgrades - In Development"),
+                        Text::new("Upgrades - In Development"),
                         TextFont { 
                             font_size: 20.0,
                             ..default()
@@ -276,7 +276,7 @@ fn setup_main_menu(
                     ));
                     
                     categories.spawn((
-                        Text::new("📦 Items - Features Planned"),
+                        Text::new("Items - Features Planned"),
                         TextFont { 
                             font_size: 20.0,
                             ..default()
@@ -393,7 +393,7 @@ fn update_tab_content(
                 MenuTab::Shop => {
                     // Title with currency display
                     parent.spawn((
-                        Text::new("🛒 SHOP"),
+                        Text::new("SHOP"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
@@ -550,7 +550,7 @@ fn update_tab_content(
                 MenuTab::Talents => {
                     // Title and points available
                     parent.spawn((
-                        Text::new("⭐ TALENT TREES"),
+                        Text::new("TALENT TREES"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
@@ -585,7 +585,7 @@ fn update_tab_content(
                                 ..default()
                             }).insert(BackgroundColor(Color::srgb(0.15, 0.05, 0.05))).with_children(|tree| {
                                 tree.spawn((
-                                    Text::new("⚔️ Offense Tree"),
+                                    Text::new("Offense Tree"),
                                     TextFont { 
                                         font_size: 20.0,
                                         ..default()
@@ -639,7 +639,7 @@ fn update_tab_content(
                                 ..default()
                             }).insert(BackgroundColor(Color::srgb(0.05, 0.05, 0.15))).with_children(|tree| {
                                 tree.spawn((
-                                    Text::new("🛡️ Defense Tree"),
+                                    Text::new("Defense Tree"),
                                     TextFont { 
                                         font_size: 20.0,
                                         ..default()
@@ -741,7 +741,7 @@ fn update_tab_content(
                 MenuTab::Achievements => {
                     // Title
                     parent.spawn((
-                        Text::new("🏆 ACHIEVEMENTS"),
+                        Text::new("ACHIEVEMENTS"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
@@ -888,7 +888,7 @@ fn update_tab_content(
                 MenuTab::Quests => {
                     // Title
                     parent.spawn((
-                        Text::new("📋 QUESTS & CHALLENGES"),
+                        Text::new("QUESTS & CHALLENGES"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
@@ -1101,7 +1101,7 @@ fn update_tab_content(
                 MenuTab::Inventory => {
                     // Title
                     parent.spawn((
-                        Text::new("🎒 INVENTORY & LOOT"),
+                        Text::new("INVENTORY & LOOT"),
                         TextFont { 
                             font_size: 36.0,
                             ..default()
@@ -1163,7 +1163,7 @@ fn update_tab_content(
                             ..default()
                         }).with_children(|equipment| {
                             equipment.spawn((
-                                Text::new("⚔️ Equipment"),
+                                Text::new("Equipment"),
                                 TextFont { 
                                     font_size: 24.0,
                                     ..default()
@@ -1374,7 +1374,7 @@ fn update_tab_content(
                             ));
                             
                             currencies.spawn((
-                                Text::new(format!("⭐ Legacy Points: {}", prestige_system.legacy_points)),
+                                Text::new(format!("Legacy Points: {}", prestige_system.legacy_points)),
                                 TextFont { 
                                     font_size: 16.0,
                                     ..default()
