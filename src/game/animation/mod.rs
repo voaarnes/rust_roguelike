@@ -15,6 +15,7 @@ pub struct AnimationController {
     pub current: String,
     pub timer: Timer,
     pub frame_index: usize,
+    pub frame: usize,  // The current frame for direction offset calculations
 }
 
 #[derive(Clone)]
@@ -43,6 +44,7 @@ impl AnimationController {
             current: String::new(),
             timer: Timer::from_seconds(0.1, TimerMode::Repeating),
             frame_index: 0,
+            frame: 0,
         }
     }
     
@@ -55,6 +57,7 @@ impl AnimationController {
             self.current = name.to_string();
             if let Some(clip) = self.animations.get(name) {
                 self.frame_index = clip.start_frame;
+                self.frame = clip.start_frame;
                 self.timer = Timer::from_seconds(clip.frame_duration, TimerMode::Repeating);
                 self.timer.reset();
             }
@@ -62,7 +65,7 @@ impl AnimationController {
     }
 }
 
-fn update_animations(
+pub fn update_animations(
     mut query: Query<(&mut AnimationController, &mut Sprite)>,
     time: Res<Time>,
 ) {
@@ -89,7 +92,10 @@ fn update_animations(
                     }
                 }
                 
-                // Update sprite atlas index if it has a texture atlas
+                // Update the frame field for direction system calculations
+                controller.frame = controller.frame_index;
+                
+                // Set base atlas index (direction systems will modify this if needed)
                 if let Some(ref mut atlas) = sprite.texture_atlas {
                     atlas.index = controller.frame_index;
                 }

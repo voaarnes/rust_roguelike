@@ -7,6 +7,18 @@ use crate::systems::talents::PlayerTalents;
 use crate::game::player_visual::PlayerParts;
 use crate::game::abilities::ActiveAbilities;
 
+#[derive(Component, Clone, Copy, PartialEq)]
+pub enum FacingDirection {
+    Left,
+    Right,
+}
+
+impl Default for FacingDirection {
+    fn default() -> Self {
+        FacingDirection::Left
+    }
+}
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -18,6 +30,7 @@ impl Plugin for PlayerPlugin {
                 player_input_system,
                 update_player_stats,
                 apply_speed_buffs,
+                update_player_sprite_direction.after(crate::game::animation::update_animations),
             ));
     }
 }
@@ -98,7 +111,7 @@ fn spawn_player(
     let texture = asset_server.load("sprites/test_p_sprite.png");
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(32, 32),
-        4, 4,
+        4, 8,  // 4 columns, 8 rows for left/right facing sprites
         None, None,
     );
     let layout_handle = layouts.add(layout);
@@ -125,6 +138,7 @@ fn spawn_player(
         },
         Velocity(Vec2::ZERO),
         Collider { size: Vec2::splat(28.0) },
+        FacingDirection::default(),
         Sprite {
             image: texture,
             texture_atlas: Some(TextureAtlas {
@@ -141,19 +155,25 @@ fn spawn_player(
 
 /// System to handle player input and movement
 fn player_input_system(
-    mut player_q: Query<(&mut Velocity, &mut AnimationController, &PlayerController), With<Player>>,
+    mut player_q: Query<(&mut Velocity, &mut AnimationController, &PlayerController, &mut FacingDirection), With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
     _time: Res<Time>,
 ) {
-    let Ok((mut velocity, mut anim, controller)) = player_q.single_mut() else { return };
+    let Ok((mut velocity, mut anim, controller, mut facing)) = player_q.single_mut() else { return };
     
     let mut movement = Vec2::ZERO;
     
     // Handle WASD movement
     if keys.pressed(KeyCode::KeyW) { movement.y += 1.0; }
     if keys.pressed(KeyCode::KeyS) { movement.y -= 1.0; }
-    if keys.pressed(KeyCode::KeyA) { movement.x -= 1.0; }
-    if keys.pressed(KeyCode::KeyD) { movement.x += 1.0; }
+    if keys.pressed(KeyCode::KeyA) { 
+        movement.x -= 1.0;
+        *facing = FacingDirection::Left;
+    }
+    if keys.pressed(KeyCode::KeyD) { 
+        movement.x += 1.0;
+        *facing = FacingDirection::Right;
+    }
     
     // Normalize diagonal movement
     if movement.length() > 0.0 {
@@ -230,6 +250,28 @@ fn apply_speed_buffs(
         } else {
             // No buff active, ensure base speed
             controller.move_speed = 200.0;
+        }
+    }
+}
+
+/// System to update player sprite based on facing direction
+fn update_player_sprite_direction(
+    mut player_q: Query<(&FacingDirection, &mut Sprite, &AnimationController), With<Player>>,
+) {
+    for (facing, mut sprite, anim_controller) in player_q.iter_mut() {
+        if let Some(ref mut atlas) = sprite.texture_atlas {
+            // Calculate the base index for the current animation and frame
+            let base_index = anim_controller.frame;
+            
+            // Adjust index based on facing direction
+            // Left-facing sprites are in rows 0 and 2 (0-15), right-facing in rows 1 and 3 (16-31)
+            let direction_offset = match facing {
+                FacingDirection::Left => 0,    // Use original indices (0-15)
+                FacingDirection::Right => 16,  // Add 16 to get right-facing sprites (16-31)
+            };
+            
+            // Update the atlas index, keeping it within the animation frame
+            atlas.index = (base_index % 16) + direction_offset;
         }
     }
 }

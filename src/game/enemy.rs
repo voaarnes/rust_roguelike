@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use crate::game::animation::{AnimationController, AnimationClip};
 use crate::game::combat::{Health, CombatStats};
 use crate::game::movement::{Velocity, Collider};
+use crate::game::player::FacingDirection;
 
 pub struct EnemyPlugin;
 
@@ -14,8 +15,8 @@ impl Plugin for EnemyPlugin {
             .add_systems(Startup, load_enemy_assets)
             .add_systems(Update, (
                 handle_spawn_events,
-                enemy_ai_system,
-                update_enemy_behavior,
+                (enemy_ai_system, update_enemy_behavior),
+                update_enemy_sprite_direction.after(crate::game::animation::update_animations),
             ));
     }
 }
@@ -152,6 +153,7 @@ fn spawn_enemy(
             },
             Velocity(Vec2::ZERO),
             Collider { size: Vec2::splat(28.0) },
+            FacingDirection::default(),
             Sprite {
                 image: texture.clone(),
                 texture_atlas: Some(TextureAtlas {
@@ -210,6 +212,7 @@ fn spawn_boss(
             },
             Velocity(Vec2::ZERO),
             Collider { size: Vec2::splat(48.0) },
+            FacingDirection::default(),
             Sprite {
                 image: texture.clone(),
                 texture_atlas: Some(TextureAtlas {
@@ -227,13 +230,13 @@ fn spawn_boss(
 }
 
 fn enemy_ai_system(
-    mut enemy_q: Query<(&mut Enemy, &Transform, &mut Velocity, &mut AnimationController)>,
+    mut enemy_q: Query<(&mut Enemy, &Transform, &mut Velocity, &mut AnimationController, &mut FacingDirection)>,
     player_q: Query<&Transform, (With<crate::game::player::Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) {
     let Ok(player_tf) = player_q.single() else { return };
     
-    for (mut enemy, enemy_tf, mut velocity, mut anim) in enemy_q.iter_mut() {
+    for (mut enemy, enemy_tf, mut velocity, mut anim, mut facing) in enemy_q.iter_mut() {
         enemy.behavior_timer.tick(time.delta());
         
         let to_player = player_tf.translation - enemy_tf.translation;
@@ -258,6 +261,13 @@ fn enemy_ai_system(
                     let direction = to_player.truncate().normalize_or_zero();
                     velocity.0 = direction * enemy.move_speed;
                     
+                    // Update facing direction based on movement
+                    if direction.x < 0.0 {
+                        *facing = FacingDirection::Left;
+                    } else if direction.x > 0.0 {
+                        *facing = FacingDirection::Right;
+                    }
+                    
                     if anim.current != "walk" {
                         anim.play("walk");
                     }
@@ -279,6 +289,28 @@ fn update_enemy_behavior(
         if health.percentage() < 0.3 && boss.phase == 1 {
             boss.phase = 2;
             enemy.move_speed *= 1.5;
+        }
+    }
+}
+
+/// System to update enemy sprite based on facing direction
+fn update_enemy_sprite_direction(
+    mut enemy_q: Query<(&FacingDirection, &mut Sprite, &AnimationController), With<Enemy>>,
+) {
+    for (facing, mut sprite, anim_controller) in enemy_q.iter_mut() {
+        if let Some(ref mut atlas) = sprite.texture_atlas {
+            // Use the current animation frame
+            atlas.index = anim_controller.frame;
+            
+            // Flip the sprite horizontally based on facing direction
+            match facing {
+                FacingDirection::Left => {
+                    sprite.flip_x = false;  // Normal orientation
+                },
+                FacingDirection::Right => {
+                    sprite.flip_x = true;   // Flipped horizontally
+                }
+            }
         }
     }
 }
