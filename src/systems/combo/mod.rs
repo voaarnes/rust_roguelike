@@ -151,7 +151,7 @@ fn handle_combo_events(
 
 fn apply_combo_multipliers(
     combo: Res<ComboTracker>,
-    mut player_q: Query<&mut crate::game::combat::CombatStats, With<crate::game::player::Player>>,
+    mut player_q: Query<&mut crate::combat::CombatStats, With<crate::player::Player>>,
 ) {
     if let Ok(mut stats) = player_q.single_mut() {
         // Apply combo multiplier to damage

@@ -182,7 +182,7 @@ fn handle_shop_button_clicks(
     
     for (interaction, shop_button) in &mut interaction_query {
         if *interaction == Interaction::Pressed {
-            purchase_events.write(PurchaseEvent {
+            purchase_events.send(PurchaseEvent {
                 item_id: shop_button.item_id.clone(),
                 player: player_entity,
             });

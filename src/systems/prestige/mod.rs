@@ -211,8 +211,8 @@ impl Default for MetaProgression {
 
 fn check_prestige_eligibility(
     _prestige: Res<PrestigeSystem>,
-    wave_manager: Res<crate::game::spawning::WaveManager>,
-    player_q: Query<&crate::game::player::Player>,
+    wave_manager: Res<crate::spawning::WaveManager>,
+    player_q: Query<&crate::player::Player>,
 ) {
     if let Ok(player) = player_q.single() {
         // Standard prestige available at wave 50 or level 100
@@ -227,8 +227,8 @@ fn handle_prestige(
     mut events: EventReader<PrestigeEvent>,
     mut prestige: ResMut<PrestigeSystem>,
     mut meta: ResMut<MetaProgression>,
-    mut player_q: Query<&mut crate::game::player::Player>,
-    wave_manager: Res<crate::game::spawning::WaveManager>,
+    mut player_q: Query<&mut crate::player::Player>,
+    wave_manager: Res<crate::spawning::WaveManager>,
 ) {
     for event in events.read() {
         match event.prestige_type {
@@ -313,7 +313,7 @@ fn apply_milestone_rewards(
 
 fn apply_meta_bonuses(
     meta: Res<MetaProgression>,
-    mut player_q: Query<(&mut crate::game::combat::CombatStats, &mut crate::game::player::Player), Added<crate::game::player::Player>>,
+    mut player_q: Query<(&mut crate::combat::CombatStats, &mut crate::player::Player), Added<crate::player::Player>>,
     mut currency: ResMut<crate::systems::shop::PlayerCurrency>,
 ) {
     if let Ok((mut stats, mut player)) = player_q.single_mut() {
@@ -338,7 +338,7 @@ fn apply_meta_bonuses(
 
 fn calculate_prestige_currency(
     prestige: Res<PrestigeSystem>,
-    game_stats: Res<crate::core::state::GameStats>,
+    game_stats: Res<crate::state::GameStats>,
 ) -> u32 {
     // Calculate how much prestige currency would be earned
     let base = game_stats.enemies_killed + game_stats.coins_collected / 10;

@@ -86,7 +86,7 @@ fn spawn_wave_system(
         if wave_manager.current_wave % 5 == 0 {
             wave_manager.boss_spawned = true;
             if let Ok(player_tf) = player_q.single() {
-                boss_events.write(SpawnBossEvent {
+                boss_events.send(SpawnBossEvent {
                     position: player_tf.translation + Vec3::new(300.0, 0.0, 3.0),
                     boss_type: choose_boss_type(wave_manager.current_wave),
                 });
@@ -114,7 +114,7 @@ fn spawn_wave_system(
                     3.0,
                 );
                 
-                spawn_events.write(SpawnEnemyEvent {
+                spawn_events.send(SpawnEnemyEvent {
                     position: spawn_pos,
                     enemy_type: choose_enemy_type(wave_manager.current_wave),
                 });

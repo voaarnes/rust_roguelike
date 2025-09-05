@@ -612,7 +612,7 @@ fn update_pulse_effects(
                 sprite.color = get_fruit_color(pulse.fruit_type).with_alpha(alpha);
             } else {
                 // Pulsing effect
-                let pulse_time = time.elapsed_secs() * pulse.pulse_speed;
+                let pulse_time = time.elapsed_seconds() * pulse.pulse_speed;
                 let scale_factor = pulse.base_scale + (pulse_time.sin() * 0.5 + 0.5) * pulse.pulse_scale;
                 transform.scale = Vec3::splat(scale_factor);
                 
@@ -638,7 +638,7 @@ fn update_aura_effects(
             transform.rotate_z(aura.rotation_speed * time.delta_secs());
             
             // Pulse the size
-            let pulse = (time.elapsed_secs() * 2.0).sin() * 0.1 + 1.0;
+            let pulse = (time.elapsed_seconds() * 2.0).sin() * 0.1 + 1.0;
             transform.scale = Vec3::splat(pulse);
             
             // Fade out over time

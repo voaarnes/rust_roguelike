@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub struct TalentTreePlugin;
 
@@ -280,14 +280,14 @@ fn handle_talent_unlocks(
 fn apply_talent_effects(
     player_talents: Res<PlayerTalents>,
     talent_tree: Res<TalentTree>,
-    mut player_q: Query<&mut crate::game::combat::CombatStats, With<crate::game::player::Player>>,
+    mut player_q: Query<&mut crate::combat::CombatStats, With<crate::player::Player>>,
 ) {
     // Apply all unlocked talent effects to player
 }
 
 fn calculate_talent_points(
     mut player_talents: ResMut<PlayerTalents>,
-    player_q: Query<&crate::game::player::Player>,
+    player_q: Query<&crate::player::Player>,
 ) {
     if let Ok(player) = player_q.single() {
         // Grant 1 talent point per level

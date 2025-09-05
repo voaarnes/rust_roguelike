@@ -188,9 +188,9 @@ fn initialize_quests(mut quest_manager: ResMut<QuestManager>) {
 }
 
 fn update_quest_progress(
-    mut active_quests: ResMut<ActiveQuests>,
-    game_stats: Res<crate::core::state::GameStats>,
-    wave_manager: Res<crate::game::spawning::WaveManager>,
+    _active_quests: ResMut<ActiveQuests>,
+    game_stats: Res<crate::state::GameStats>,
+    wave_manager: Res<crate::spawning::WaveManager>,
     combo_tracker: Res<crate::systems::combo::ComboTracker>,
 ) {
     // Update progress for all active quests - process each list separately to avoid borrow issues
@@ -290,9 +290,9 @@ fn update_quest_progress(
 }
 
 fn check_quest_completion(
-    mut active_quests: ResMut<ActiveQuests>,
+    _active_quests: ResMut<ActiveQuests>,
     mut complete_events: EventWriter<QuestCompleteEvent>,
-    player_q: Query<Entity, With<crate::game::player::Player>>,
+    player_q: Query<Entity, With<crate::player::Player>>,
 ) {
     let Ok(player_entity) = player_q.single() else { return };
     
@@ -318,7 +318,7 @@ fn check_quest_completion(
         
         if all_complete {
             active_quest.completed = true;
-            complete_events.write(QuestCompleteEvent {
+            complete_events.send(QuestCompleteEvent {
                 quest_id: active_quest.quest.id.clone(),
                 player: player_entity,
             });
@@ -345,7 +345,7 @@ fn check_quest_completion(
         
         if all_complete {
             active_quest.completed = true;
-            complete_events.write(QuestCompleteEvent {
+            complete_events.send(QuestCompleteEvent {
                 quest_id: active_quest.quest.id.clone(),
                 player: player_entity,
             });
@@ -372,7 +372,7 @@ fn check_quest_completion(
         
         if all_complete {
             active_quest.completed = true;
-            complete_events.write(QuestCompleteEvent {
+            complete_events.send(QuestCompleteEvent {
                 quest_id: active_quest.quest.id.clone(),
                 player: player_entity,
             });
@@ -381,9 +381,9 @@ fn check_quest_completion(
 }
 
 fn generate_daily_quests(
-    mut active_quests: ResMut<ActiveQuests>,
-    quest_manager: Res<QuestManager>,
-    time: Res<Time>,
+    _active_quests: ResMut<ActiveQuests>,
+    _quest_manager: Res<QuestManager>,
+    _time: Res<Time>,
 ) {
     // Generate new daily quests at the start of each day
     // This would be tied to real time or game sessions
@@ -391,9 +391,9 @@ fn generate_daily_quests(
 
 fn handle_quest_rewards(
     mut events: EventReader<QuestCompleteEvent>,
-    quest_manager: Res<QuestManager>,
+    _quest_manager: Res<QuestManager>,
     mut currency: ResMut<crate::systems::shop::PlayerCurrency>,
-    mut active_quests: ResMut<ActiveQuests>,
+    _active_quests: ResMut<ActiveQuests>,
 ) {
     for event in events.read() {
         if let Some(quest) = quest_manager.available_quests.get(&event.quest_id) {

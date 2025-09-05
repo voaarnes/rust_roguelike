@@ -117,7 +117,7 @@ pub fn handle_combat(
                 player_health.take_damage(damage);
                 
                 // Reset combo when player takes damage
-                combo_events.write(ComboEvent::Reset);
+                combo_events.send(ComboEvent::Reset);
                 
                 // Add damage immunity period
                 commands.entity(player_entity).insert(LastDamageTime::default());
@@ -127,7 +127,7 @@ pub fn handle_combat(
             enemy_health.take_damage(1);
             
             // Send combo event for hit
-            combo_events.write(ComboEvent::Hit);
+            combo_events.send(ComboEvent::Hit);
         }
     }
 }
@@ -163,41 +163,41 @@ fn cleanup_dead_entities(
             state.score += 10;
             
             // Send combo event for kill
-            combo_events.write(ComboEvent::Kill);
+            combo_events.send(ComboEvent::Kill);
             
             // Drop loot if this was an enemy
             if let Some(_enemy) = enemy {
-                loot_events.write(DropLootEvent {
+                loot_events.send(DropLootEvent {
                     position: transform.translation,
                     source: LootSource::Enemy("BasicEnemy".to_string()),
                     luck_bonus: 0.0, // TODO: Get from player stats
                 });
                 
                 // Trigger achievement progress for enemy kills
-                achievement_events.write(AchievementUnlockedEvent {
+                achievement_events.send(AchievementUnlockedEvent {
                     achievement_id: "first_kill".to_string(),
                     player: player_entity,
                 });
                 
                 // Trigger quest progress for enemy kills
-                quest_events.write(QuestCompleteEvent {
+                quest_events.send(QuestCompleteEvent {
                     quest_id: "daily_slayer".to_string(),
                     player: player_entity,
                 });
                 
                 // Check for milestone achievements
                 if state.enemies_killed == 10 {
-                    achievement_events.write(AchievementUnlockedEvent {
+                    achievement_events.send(AchievementUnlockedEvent {
                         achievement_id: "slayer_bronze".to_string(),
                         player: player_entity,
                     });
                 } else if state.enemies_killed == 100 {
-                    achievement_events.write(AchievementUnlockedEvent {
+                    achievement_events.send(AchievementUnlockedEvent {
                         achievement_id: "slayer_silver".to_string(),
                         player: player_entity,
                     });
                 } else if state.enemies_killed == 1000 {
-                    achievement_events.write(AchievementUnlockedEvent {
+                    achievement_events.send(AchievementUnlockedEvent {
                         achievement_id: "slayer_gold".to_string(),
                         player: player_entity,
                     });

@@ -4,23 +4,46 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.14", features = ["dynamic_linking", "wayland", "android_shared_stdcxx"] }
+bevy = { version = "0.16", default-features = false, features = [
+    "bevy_asset",
+    "bevy_audio",
+    "bevy_gilrs",
+    "bevy_scene",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_gltf",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "multi_threaded",
+    "png",
+    "hdr",
+    "bevy_gizmos",
+    "tonemapping_luts",
+    "default_font",
+    "android-native-activity"
+] }
+log = "0.4"
 bevy_ecs_tilemap = "0.14"
 rand = "0.8"
-
-[target.'cfg(target_os = "android")'.dependencies]
-android_logger = "0.14"
-jni = "0.21"
 
 [lib]
 name = "rust_roguelike"
 crate-type = ["cdylib", "rlib"]
 
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.14"
+jni = "0.21"
+
 [package.metadata.android]
+package = "com.example.rust_roguelike"
+assets = "assets"
 build_targets = ["aarch64-linux-android"]
-min_sdk_version = 24
-target_sdk_version = 33
-compile_sdk_version = 33
+min_sdk_version = 23
+target_sdk_version = 34
+compile_sdk_version = 34
 
 [package.metadata.android.application]
 label = "Rust Roguelike"

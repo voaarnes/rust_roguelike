@@ -1567,7 +1567,7 @@ fn handle_shop_purchases(
     for (interaction, shop_button) in &interaction_query {
         if *interaction == Interaction::Pressed {
             if let Ok(player_entity) = player_query.single() {
-                purchase_events.write(crate::systems::shop::PurchaseEvent {
+                purchase_events.send(crate::systems::shop::PurchaseEvent {
                     item_id: shop_button.item_id.clone(),
                     player: player_entity,
                 });

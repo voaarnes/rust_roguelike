@@ -247,13 +247,13 @@ fn handle_purchases(
 fn apply_upgrade_effects(
     purchased: Res<PurchasedUpgrades>,
     shop: Res<ShopInventory>,
-    mut player_q: Query<&mut crate::game::combat::CombatStats, With<crate::game::player::Player>>,
+    mut player_q: Query<&mut crate::combat::CombatStats, With<crate::player::Player>>,
 ) {
     // Apply all purchased upgrades to player stats
 }
 
 fn refresh_shop_on_wave_clear(
-    wave_manager: Res<crate::game::spawning::WaveManager>,
+    wave_manager: Res<crate::spawning::WaveManager>,
     mut shop: ResMut<ShopInventory>,
 ) {
     if wave_manager.wave_complete && wave_manager.current_wave != shop.last_refresh_wave {

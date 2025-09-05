@@ -1,7 +1,6 @@
 // Touch input system for mobile controls
 
 use bevy::prelude::*;
-use bevy::input::touch::*;
 
 #[derive(Resource, Default)]
 pub struct TouchState {
@@ -29,7 +28,7 @@ pub fn handle_touch_input(
     touches: Res<Touches>,
     mut touch_state: ResMut<TouchState>,
     mut move_events: EventWriter<MoveCommand>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     // Handle touch start
     if let Some(touch) = touches.iter_just_pressed().next() {

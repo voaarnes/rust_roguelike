@@ -63,20 +63,20 @@ fn handle_collectible_pickup(
                     
                     // Trigger collection achievements
                     if game_stats.coins_collected >= 100 {
-                        achievement_events.write(AchievementUnlockedEvent {
+                        achievement_events.send(AchievementUnlockedEvent {
                             achievement_id: "coin_collector_bronze".to_string(),
                             player: player_entity,
                         });
                     }
                     if game_stats.coins_collected >= 1000 {
-                        achievement_events.write(AchievementUnlockedEvent {
+                        achievement_events.send(AchievementUnlockedEvent {
                             achievement_id: "coin_collector_silver".to_string(),
                             player: player_entity,
                         });
                     }
                     
                     // Trigger quest progress
-                    quest_events.write(QuestCompleteEvent {
+                    quest_events.send(QuestCompleteEvent {
                         quest_id: "daily_collector".to_string(),
                         player: player_entity,
                     });
@@ -92,7 +92,7 @@ fn handle_collectible_pickup(
                     }
                     
                     // Trigger fruit collection achievements
-                    achievement_events.write(AchievementUnlockedEvent {
+                    achievement_events.send(AchievementUnlockedEvent {
                         achievement_id: "fruit_collector".to_string(),
                         player: player_entity,
                     });
@@ -104,7 +104,7 @@ fn handle_collectible_pickup(
                     }
                     
                     // Trigger gem collection achievements
-                    achievement_events.write(AchievementUnlockedEvent {
+                    achievement_events.send(AchievementUnlockedEvent {
                         achievement_id: "gem_collector".to_string(),
                         player: player_entity,
                     });
@@ -127,7 +127,7 @@ fn animate_collectibles(
 ) {
     for mut transform in query.iter_mut() {
         // Add a subtle floating animation
-        transform.translation.y += (time.elapsed_secs() * 3.0 + transform.translation.x * 0.01).sin() * 0.3;
-        transform.rotation = Quat::from_rotation_z((time.elapsed_secs() * 2.0).sin() * 0.1);
+        transform.translation.y += (time.elapsed_seconds() * 3.0 + transform.translation.x * 0.01).sin() * 0.3;
+        transform.rotation = Quat::from_rotation_z((time.elapsed_seconds() * 2.0).sin() * 0.1);
     }
 }

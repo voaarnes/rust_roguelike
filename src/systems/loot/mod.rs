@@ -296,7 +296,7 @@ fn spawn_loot_drop(
     position: Vec3,
     loot_type: LootType,
     rarity: Rarity,
-    asset_server: &AssetServer,
+    _asset_server: &AssetServer,
 ) {
     let mut rng = rand::thread_rng();
     let offset = Vec3::new(
@@ -326,7 +326,7 @@ fn spawn_loot_drop(
 fn handle_loot_collection(
     mut commands: Commands,
     mut collect_events: EventReader<CollectLootEvent>,
-    mut loot_q: Query<&LootDrop>,
+    loot_q: Query<&LootDrop>,
     mut collected: ResMut<CollectedLoot>,
 ) {
     for event in collect_events.read() {
@@ -353,7 +353,7 @@ fn handle_loot_collection(
 
 fn apply_loot_effects(
     collected: Res<CollectedLoot>,
-    mut player_q: Query<&mut crate::game::combat::CombatStats, With<crate::game::player::Player>>,
+    mut player_q: Query<&mut crate::combat::CombatStats, With<crate::player::Player>>,
 ) {
     // Apply equipment stats and effects to player
 }
@@ -365,7 +365,7 @@ fn animate_loot_drops(
 ) {
     for (mut transform, mut loot, entity) in loot_q.iter_mut() {
         // Floating animation
-        transform.translation.y += (time.elapsed_secs() * 2.0).sin() * 0.5;
+        transform.translation.y += (time.elapsed_seconds() * 2.0).sin() * 0.5;
         
         // Lifetime management
         loot.lifetime.tick(time.delta());

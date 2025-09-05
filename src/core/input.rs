@@ -38,7 +38,7 @@ pub fn buffer_input_system(
     mut buffer: ResMut<InputBuffer>,
     time: Res<Time>,
 ) {
-    let current_time = time.elapsed_secs();
+    let current_time = time.elapsed_seconds();
     
     // Clean old inputs
     let buffer_time = buffer.buffer_time;

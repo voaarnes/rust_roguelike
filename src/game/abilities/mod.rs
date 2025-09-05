@@ -278,7 +278,7 @@ fn trigger_abilities(
             modified_timer.tick(time.delta());
             
             if modified_timer.just_finished() && ability.auto_cast {
-                trigger_events.write(TriggerAbilityEvent {
+                trigger_events.send(TriggerAbilityEvent {
                     ability_id: ability.ability_id,
                     caster: entity,
                     position: transform.translation,
@@ -291,7 +291,7 @@ fn trigger_abilities(
         if let Some(ref mut ability) = abilities.torso_ability {
             ability.cooldown_timer.tick(time.delta());
             if ability.cooldown_timer.just_finished() && ability.auto_cast {
-                trigger_events.write(TriggerAbilityEvent {
+                trigger_events.send(TriggerAbilityEvent {
                     ability_id: ability.ability_id,
                     caster: entity,
                     position: transform.translation,
@@ -303,7 +303,7 @@ fn trigger_abilities(
         if let Some(ref mut ability) = abilities.legs_ability {
             ability.cooldown_timer.tick(time.delta());
             if ability.cooldown_timer.just_finished() && ability.auto_cast {
-                trigger_events.write(TriggerAbilityEvent {
+                trigger_events.send(TriggerAbilityEvent {
                     ability_id: ability.ability_id,
                     caster: entity,
                     position: transform.translation,

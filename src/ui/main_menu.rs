@@ -117,7 +117,7 @@ fn handle_main_menu_input(
                 if play.is_some() {
                     next_state.set(GameState::Playing);
                 } else if quit.is_some() {
-                    app_exit_events.write(AppExit::Success);
+                    app_exit_events.send(AppExit::Success);
                 }
             }
             Interaction::Hovered => {

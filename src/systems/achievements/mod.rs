@@ -213,9 +213,9 @@ fn initialize_achievements(mut registry: ResMut<AchievementRegistry>) {
 fn track_achievement_progress(
     mut player_achievements: ResMut<PlayerAchievements>,
     registry: Res<AchievementRegistry>,
-    game_stats: Res<crate::core::state::GameStats>,
+    game_stats: Res<crate::state::GameStats>,
     combo_tracker: Res<crate::systems::combo::ComboTracker>,
-    player_stats_q: Query<&crate::game::player::PlayerStats>,
+    player_stats_q: Query<&crate::player::PlayerStats>,
 ) {
     for (id, achievement) in registry.achievements.iter() {
         if player_achievements.unlocked.get(id).copied().unwrap_or(false) {
@@ -246,7 +246,7 @@ fn check_achievement_completion(
     mut player_achievements: ResMut<PlayerAchievements>,
     registry: Res<AchievementRegistry>,
     mut unlock_events: EventWriter<AchievementUnlockedEvent>,
-    player_q: Query<Entity, With<crate::game::player::Player>>,
+    player_q: Query<Entity, With<crate::player::Player>>,
 ) {
     let Ok(player_entity) = player_q.single() else { return };
     
@@ -274,7 +274,7 @@ fn check_achievement_completion(
                 AchievementTier::Platinum => 100,
                 AchievementTier::Diamond => 200,
             };
-            unlock_events.write(AchievementUnlockedEvent {
+            unlock_events.send(AchievementUnlockedEvent {
                 achievement_id: id.clone(),
                 player: player_entity,
             });
