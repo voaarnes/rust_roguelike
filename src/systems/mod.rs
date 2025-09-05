@@ -24,3 +24,6 @@ impl Plugin for GameSystemsPlugin {
             ));
     }
 }
+
+#[cfg(target_os = "android")]
+pub mod mobile;
